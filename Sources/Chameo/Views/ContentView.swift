@@ -8,7 +8,7 @@ struct ContentView: View {
     @Environment(\.openSettings) private var openSettings
 
     @AppStorage("albumName") private var albumName = "Chameo"
-    @AppStorage("showGrid") private var showGrid = true
+    @AppStorage("showGrid") private var showFaceGuide = true
     @AppStorage("mirrorCamera") private var mirrorCamera = false
     @AppStorage("saveLocation") private var saveLocation = false
 
@@ -31,7 +31,7 @@ struct ContentView: View {
                 case .camera:
                     CameraView(
                         albumName: albumName,
-                        showGrid: showGrid,
+                        showFaceGuide: showFaceGuide,
                         mirrorCamera: mirrorCamera,
                         saveLocation: saveLocation,
                         statusMessage: $statusMessage

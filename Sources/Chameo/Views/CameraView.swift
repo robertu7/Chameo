@@ -6,7 +6,7 @@ struct CameraView: View {
     @EnvironmentObject private var libraryStore: LibraryStore
 
     let albumName: String
-    let showGrid: Bool
+    let showFaceGuide: Bool
     let mirrorCamera: Bool
     let saveLocation: Bool
     @Binding var statusMessage: String?
@@ -38,8 +38,8 @@ struct CameraView: View {
                 ZStack {
                     CameraPreviewView(session: cameraService.session, mirrored: mirrorCamera)
                         .overlay {
-                            if showGrid {
-                                CameraGridView()
+                            if showFaceGuide {
+                                CameraGuideView()
                             }
                         }
                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))

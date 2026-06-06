@@ -17,7 +17,7 @@ The app uses `NSStatusItem` plus `NSPopover` instead of SwiftUI `MenuBarExtra` b
   - whether Settings is visible
 - `@AppStorage` stores durable preferences:
   - album name
-  - camera grid
+  - camera face guide
   - mirror camera
   - save location
   - launch at login
