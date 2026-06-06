@@ -7,7 +7,7 @@
   - Open Photos settings.
   - Open Location settings.
   - Open Notifications settings.
-- Changed Library removal to remove photos from the configured album only, with an undo action.
+- Changed Library deletion to delete the original Photos asset behind inline confirmation.
 - Added explicit status for permission-denied states near the action that needs the permission.
 - Added lightweight loading states for Library reverse geocoding.
 - Added the Library empty-state `Take First Chameo` action.

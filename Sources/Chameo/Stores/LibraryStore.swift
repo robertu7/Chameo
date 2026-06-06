@@ -20,27 +20,28 @@ final class LibraryStore: ObservableObject {
         isLoading = false
     }
 
-    func removeFromAlbum(_ asset: ChameoAsset, albumName: String) async {
+    func deleteFromLibrary(_ asset: ChameoAsset, albumName: String) async -> Bool {
         errorMessage = nil
         let previousAssets = assets
         assets.removeAll { $0.id == asset.id }
 
         do {
-            try await PhotoLibraryService.removeAssetFromAlbum(asset.asset, albumName: albumName)
+            try await PhotoLibraryService.deleteAsset(asset.asset)
+            return true
         } catch {
             assets = previousAssets
             errorMessage = error.localizedDescription
+            await reload(albumName: albumName, preservingError: true)
+            return false
         }
     }
 
-    func restoreToAlbum(_ asset: ChameoAsset, albumName: String) async {
-        errorMessage = nil
+    private func reload(albumName: String, preservingError shouldPreserveError: Bool) async {
+        let currentError = shouldPreserveError ? errorMessage : nil
+        await reload(albumName: albumName)
 
-        do {
-            try await PhotoLibraryService.restoreAssetToAlbum(asset.asset, albumName: albumName)
-            await reload(albumName: albumName)
-        } catch {
-            errorMessage = error.localizedDescription
+        if shouldPreserveError {
+            errorMessage = currentError
         }
     }
 }

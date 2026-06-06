@@ -19,7 +19,7 @@ The app is intentionally small: click the camera icon in the menu bar, take a ph
 - Reminder scheduling with none, daily, and weekly repeat modes.
 - Clicking a reminder notification opens the app directly to the Camera tab.
 - Permission-denied states include direct System Settings recovery actions.
-- Library removal keeps the original Photos asset and offers undo.
+- Library deletion removes the original photo from Photos.
 - Optional launch-at-login support.
 - Menu-bar-only app with no Dock icon.
 
@@ -49,11 +49,11 @@ The script builds the SwiftPM executable, stages a local `.app` bundle in `dist/
 Chameo asks for permissions only when needed:
 
 - Camera: required for live preview and capture.
-- Photos: required to create/use the album, save photos, list library items, and remove photos from the Chameo album.
+- Photos: required to create/use the album, save photos, list library items, and delete photos from Photos.
 - Location: optional, only when `Save photo location` is enabled.
 - Notifications: requested when reminder settings are scheduled.
 
-Library removal only removes the photo from the Chameo album. The original Photos asset remains in Photos/iCloud, and Chameo shows an undo action after removal.
+Library deletion removes the original photo from Photos. Photos may move deleted items to Recently Deleted according to the system Photos behavior.
 
 ## Documentation
 

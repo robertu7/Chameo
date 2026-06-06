@@ -84,5 +84,5 @@ plutil -p dist/Chameo.app/Contents/Info.plist
 - Keep AppKit interop narrow. `StatusPopoverController` owns status item and popover behavior; SwiftUI owns feature UI.
 - Do not start the camera outside the visible Camera tab.
 - Do not write to Photos on `Take`; write only on `Save to Photos`.
-- Keep destructive Photos deletion behind inline confirmation unless the behavior changes to non-destructive album removal.
+- Keep destructive Photos deletion behind inline confirmation.
 - If reminder settings do not change, saving Settings should not request notification permission.

@@ -5,7 +5,7 @@ struct LibraryView: View {
     @EnvironmentObject private var libraryStore: LibraryStore
     let albumName: String
 
-    @State private var removedAsset: ChameoAsset?
+    @State private var didDeletePhoto = false
 
     private var sections: [LibrarySection] {
         LibrarySection.sections(for: libraryStore.assets)
@@ -64,11 +64,10 @@ struct LibraryView: View {
                                 VStack(spacing: 1) {
                                     ForEach(section.assets) { asset in
                                         LibraryRow(asset: asset) {
-                                            removedAsset = asset
-                                            await libraryStore.removeFromAlbum(asset, albumName: albumName)
+                                            let didDelete = await libraryStore.deleteFromLibrary(asset, albumName: albumName)
 
-                                            if libraryStore.errorMessage != nil {
-                                                removedAsset = nil
+                                            if didDelete {
+                                                didDeletePhoto = true
                                             }
                                         }
 
@@ -100,24 +99,16 @@ struct LibraryView: View {
                 .padding(.bottom, 8)
             }
 
-            if let removedAsset {
+            if didDeletePhoto {
                 HStack(spacing: 8) {
-                    Image(systemName: "arrow.uturn.backward")
+                    Image(systemName: "checkmark.circle")
                         .foregroundStyle(.secondary)
 
-                    Text("Removed from album")
+                    Text("Deleted from Photos")
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
                     Spacer()
-
-                    Button("Undo") {
-                        Task {
-                            await libraryStore.restoreToAlbum(removedAsset, albumName: albumName)
-                            self.removedAsset = nil
-                        }
-                    }
-                    .buttonStyle(.borderless)
                 }
                 .padding(.horizontal, 14)
                 .padding(.bottom, 8)
@@ -172,7 +163,7 @@ private struct LibraryRow: View {
     @State private var thumbnail: NSImage?
     @State private var locationName = ""
     @State private var isLoadingLocationName = false
-    @State private var isConfirmingRemoval = false
+    @State private var isConfirmingDeletion = false
 
     var body: some View {
         HStack(spacing: 12) {
@@ -211,10 +202,10 @@ private struct LibraryRow: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            if isConfirmingRemoval {
+            if isConfirmingDeletion {
                 HStack(spacing: 6) {
-                    Button("Remove", role: .destructive) {
-                        isConfirmingRemoval = false
+                    Button("Delete", role: .destructive) {
+                        isConfirmingDeletion = false
                         Task {
                             await onDelete()
                         }
@@ -222,19 +213,19 @@ private struct LibraryRow: View {
                     .buttonStyle(.borderless)
 
                     Button("Cancel") {
-                        isConfirmingRemoval = false
+                        isConfirmingDeletion = false
                     }
                     .buttonStyle(.borderless)
                 }
             } else {
                 Button {
-                    isConfirmingRemoval = true
+                    isConfirmingDeletion = true
                 } label: {
-                    Label("Remove from Album", systemImage: "minus.circle")
+                    Label("Delete Photo", systemImage: "trash")
                 }
                 .labelStyle(.iconOnly)
                 .buttonStyle(.borderless)
-                .help("Remove from Album")
+                .help("Delete Photo")
             }
         }
         .padding(.horizontal, 12)

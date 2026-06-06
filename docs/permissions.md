@@ -66,11 +66,11 @@ Behavior:
 - Updating reminder settings replaces the prior pending request.
 - Clicking a reminder notification opens the app to the Camera tab.
 
-## Album Removal
+## Library Deletion
 
-Library removal uses PhotoKit album membership changes. Removing a photo from Chameo does not delete the original asset from Photos or iCloud Photos.
+Library deletion uses PhotoKit asset deletion. Deleting a photo from Chameo removes the original asset from Photos, not just from the configured album.
 
-After a removal, the app shows an undo action that adds the original asset back to the configured album.
+Photos may move deleted items to Recently Deleted according to the system Photos behavior.
 
 ## Permission Recovery
 

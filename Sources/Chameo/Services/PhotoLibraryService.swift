@@ -111,31 +111,10 @@ enum PhotoLibraryService {
         return assets
     }
 
-    static func removeAssetFromAlbum(_ asset: PHAsset, albumName: String) async throws {
+    static func deleteAsset(_ asset: PHAsset) async throws {
         try await ensureAuthorized()
-        guard let album = fetchAlbum(named: normalizedAlbumName(albumName)) else {
-            return
-        }
-
-        try await performAlbumMembershipChanges {
-            guard let albumRequest = PHAssetCollectionChangeRequest(for: album) else {
-                return
-            }
-
-            albumRequest.removeAssets([asset] as NSArray)
-        }
-    }
-
-    static func restoreAssetToAlbum(_ asset: PHAsset, albumName: String) async throws {
-        try await ensureAuthorized()
-        let album = try await ensureAlbum(named: normalizedAlbumName(albumName))
-
-        try await performAlbumMembershipChanges {
-            guard let albumRequest = PHAssetCollectionChangeRequest(for: album) else {
-                return
-            }
-
-            albumRequest.addAssets([asset] as NSArray)
+        try await performPhotoLibraryChanges {
+            PHAssetChangeRequest.deleteAssets([asset] as NSArray)
         }
     }
 
@@ -181,7 +160,7 @@ enum PhotoLibraryService {
         return url
     }
 
-    private static func performAlbumMembershipChanges(_ changes: @escaping () -> Void) async throws {
+    private static func performPhotoLibraryChanges(_ changes: @escaping () -> Void) async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             let completion = PhotoLibraryChangeCompletion(continuation)
 
@@ -250,9 +229,9 @@ enum PhotoLibraryError: LocalizedError {
         case .assetCreationFailed:
             return "The captured photo could not be found after saving."
         case .changeFailed:
-            return "Photos could not update the Chameo album."
+            return "Photos could not delete the photo."
         case .changeTimedOut:
-            return "Photos did not finish updating the Chameo album."
+            return "Photos did not finish deleting the photo."
         }
     }
 }
