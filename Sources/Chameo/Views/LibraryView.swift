@@ -5,9 +5,7 @@ struct LibraryView: View {
     @EnvironmentObject private var libraryStore: LibraryStore
     let albumName: String
 
-    @State private var assetPendingRemoval: ChameoAsset?
     @State private var removedAsset: ChameoAsset?
-    @State private var isShowingRemovalConfirmation = false
 
     private var sections: [LibrarySection] {
         LibrarySection.sections(for: libraryStore.assets)
@@ -66,8 +64,12 @@ struct LibraryView: View {
                                 VStack(spacing: 1) {
                                     ForEach(section.assets) { asset in
                                         LibraryRow(asset: asset) {
-                                            assetPendingRemoval = asset
-                                            isShowingRemovalConfirmation = true
+                                            removedAsset = asset
+                                            await libraryStore.removeFromAlbum(asset, albumName: albumName)
+
+                                            if libraryStore.errorMessage != nil {
+                                                removedAsset = nil
+                                            }
                                         }
 
                                         if asset.id != section.assets.last?.id {
@@ -122,34 +124,6 @@ struct LibraryView: View {
             }
         }
         .background(Color(nsColor: .controlBackgroundColor))
-        .confirmationDialog(
-            "Remove from Chameo album?",
-            isPresented: $isShowingRemovalConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("Remove from Album") {
-                guard let assetPendingRemoval else {
-                    return
-                }
-
-                Task {
-                    await libraryStore.removeFromAlbum(assetPendingRemoval, albumName: albumName)
-                    removedAsset = assetPendingRemoval
-                    self.assetPendingRemoval = nil
-                }
-            }
-
-            Button("Cancel", role: .cancel) {
-                assetPendingRemoval = nil
-            }
-        } message: {
-            Text("The original photo stays in Photos. You can undo this from Chameo.")
-        }
-        .onChange(of: isShowingRemovalConfirmation) { _, isPresented in
-            if !isPresented {
-                assetPendingRemoval = nil
-            }
-        }
         .task {
             await libraryStore.reload(albumName: albumName)
         }
@@ -193,11 +167,12 @@ private struct LibrarySection: Identifiable {
 
 private struct LibraryRow: View {
     let asset: ChameoAsset
-    let onDelete: () -> Void
+    let onDelete: () async -> Void
 
     @State private var thumbnail: NSImage?
     @State private var locationName = ""
     @State private var isLoadingLocationName = false
+    @State private var isConfirmingRemoval = false
 
     var body: some View {
         HStack(spacing: 12) {
@@ -236,12 +211,31 @@ private struct LibraryRow: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            Button(action: onDelete) {
-                Label("Remove from Album", systemImage: "minus.circle")
+            if isConfirmingRemoval {
+                HStack(spacing: 6) {
+                    Button("Remove", role: .destructive) {
+                        isConfirmingRemoval = false
+                        Task {
+                            await onDelete()
+                        }
+                    }
+                    .buttonStyle(.borderless)
+
+                    Button("Cancel") {
+                        isConfirmingRemoval = false
+                    }
+                    .buttonStyle(.borderless)
+                }
+            } else {
+                Button {
+                    isConfirmingRemoval = true
+                } label: {
+                    Label("Remove from Album", systemImage: "minus.circle")
+                }
+                .labelStyle(.iconOnly)
+                .buttonStyle(.borderless)
+                .help("Remove from Album")
             }
-            .labelStyle(.iconOnly)
-            .buttonStyle(.borderless)
-            .help("Remove from Album")
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)

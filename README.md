@@ -30,19 +30,19 @@ Requirements:
 - macOS 14 or newer.
 - Xcode command line tools or Xcode with SwiftPM support.
 
-Build and launch:
+Build app bundle:
 
 ```bash
-./script/build_and_run.sh
+./script/build_app.sh
 ```
 
-Verify launch:
+Build a release app bundle:
 
 ```bash
-./script/build_and_run.sh --verify
+./script/build_app.sh --release
 ```
 
-The script builds the SwiftPM executable, stages a local `.app` bundle in `dist/`, writes the required `Info.plist`, applies the development entitlements, ad-hoc signs the app, and launches it.
+The script builds the SwiftPM executable, stages a local `.app` bundle in `dist/`, writes the required `Info.plist`, applies the development entitlements, ad-hoc signs the app, and prints the bundle path.
 
 ## Permissions
 

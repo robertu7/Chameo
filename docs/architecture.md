@@ -69,4 +69,4 @@ Camera hardware starts only when the Camera tab is visible and Settings is close
 
 ## Bundle and Signing
 
-The project is SwiftPM-based, so `script/build_and_run.sh` stages the app bundle manually under `dist/Chameo.app`. The script writes bundle metadata and signs with `Chameo.entitlements`.
+The project is SwiftPM-based, so `script/build_app.sh` stages the app bundle manually under `dist/Chameo.app`. The script writes bundle metadata and signs with `Chameo.entitlements`.

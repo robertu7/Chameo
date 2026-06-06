@@ -22,11 +22,13 @@ final class LibraryStore: ObservableObject {
 
     func removeFromAlbum(_ asset: ChameoAsset, albumName: String) async {
         errorMessage = nil
+        let previousAssets = assets
+        assets.removeAll { $0.id == asset.id }
 
         do {
             try await PhotoLibraryService.removeAssetFromAlbum(asset.asset, albumName: albumName)
-            await reload(albumName: albumName)
         } catch {
+            assets = previousAssets
             errorMessage = error.localizedDescription
         }
     }

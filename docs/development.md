@@ -5,7 +5,7 @@
 ```text
 Package.swift
 Chameo.entitlements
-script/build_and_run.sh
+script/build_app.sh
 Sources/Chameo/
   App/
   Models/
@@ -23,13 +23,13 @@ Use SwiftPM for compilation:
 swift build
 ```
 
-Use the project script for app launch:
+Use the project script to build and stage the app bundle:
 
 ```bash
-./script/build_and_run.sh
+./script/build_app.sh
 ```
 
-The script is the preferred run path because SwiftPM GUI executables should launch as an `.app` bundle, not as a raw command-line process.
+The script is the preferred build path because SwiftPM GUI executables should be staged as an `.app` bundle, not used as a raw command-line process.
 
 ## App Icon
 
@@ -41,28 +41,22 @@ swift script/generate_app_icon.swift
 
 The script writes `Assets/AppIcon.iconset/` and packages `Assets/AppIcon.icns`. The build script copies `Assets/AppIcon.icns` into the app bundle and declares it as `CFBundleIconFile`.
 
-## Run Script Modes
+## Build Script Modes
 
 ```bash
-./script/build_and_run.sh
-./script/build_and_run.sh --verify
-./script/build_and_run.sh --logs
-./script/build_and_run.sh --telemetry
-./script/build_and_run.sh --debug
+./script/build_app.sh
+./script/build_app.sh --release
 ```
 
-- `run`: build, stage, sign, launch.
-- `--verify`: launch and confirm the process exists.
-- `--logs`: launch and stream logs for the process.
-- `--telemetry`: launch and stream logs filtered by bundle ID.
-- `--debug`: open the built binary under `lldb`.
+- `debug`: build, stage, and sign a debug app bundle. This is the default.
+- `--release`: build, stage, and sign a release app bundle.
 
 ## Codex Run Button
 
 `.codex/environments/environment.toml` wires the Codex app Run action to:
 
 ```bash
-./script/build_and_run.sh
+./script/build_app.sh
 ```
 
 ## Debugging Tips

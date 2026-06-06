@@ -117,7 +117,7 @@ enum PhotoLibraryService {
             return
         }
 
-        try await PHPhotoLibrary.shared().performChanges {
+        try await performAlbumMembershipChanges {
             guard let albumRequest = PHAssetCollectionChangeRequest(for: album) else {
                 return
             }
@@ -130,7 +130,7 @@ enum PhotoLibraryService {
         try await ensureAuthorized()
         let album = try await ensureAlbum(named: normalizedAlbumName(albumName))
 
-        try await PHPhotoLibrary.shared().performChanges {
+        try await performAlbumMembershipChanges {
             guard let albumRequest = PHAssetCollectionChangeRequest(for: album) else {
                 return
             }
@@ -180,12 +180,66 @@ enum PhotoLibraryService {
         try data.write(to: url, options: .atomic)
         return url
     }
+
+    private static func performAlbumMembershipChanges(_ changes: @escaping () -> Void) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            let completion = PhotoLibraryChangeCompletion(continuation)
+
+            PHPhotoLibrary.shared().performChanges(changes) { success, error in
+                if let error {
+                    completion.resume(throwing: error)
+                } else if success {
+                    completion.resume()
+                } else {
+                    completion.resume(throwing: PhotoLibraryError.changeFailed)
+                }
+            }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 20) {
+                completion.resume(throwing: PhotoLibraryError.changeTimedOut)
+            }
+        }
+    }
+}
+
+private final class PhotoLibraryChangeCompletion: @unchecked Sendable {
+    private let lock = NSLock()
+    private var continuation: CheckedContinuation<Void, Error>?
+
+    init(_ continuation: CheckedContinuation<Void, Error>) {
+        self.continuation = continuation
+    }
+
+    func resume() {
+        resume { continuation in
+            continuation.resume()
+        }
+    }
+
+    func resume(throwing error: Error) {
+        resume { continuation in
+            continuation.resume(throwing: error)
+        }
+    }
+
+    private func resume(_ action: (CheckedContinuation<Void, Error>) -> Void) {
+        lock.lock()
+        let continuation = continuation
+        self.continuation = nil
+        lock.unlock()
+
+        if let continuation {
+            action(continuation)
+        }
+    }
 }
 
 enum PhotoLibraryError: LocalizedError {
     case notAuthorized
     case albumCreationFailed
     case assetCreationFailed
+    case changeFailed
+    case changeTimedOut
 
     var errorDescription: String? {
         switch self {
@@ -195,6 +249,10 @@ enum PhotoLibraryError: LocalizedError {
             return "The Photos album could not be created."
         case .assetCreationFailed:
             return "The captured photo could not be found after saving."
+        case .changeFailed:
+            return "Photos could not update the Chameo album."
+        case .changeTimedOut:
+            return "Photos did not finish updating the Chameo album."
         }
     }
 }
