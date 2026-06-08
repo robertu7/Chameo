@@ -35,17 +35,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
     private func configureUserDefaults() {
         UserDefaults.standard.register(defaults: [
-            "mirrorCamera": false,
             "showGrid": true,
             "saveLocation": false,
             "launchAtLogin": LaunchAtLoginService.isEnabled
         ])
         UserDefaults.standard.set(LaunchAtLoginService.isEnabled, forKey: "launchAtLogin")
-
-        if !UserDefaults.standard.bool(forKey: "mirrorCameraDefaultDisabledMigrated") {
-            UserDefaults.standard.set(false, forKey: "mirrorCamera")
-            UserDefaults.standard.set(true, forKey: "mirrorCameraDefaultDisabledMigrated")
-        }
     }
 }
 

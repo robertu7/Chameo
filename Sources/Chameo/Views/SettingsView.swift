@@ -6,7 +6,6 @@ import UserNotifications
 struct SettingsView: View {
     @AppStorage("albumName") private var albumName = "Chameo"
     @AppStorage("showGrid") private var showFaceGuide = true
-    @AppStorage("mirrorCamera") private var mirrorCamera = false
     @AppStorage("saveLocation") private var saveLocation = false
     @AppStorage("launchAtLogin") private var storedLaunchAtLogin = false
     @AppStorage("reminderDate") private var reminderDateTimeInterval = Date().timeIntervalSinceReferenceDate
@@ -43,8 +42,6 @@ struct SettingsView: View {
 
                 Section("Camera") {
                     Toggle("Show Face Guide", isOn: $showFaceGuide)
-
-                    Toggle("Mirror Camera", isOn: $mirrorCamera)
                 }
 
                 Section("Location") {

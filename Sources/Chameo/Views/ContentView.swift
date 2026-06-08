@@ -9,7 +9,6 @@ struct ContentView: View {
 
     @AppStorage("albumName") private var albumName = "Chameo"
     @AppStorage("showGrid") private var showFaceGuide = true
-    @AppStorage("mirrorCamera") private var mirrorCamera = false
     @AppStorage("saveLocation") private var saveLocation = false
 
     @State private var statusMessage: String?
@@ -32,7 +31,6 @@ struct ContentView: View {
                     CameraView(
                         albumName: albumName,
                         showFaceGuide: showFaceGuide,
-                        mirrorCamera: mirrorCamera,
                         saveLocation: saveLocation,
                         statusMessage: $statusMessage
                     )

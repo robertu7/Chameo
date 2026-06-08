@@ -18,7 +18,6 @@ The app uses `NSStatusItem` plus `NSPopover` instead of SwiftUI `MenuBarExtra` b
 - `@AppStorage` stores durable preferences:
   - album name
   - camera face guide
-  - mirror camera
   - save location
   - launch at login
   - reminder date/time
@@ -33,7 +32,7 @@ Camera hardware starts only when the Camera tab is visible and Settings is close
 - `CameraService`
   - Requests camera permission.
   - Configures `AVCaptureSession`.
-  - Captures still photos with optional mirroring.
+  - Captures still photos without preview mirroring.
 
 - `PhotoLibraryService`
   - Requests Photos read/write access.

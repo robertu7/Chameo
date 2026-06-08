@@ -11,7 +11,7 @@ The app is intentionally small: click the camera icon in the menu bar, take a ph
 ## Features
 
 - Menu bar camera icon with a compact popover UI.
-- Camera tab with live preview, optional face guide, and optional mirrored camera support.
+- Camera tab with mirrored live preview and optional face guide.
 - Capture preview flow:
   - `Take` captures into memory only.
   - `Save to Photos` writes the image to Photos.app.

@@ -7,7 +7,6 @@ struct CameraView: View {
 
     let albumName: String
     let showFaceGuide: Bool
-    let mirrorCamera: Bool
     let saveLocation: Bool
     @Binding var statusMessage: String?
 
@@ -36,7 +35,8 @@ struct CameraView: View {
                 )
             } else {
                 ZStack {
-                    CameraPreviewView(session: cameraService.session, mirrored: mirrorCamera)
+                    CameraPreviewView(session: cameraService.session, mirrored: false)
+                        .scaleEffect(x: -1, y: 1, anchor: .center)
                         .overlay {
                             if showFaceGuide {
                                 CameraGuideView()
@@ -129,7 +129,7 @@ struct CameraView: View {
         statusMessage = nil
 
         do {
-            let data = try await cameraService.capturePhoto(mirrored: mirrorCamera)
+            let data = try await cameraService.capturePhoto(mirrored: false)
             capturedPreview = CapturedPreview(data: data)
             statusMessage = "Preview ready. Keep or Cancel."
         } catch {
