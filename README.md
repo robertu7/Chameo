@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="Assets/AppIconSource.png" alt="Chameo app icon" width="128">
+</p>
+
 # Chameo
 
 Chameo is a macOS menu bar app for taking quick daily selfies and storing the photos in a dedicated Photos.app album. The name leans into the idea of seeing how your face, mood, style, and life change over time.
