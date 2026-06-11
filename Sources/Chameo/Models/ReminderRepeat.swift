@@ -5,12 +5,16 @@ enum ReminderRepeat: String, CaseIterable, Identifiable {
     case daily
     case weekly
 
+    static var allCases: [ReminderRepeat] {
+        [.daily, .weekly, .none]
+    }
+
     var id: String { rawValue }
 
     var title: String {
         switch self {
         case .none:
-            return "None"
+            return "Once"
         case .daily:
             return "Daily"
         case .weekly:

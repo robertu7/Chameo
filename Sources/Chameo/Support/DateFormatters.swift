@@ -14,4 +14,12 @@ enum DateFormatters {
         formatter.timeStyle = .none
         return formatter
     }()
+
+    static let reminderPreview: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        formatter.doesRelativeDateFormatting = true
+        return formatter
+    }()
 }

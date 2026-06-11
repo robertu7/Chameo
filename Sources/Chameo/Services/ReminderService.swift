@@ -8,7 +8,13 @@ enum ReminderService {
         await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
     }
 
-    static func configureReminder(date: Date, repeatMode: ReminderRepeat) async throws {
+    static func hasScheduledReminder() async -> Bool {
+        await UNUserNotificationCenter.current()
+            .pendingNotificationRequests()
+            .contains { $0.identifier == requestIdentifier }
+    }
+
+    static func configureReminder(date: Date, repeatMode: ReminderRepeat, weekday: Int? = nil) async throws {
         let center = UNUserNotificationCenter.current()
         center.removePendingNotificationRequests(withIdentifiers: [requestIdentifier])
 
@@ -23,7 +29,7 @@ enum ReminderService {
         content.sound = .default
 
         let trigger = UNCalendarNotificationTrigger(
-            dateMatching: dateComponents(for: date, repeatMode: repeatMode),
+            dateMatching: dateComponents(for: date, repeatMode: repeatMode, weekday: weekday),
             repeats: repeatMode != .none
         )
         let request = UNNotificationRequest(identifier: requestIdentifier, content: content, trigger: trigger)
@@ -34,7 +40,7 @@ enum ReminderService {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [requestIdentifier])
     }
 
-    private static func dateComponents(for date: Date, repeatMode: ReminderRepeat) -> DateComponents {
+    private static func dateComponents(for date: Date, repeatMode: ReminderRepeat, weekday: Int?) -> DateComponents {
         let calendar = Calendar.current
 
         switch repeatMode {
@@ -43,7 +49,9 @@ enum ReminderService {
         case .daily:
             return calendar.dateComponents([.hour, .minute], from: date)
         case .weekly:
-            return calendar.dateComponents([.weekday, .hour, .minute], from: date)
+            var components = calendar.dateComponents([.hour, .minute], from: date)
+            components.weekday = weekday ?? calendar.component(.weekday, from: date)
+            return components
         }
     }
 }
