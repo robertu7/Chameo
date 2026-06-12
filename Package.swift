@@ -14,6 +14,11 @@ let package = Package(
         .executableTarget(
             name: "Chameo",
             path: "Sources/Chameo"
+        ),
+        .testTarget(
+            name: "ChameoTests",
+            dependencies: ["Chameo"],
+            path: "Tests/ChameoTests"
         )
     ],
     swiftLanguageVersions: [.v5]

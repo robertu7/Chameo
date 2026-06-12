@@ -18,6 +18,7 @@ The app uses `NSStatusItem` plus `NSPopover` instead of SwiftUI `MenuBarExtra` b
 - `@AppStorage` stores durable preferences:
   - album name
   - camera face guide
+  - automatic photo alignment
   - save location
   - launch at login
   - reminder date/time
@@ -33,6 +34,11 @@ Camera hardware starts only when the Camera tab is visible and Settings is close
   - Requests camera permission.
   - Configures `AVCaptureSession`.
   - Captures still photos without preview mirroring.
+
+- `FaceAlignmentService`
+  - Uses Vision face landmarks after capture.
+  - Aligns captured selfies with Core Image before preview/save when enabled.
+  - Falls back to the original photo when face or landmark detection fails.
 
 - `PhotoLibraryService`
   - Requests Photos read/write access.

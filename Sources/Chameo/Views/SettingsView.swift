@@ -6,6 +6,7 @@ import UserNotifications
 struct SettingsView: View {
     @AppStorage("albumName") private var albumName = "Chameo"
     @AppStorage("showGrid") private var showFaceGuide = true
+    @AppStorage("autoAlignPhotos") private var autoAlignPhotos = true
     @AppStorage("saveLocation") private var saveLocation = false
     @AppStorage("launchAtLogin") private var storedLaunchAtLogin = false
     @AppStorage("reminderEnabled") private var reminderEnabledStorage = false
@@ -49,6 +50,7 @@ struct SettingsView: View {
 
                 Section("Camera") {
                     Toggle("Show Face Guide", isOn: $showFaceGuide)
+                    Toggle("Auto Align Photos", isOn: $autoAlignPhotos)
                 }
 
                 Section("Location") {

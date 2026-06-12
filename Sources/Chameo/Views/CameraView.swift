@@ -4,6 +4,7 @@ import SwiftUI
 struct CameraView: View {
     @EnvironmentObject private var cameraService: CameraService
     @EnvironmentObject private var libraryStore: LibraryStore
+    @AppStorage("autoAlignPhotos") private var autoAlignPhotos = true
 
     let albumName: String
     let showFaceGuide: Bool
@@ -130,8 +131,15 @@ struct CameraView: View {
 
         do {
             let data = try await cameraService.capturePhoto(mirrored: false)
-            capturedPreview = CapturedPreview(data: data)
-            statusMessage = "Preview ready. Keep or Cancel."
+            if autoAlignPhotos {
+                statusMessage = "Aligning photo…"
+                let result = await FaceAlignmentService.alignmentResult(from: data)
+                capturedPreview = CapturedPreview(data: result.data)
+                statusMessage = result.message ?? "Preview ready. Keep or Cancel."
+            } else {
+                capturedPreview = CapturedPreview(data: data)
+                statusMessage = "Preview ready. Keep or Cancel."
+            }
         } catch {
             statusMessage = error.localizedDescription
         }
