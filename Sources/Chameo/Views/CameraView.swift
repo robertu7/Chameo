@@ -174,6 +174,7 @@ struct CameraView: View {
                 albumName: albumName,
                 location: location
             )
+            await ReminderService.recordSelfieTaken()
             photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
             await libraryStore.reload(albumName: albumName)
             self.capturedPreview = nil

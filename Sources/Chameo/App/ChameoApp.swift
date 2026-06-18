@@ -18,6 +18,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             cameraService: cameraService,
             libraryStore: libraryStore
         )
+        Task {
+            await ReminderService.refreshFollowUpsFromStoredSettings()
+        }
     }
 
     func userNotificationCenter(
@@ -31,7 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse
     ) async {
-        guard response.notification.request.identifier == ReminderService.requestIdentifier else {
+        guard ReminderService.isReminderIdentifier(response.notification.request.identifier) else {
             return
         }
 

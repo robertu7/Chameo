@@ -62,8 +62,8 @@ Bundle key:
 
 Behavior:
 
-- The app schedules one stable notification request.
-- Updating reminder settings replaces the prior pending request.
+- The app schedules one stable primary notification request and optional hourly follow-ups for upcoming reminder days.
+- Updating reminder settings replaces prior pending requests, and saving a selfie cancels the rest of that day's follow-ups.
 - Clicking a reminder notification opens the app to the Camera tab.
 
 ## Library Deletion
