@@ -25,13 +25,11 @@ struct CameraView: View {
                     isSaving: isSaving,
                     photosPermissionDenied: isPhotosPermissionDenied,
                     locationPermissionDenied: saveLocation && locationPermissionDenied,
-                    onCancel: {
-                        cancelCapturedPreview()
+                    onRetake: {
+                        retakeCapturedPreview()
                     },
                     onKeep: {
-                        Task {
-                            await keepCapturedPreview()
-                        }
+                        beginSavingCapturedPreview()
                     }
                 )
             } else {
@@ -51,15 +49,14 @@ struct CameraView: View {
                 .padding(.top, 14)
 
                 Button {
-                    Task {
-                        await takeChameo()
-                    }
+                    beginCapture()
                 } label: {
                     Label(isSaving ? "Saving…" : "Take Photo", systemImage: "camera.circle.fill")
                         .frame(minWidth: 104)
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
+                .keyboardShortcut(.defaultAction)
                 .disabled(!canCapture || isSaving)
 
                 if case .unauthorized = cameraService.status {
@@ -125,8 +122,15 @@ struct CameraView: View {
         }
     }
 
-    private func takeChameo() async {
+    private func beginCapture() {
+        guard !isSaving else { return }
         isSaving = true
+        Task {
+            await takeChameo()
+        }
+    }
+
+    private func takeChameo() async {
         statusMessage = nil
 
         do {
@@ -147,12 +151,18 @@ struct CameraView: View {
         isSaving = false
     }
 
+    private func beginSavingCapturedPreview() {
+        guard capturedPreview != nil, !isSaving else { return }
+        isSaving = true
+        Task {
+            await keepCapturedPreview()
+        }
+    }
+
     private func keepCapturedPreview() async {
         guard let capturedPreview else {
             return
         }
-
-        isSaving = true
 
         do {
             var location = Optional.none as CLLocation?
@@ -191,7 +201,7 @@ struct CameraView: View {
         isSaving = false
     }
 
-    private func cancelCapturedPreview() {
+    private func retakeCapturedPreview() {
         self.capturedPreview = nil
         statusMessage = "Discarded preview"
     }
@@ -211,7 +221,7 @@ private struct CapturedPreviewView: View {
     let isSaving: Bool
     let photosPermissionDenied: Bool
     let locationPermissionDenied: Bool
-    let onCancel: () -> Void
+    let onRetake: () -> Void
     let onKeep: () -> Void
 
     var body: some View {
@@ -236,13 +246,15 @@ private struct CapturedPreviewView: View {
             }
 
             HStack {
-                Button("Cancel", role: .destructive, action: onCancel)
+                Button("Retake", role: .destructive, action: onRetake)
+                    .keyboardShortcut(.cancelAction)
                     .disabled(isSaving)
 
                 Spacer()
 
                 Button(isSaving ? "Saving…" : "Save to Photos", action: onKeep)
                     .buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.defaultAction)
                     .disabled(isSaving)
             }
             .frame(width: 392)
