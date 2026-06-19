@@ -21,7 +21,7 @@ Purpose:
 - Create or find the configured album. If an album with the same exact name already exists, the app uses that album.
 - Save kept photos.
 - Read the album for the Library view.
-- Remove selected photos from the configured album.
+- Delete selected original photo assets from Photos.
 
 Bundle key:
 

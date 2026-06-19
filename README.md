@@ -6,19 +6,22 @@
 
 Chameo is a macOS menu bar app for taking quick daily selfies and storing the photos in a dedicated Photos.app album. The name leans into the idea of seeing how your face, mood, style, and life change over time.
 
-The app is intentionally small: click the camera icon in the menu bar, take a photo, preview it, then save or discard it.
+The app is intentionally small: click the camera icon in the menu bar, take a photo, preview it, then save it or retake it.
 
 ## Features
 
 - Menu bar camera icon with a compact popover UI.
 - Camera tab with mirrored live preview and optional face guide.
 - Capture preview flow:
-  - `Take` captures into memory only.
+  - `Take Photo` captures into memory only.
   - `Save to Photos` writes the image to Photos.app.
-  - `Cancel` discards the in-memory preview without touching Photos.
+  - `Retake` discards the in-memory preview without touching Photos.
+  - Return performs the primary action; Escape retakes from preview.
+- Optional automatic face alignment produces consistent square photos and falls back to the original when alignment is unavailable.
 - Library tab with thumbnails grouped by local date.
 - Library rows show local date/time and location name when available.
-- Dedicated Photos.app album name configurable in Settings. If Photos already has an album with the same name, Chameo uses that album instead of creating another one.
+- Library shows rolling 30-day capture progress and missed dates; today remains pending until it is complete.
+- Dedicated Photos.app album name configurable in Settings. If Photos already has an album with the same name, Chameo uses that album instead of creating another one. If the album is deleted externally, the next save recreates it.
 - Optional location metadata on saved photos, off by default.
 - Reminder scheduling with none, daily, and weekly repeat modes.
 - Clicking a reminder notification opens the app directly to the Camera tab.

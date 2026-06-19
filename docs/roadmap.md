@@ -4,22 +4,7 @@ Chameo is currently a personal daily-selfie tool. The roadmap prioritizes a
 reliable daily capture habit before broader library, automation, or distribution
 work.
 
-## Now
-
-- Rename preview `Cancel` to `Retake`. Retaking discards the in-memory preview
-  and returns to the live camera.
-- Add contextual keyboard actions:
-  - Return takes a photo from the live camera.
-  - Return saves the captured preview to Photos.
-  - Escape discards the preview and returns to the live camera.
-- Add a compact rolling 30-day summary at the top of Library:
-  - Count at most one captured day per local calendar day.
-  - Treat completed local days without a photo as missed; today is pending.
-  - Start tracking on the date of the album's first Chameo.
-  - Before 30 days have elapsed, show captured days against elapsed days.
-  - Show the missed dates alongside the captured-day count.
-
-## Validation Gate
+## Now: Validation
 
 Run a 30-day personal trial before expanding the feature set.
 
@@ -78,6 +63,10 @@ owner's own Macs:
   confirmation.
 - Added loading state for Library reverse geocoding.
 - Added the Library empty-state `Take First Chameo` action.
+- Renamed preview `Cancel` to `Retake` and added contextual Return and Escape
+  keyboard actions.
+- Added a rolling 30-day Library summary derived from local Photos asset dates,
+  with captured-day progress, missed dates, and today treated as pending.
 - Added optional automatic face alignment with square output and fallback to the
   original photo when alignment fails.
 - Automatically recreate the configured Photos album on the next save if it was

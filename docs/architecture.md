@@ -14,7 +14,6 @@ The app uses `NSStatusItem` plus `NSPopover` instead of SwiftUI `MenuBarExtra` b
 
 - `AppState` stores popover-level UI state:
   - selected tab
-  - whether Settings is visible
 - `@AppStorage` stores durable preferences:
   - album name
   - camera face guide
@@ -23,10 +22,13 @@ The app uses `NSStatusItem` plus `NSPopover` instead of SwiftUI `MenuBarExtra` b
   - launch at login
   - reminder date/time
   - reminder repeat mode
+  - reminder weekday
+  - hourly reminder follow-ups
 - `LibraryStore` owns the currently fetched Photos assets and library errors.
 - `CameraService` owns the `AVCaptureSession` and still photo capture.
+- `CaptureProgress` derives rolling captured and missed days from Photos asset creation dates; it does not persist a separate activity history.
 
-Camera hardware starts only when the Camera tab is visible and Settings is closed. It stops when the user switches tabs, opens Settings, or closes the popover.
+Camera hardware starts only when the Camera tab is visible. It stops when the user switches to Library or closes the popover.
 
 ## Services
 
@@ -44,7 +46,8 @@ Camera hardware starts only when the Camera tab is visible and Settings is close
   - Requests Photos read/write access.
   - Finds the first Photos album with the configured exact name, or creates that album if none exists.
   - Saves images into Photos.app with optional `CLLocation`.
-  - Fetches album assets, thumbnails, and deletes selected assets.
+  - Fetches album assets and thumbnails.
+  - Deletes selected original assets from Photos.
 
 - `LocationService`
   - Requests when-in-use authorization.
@@ -60,10 +63,12 @@ Camera hardware starts only when the Camera tab is visible and Settings is close
 - `CameraView`
   - Live camera preview.
   - Capture-to-memory preview.
-  - `Save to Photos` and `Cancel` flow.
+  - `Save to Photos` and `Retake` flow.
+  - Contextual Return and Escape keyboard actions.
   - Inline status for capture, location, and save progress.
 
 - `LibraryView`
+  - Rolling 30-day captured and missed-day summary.
   - Date-grouped photo list.
   - Thumbnail, local date/time, location name.
   - Inline destructive confirmation before Photos deletion.
@@ -74,4 +79,4 @@ Camera hardware starts only when the Camera tab is visible and Settings is close
 
 ## Bundle and Signing
 
-The project is SwiftPM-based, so `script/build_app.sh` stages the app bundle manually under `dist/Chameo.app`. The script writes bundle metadata and signs with `Chameo.entitlements`.
+The project is SwiftPM-based, so `script/build_app.sh` stages the app bundle manually under `dist/Chameo.app`. The script writes bundle metadata and applies an ad-hoc signature with `Chameo.entitlements`.
