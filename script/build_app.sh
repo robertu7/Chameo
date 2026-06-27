@@ -16,6 +16,7 @@ APP_BINARY="$APP_MACOS/$APP_NAME"
 INFO_PLIST="$APP_CONTENTS/Info.plist"
 ENTITLEMENTS="$ROOT_DIR/Chameo.entitlements"
 APP_ICON="$ROOT_DIR/Assets/AppIcon.icns"
+VERSION_FILE="$ROOT_DIR/VERSION"
 
 case "$BUILD_CONFIGURATION" in
   debug|release)
@@ -31,6 +32,21 @@ case "$BUILD_CONFIGURATION" in
     exit 2
     ;;
 esac
+
+APP_VERSION="${CHAMEO_VERSION:-$(tr -d '[:space:]' <"$VERSION_FILE")}"
+BUILD_NUMBER="${CHAMEO_BUILD_NUMBER:-$(git -C "$ROOT_DIR" rev-list --count HEAD 2>/dev/null || echo 0)}"
+
+if [[ -n "${CHAMEO_BUILD_ID:-}" ]]; then
+  BUILD_ID="$CHAMEO_BUILD_ID"
+elif GIT_SHA="$(git -C "$ROOT_DIR" rev-parse --short HEAD 2>/dev/null)"; then
+  if git -C "$ROOT_DIR" diff --quiet --ignore-submodules HEAD --; then
+    BUILD_ID="$GIT_SHA"
+  else
+    BUILD_ID="$GIT_SHA-dirty"
+  fi
+else
+  BUILD_ID="$(date -u +%Y%m%d%H%M%S)"
+fi
 
 swift build -c "$BUILD_CONFIGURATION"
 BUILD_BINARY="$(swift build -c "$BUILD_CONFIGURATION" --show-bin-path)/$APP_NAME"
@@ -54,6 +70,12 @@ cat >"$INFO_PLIST" <<PLIST
   <string>Chameo</string>
   <key>CFBundleDisplayName</key>
   <string>Chameo</string>
+  <key>CFBundleShortVersionString</key>
+  <string>$APP_VERSION</string>
+  <key>CFBundleVersion</key>
+  <string>$BUILD_NUMBER</string>
+  <key>ChameoBuildID</key>
+  <string>$BUILD_ID</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleIconFile</key>

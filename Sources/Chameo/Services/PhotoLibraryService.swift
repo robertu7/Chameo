@@ -38,6 +38,48 @@ enum PhotoLibraryService {
         return PHAssetCollection.fetchAssetCollections(with: .album, subtype: .albumRegular, options: options).firstObject
     }
 
+    static func fetchAlbumNames() async throws -> [String] {
+        try await ensureAuthorized()
+
+        let collections = PHAssetCollection.fetchAssetCollections(with: .album, subtype: .albumRegular, options: nil)
+        var names: [String] = []
+
+        collections.enumerateObjects { collection, _, _ in
+            guard let title = collection.localizedTitle?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !title.isEmpty else {
+                return
+            }
+
+            names.append(title)
+        }
+
+        return Array(Set(names)).sorted { lhs, rhs in
+            lhs.localizedStandardCompare(rhs) == .orderedAscending
+        }
+    }
+
+    static func createAlbum(named albumName: String) async throws -> PHAssetCollection {
+        try await ensureAuthorized()
+
+        let normalizedName = normalizedAlbumName(albumName)
+        var albumPlaceholder: PHObjectPlaceholder?
+        try await PHPhotoLibrary.shared().performChanges {
+            let request = PHAssetCollectionChangeRequest.creationRequestForAssetCollection(withTitle: normalizedName)
+            albumPlaceholder = request.placeholderForCreatedAssetCollection
+        }
+
+        guard let localIdentifier = albumPlaceholder?.localIdentifier else {
+            throw PhotoLibraryError.albumCreationFailed
+        }
+
+        let result = PHAssetCollection.fetchAssetCollections(withLocalIdentifiers: [localIdentifier], options: nil)
+        guard let album = result.firstObject else {
+            throw PhotoLibraryError.albumCreationFailed
+        }
+
+        return album
+    }
+
     static func ensureAlbum(named albumName: String) async throws -> PHAssetCollection {
         if let existingAlbum = fetchAlbum(named: albumName) {
             return existingAlbum

@@ -6,6 +6,7 @@
 Package.swift
 Chameo.entitlements
 script/build_app.sh
+VERSION
 Sources/Chameo/
   App/
   Models/
@@ -30,6 +31,18 @@ Use the project script to build and stage the app bundle:
 ```
 
 The script is the preferred build path because SwiftPM GUI executables should be staged as an `.app` bundle, not used as a raw command-line process.
+
+## Versioning
+
+`VERSION` is the app version source of truth. `script/build_app.sh` writes that value to `CFBundleShortVersionString`, writes the git commit count to `CFBundleVersion`, and writes the short git SHA to `ChameoBuildID`. Local builds with uncommitted changes append `-dirty` to the build id.
+
+Release automation can override those values:
+
+```bash
+CHAMEO_VERSION=1.2.0 CHAMEO_BUILD_NUMBER=42 CHAMEO_BUILD_ID=ci-42 ./script/build_app.sh --release
+```
+
+Settings shows the bundled version number and build id from `Info.plist`.
 
 ## App Icon
 

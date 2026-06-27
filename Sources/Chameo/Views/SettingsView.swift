@@ -29,24 +29,66 @@ struct SettingsView: View {
     @State private var isLoadingSettings = true
     @State private var errorMessage: String?
     @State private var photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
+    @State private var photosAlbumNames: [String] = []
+    @State private var isLoadingPhotosAlbums = false
+    @State private var isShowingNewAlbumSheet = false
+    @State private var newAlbumName = ""
+    @State private var isCreatingPhotosAlbum = false
     @State private var locationAuthorizationStatus = CLLocationManager().authorizationStatus
     @State private var notificationAuthorizationStatus = UNAuthorizationStatus.notDetermined
 
     var body: some View {
         TabView {
             Form {
-                Section("Album") {
-                    TextField("Album Name", text: $albumName)
-                        .textFieldStyle(.roundedBorder)
-                        .onSubmit {
-                            albumName = PhotoLibraryService.normalizedAlbumName(albumName)
+                Section("Photos Album") {
+                    Picker("Album", selection: $albumName) {
+                        ForEach(albumChoices, id: \.self) { albumName in
+                            Text(albumName).tag(albumName)
                         }
+                    }
+                    .disabled(albumChoices.isEmpty || isLoadingPhotosAlbums)
+
+                    Text("Saves and shows Chameos from this Photos album.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    HStack {
+                        if isLoadingPhotosAlbums {
+                            ProgressView()
+                                .controlSize(.small)
+                                .accessibilityLabel("Loading Photos albums")
+                        }
+
+                        Spacer()
+
+                        Button {
+                            Task {
+                                await refreshPhotosAlbums(requestAuthorization: true)
+                            }
+                        } label: {
+                            Label("Refresh Albums", systemImage: "arrow.clockwise")
+                        }
+                        .disabled(isLoadingPhotosAlbums || isCreatingPhotosAlbum)
+
+                        Button {
+                            errorMessage = nil
+                            newAlbumName = defaultNewAlbumName
+                            isShowingNewAlbumSheet = true
+                        } label: {
+                            Label("New Album...", systemImage: "plus")
+                        }
+                        .disabled(isCreatingPhotosAlbum)
+                    }
 
                     if isPhotosPermissionDenied {
                         PermissionStatusInline(
                             message: "Photos permission is required to save and show Chameos.",
                             destination: .photos
                         )
+                    } else if canReadPhotosAlbums && albumChoices.count == 1 && photosAlbumNames.isEmpty {
+                        Text("No Photos albums found.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
 
@@ -56,7 +98,7 @@ struct SettingsView: View {
                 }
 
                 Section("Location") {
-                    Toggle("Save Photo Location", isOn: $saveLocation)
+                    Toggle("Save Location with Photo", isOn: $saveLocation)
 
                     if saveLocation && isLocationPermissionDenied {
                         PermissionStatusInline(
@@ -69,6 +111,11 @@ struct SettingsView: View {
                 Section("Startup") {
                     Toggle("Launch at Login", isOn: $launchAtLogin)
                         .disabled(isUpdatingLaunchAtLogin)
+                }
+
+                Section("About") {
+                    LabeledContent("Version", value: AppVersion.current.version)
+                    LabeledContent("Build ID", value: AppVersion.current.buildID)
                 }
             }
             .formStyle(.grouped)
@@ -148,6 +195,9 @@ struct SettingsView: View {
             }
         }
         .frame(width: 460, height: 360)
+        .sheet(isPresented: $isShowingNewAlbumSheet) {
+            newAlbumSheet
+        }
         .scenePadding()
         .safeAreaInset(edge: .bottom) {
             if let errorMessage {
@@ -173,6 +223,7 @@ struct SettingsView: View {
             Task {
                 await migrateReminderSettingsIfNeeded()
                 await refreshPermissionStatuses()
+                await refreshPhotosAlbums(requestAuthorization: false)
             }
         }
         .onChange(of: launchAtLogin) { _, newValue in
@@ -194,6 +245,62 @@ struct SettingsView: View {
 
             reminderDate = defaultOneTimeReminderDate
         }
+    }
+
+    private var newAlbumSheet: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("New Photos Album")
+                .font(.headline)
+
+            TextField("Album name", text: $newAlbumName)
+                .textFieldStyle(.roundedBorder)
+                .disabled(isCreatingPhotosAlbum)
+                .onSubmit {
+                    guard canCreatePhotosAlbum else {
+                        return
+                    }
+
+                    Task {
+                        await createPhotosAlbum()
+                    }
+                }
+
+            if isDuplicateNewAlbumName {
+                Text("An album with this name already exists.")
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            } else if let errorMessage {
+                Text(errorMessage)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+
+            HStack {
+                if isCreatingPhotosAlbum {
+                    ProgressView()
+                        .controlSize(.small)
+                        .accessibilityLabel("Creating Photos album")
+                }
+
+                Spacer()
+
+                Button("Cancel") {
+                    isShowingNewAlbumSheet = false
+                    newAlbumName = ""
+                }
+                .disabled(isCreatingPhotosAlbum)
+
+                Button("Create") {
+                    Task {
+                        await createPhotosAlbum()
+                    }
+                }
+                .keyboardShortcut(.defaultAction)
+                .disabled(!canCreatePhotosAlbum)
+            }
+        }
+        .padding()
+        .frame(width: 340)
     }
 
     private func updateLaunchAtLogin(_ isEnabled: Bool) async {
@@ -239,7 +346,7 @@ struct SettingsView: View {
                 )
                 reminderDate = dateToSchedule
             } else {
-                await ReminderService.cancelReminder()
+                try await ReminderService.cancelReminder()
             }
 
             reminderEnabledStorage = reminderEnabled
@@ -349,6 +456,52 @@ struct SettingsView: View {
         return symbols[weekday - 1]
     }
 
+    private var albumChoices: [String] {
+        var choices = [PhotoLibraryService.normalizedAlbumName(albumName)]
+        choices.append(contentsOf: photosAlbumNames)
+
+        var seen = Set<String>()
+        return choices.filter { choice in
+            seen.insert(choice).inserted
+        }
+    }
+
+    private var normalizedNewAlbumName: String {
+        newAlbumName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var defaultNewAlbumName: String {
+        albumNameExists("Chameo") ? "" : "Chameo"
+    }
+
+    private var isDuplicateNewAlbumName: Bool {
+        guard !normalizedNewAlbumName.isEmpty else {
+            return false
+        }
+
+        return albumNameExists(normalizedNewAlbumName)
+    }
+
+    private func albumNameExists(_ name: String) -> Bool {
+        albumChoices.contains { existingName in
+            existingName.trimmingCharacters(in: .whitespacesAndNewlines)
+                .localizedCaseInsensitiveCompare(name) == .orderedSame
+        }
+    }
+
+    private var canCreatePhotosAlbum: Bool {
+        !normalizedNewAlbumName.isEmpty && !isDuplicateNewAlbumName && !isCreatingPhotosAlbum
+    }
+
+    private var canReadPhotosAlbums: Bool {
+        switch photosAuthorizationStatus {
+        case .authorized, .limited:
+            return true
+        default:
+            return false
+        }
+    }
+
     private var isPhotosPermissionDenied: Bool {
         switch photosAuthorizationStatus {
         case .denied, .restricted:
@@ -380,6 +533,79 @@ struct SettingsView: View {
         photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
         locationAuthorizationStatus = CLLocationManager().authorizationStatus
         notificationAuthorizationStatus = await ReminderService.authorizationStatus()
+    }
+
+    private func refreshPhotosAlbums(requestAuthorization: Bool) async {
+        errorMessage = nil
+        photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
+
+        if requestAuthorization {
+            do {
+                try await PhotoLibraryService.ensureAuthorized()
+            } catch {
+                photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
+                errorMessage = error.localizedDescription
+                return
+            }
+        }
+
+        switch PhotoLibraryService.authorizationStatus() {
+        case .authorized, .limited:
+            break
+        default:
+            photosAlbumNames = []
+            photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
+            return
+        }
+
+        isLoadingPhotosAlbums = true
+        defer {
+            isLoadingPhotosAlbums = false
+            photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
+        }
+
+        do {
+            photosAlbumNames = try await PhotoLibraryService.fetchAlbumNames()
+        } catch {
+            photosAlbumNames = []
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func createPhotosAlbum() async {
+        guard canCreatePhotosAlbum else {
+            return
+        }
+
+        let albumNameToCreate = normalizedNewAlbumName
+        errorMessage = nil
+        isCreatingPhotosAlbum = true
+        defer {
+            isCreatingPhotosAlbum = false
+            photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
+        }
+
+        do {
+            photosAlbumNames = try await PhotoLibraryService.fetchAlbumNames()
+            guard !isDuplicateNewAlbumName else {
+                return
+            }
+
+            _ = try await PhotoLibraryService.createAlbum(named: albumNameToCreate)
+            if let refreshedAlbumNames = try? await PhotoLibraryService.fetchAlbumNames() {
+                photosAlbumNames = refreshedAlbumNames
+            } else if !photosAlbumNames.contains(albumNameToCreate) {
+                photosAlbumNames.append(albumNameToCreate)
+                photosAlbumNames.sort { lhs, rhs in
+                    lhs.localizedStandardCompare(rhs) == .orderedAscending
+                }
+            }
+            albumName = albumNameToCreate
+            newAlbumName = ""
+            isShowingNewAlbumSheet = false
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 
     private func migrateReminderSettingsIfNeeded() async {

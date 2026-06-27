@@ -27,7 +27,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {
-        [.banner, .sound]
+        guard ReminderService.shouldPresentReminderNotification(
+            identifier: notification.request.identifier
+        ) else {
+            await ReminderService.refreshFollowUpsFromStoredSettings()
+            return []
+        }
+
+        return [.banner, .sound]
     }
 
     func userNotificationCenter(
@@ -35,6 +42,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         didReceive response: UNNotificationResponse
     ) async {
         guard ReminderService.isReminderIdentifier(response.notification.request.identifier) else {
+            return
+        }
+
+        guard ReminderService.shouldPresentReminderNotification(
+            identifier: response.notification.request.identifier
+        ) else {
+            await ReminderService.refreshFollowUpsFromStoredSettings()
             return
         }
 

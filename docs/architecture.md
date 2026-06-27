@@ -55,8 +55,8 @@ Camera hardware starts only when the Camera tab is visible. It stops when the us
   - Reverse-geocodes asset locations into `City, Country` for Library rows.
 
 - `ReminderService`
-  - Schedules one stable primary notification request plus optional dated hourly follow-ups.
-  - Replaces existing reminders when reminder settings change and refreshes follow-ups after a save.
+  - Schedules dated primary notifications plus optional dated hourly follow-ups.
+  - Reconciles pending notifications when settings change and after a save, skipping completed days and clearing delivered reminders for completed days.
 
 ## UI Composition
 

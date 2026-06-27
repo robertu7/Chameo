@@ -52,6 +52,8 @@ Build a release app bundle:
 
 The script builds the SwiftPM executable, stages a local `.app` bundle in `dist/`, writes the required `Info.plist`, applies the development entitlements, ad-hoc signs the app, and prints the bundle path.
 
+Set the app version in `VERSION`. The build script also writes a build number and build id into the bundle so Settings can display the exact build.
+
 ## Permissions
 
 Chameo asks for permissions only when needed:
