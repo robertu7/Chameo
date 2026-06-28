@@ -37,7 +37,7 @@ struct CameraView: View {
                     CameraPreviewView(session: cameraService.session, mirrored: false)
                         .scaleEffect(x: -1, y: 1, anchor: .center)
                         .overlay {
-                            if showFaceGuide {
+                            if shouldShowFaceGuide {
                                 CameraGuideView()
                             }
                         }
@@ -113,6 +113,10 @@ struct CameraView: View {
         return false
     }
 
+    private var shouldShowFaceGuide: Bool {
+        showFaceGuide && canCapture
+    }
+
     private var isPhotosPermissionDenied: Bool {
         switch photosAuthorizationStatus {
         case .denied, .restricted:
@@ -144,6 +148,7 @@ struct CameraView: View {
                 capturedPreview = CapturedPreview(data: data)
                 statusMessage = "Preview ready. Keep or Cancel."
             }
+            await ReminderService.recordSelfieTaken()
         } catch {
             statusMessage = error.localizedDescription
         }

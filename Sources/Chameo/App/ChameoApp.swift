@@ -8,19 +8,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     private let cameraService = CameraService()
     private let libraryStore = LibraryStore()
     private var statusPopoverController: StatusPopoverController?
+    private var reminderRefreshTask: Task<Void, Never>?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         configureUserDefaults()
         NSApp.setActivationPolicy(.accessory)
         UNUserNotificationCenter.current().delegate = self
+        installReminderRefreshObservers()
         statusPopoverController = StatusPopoverController(
             appState: appState,
             cameraService: cameraService,
             libraryStore: libraryStore
         )
-        Task {
-            await ReminderService.refreshFollowUpsFromStoredSettings()
-        }
+        refreshReminderNotifications()
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        reminderRefreshTask?.cancel()
+        NotificationCenter.default.removeObserver(self)
+        NSWorkspace.shared.notificationCenter.removeObserver(self)
     }
 
     func userNotificationCenter(
@@ -64,6 +70,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             "launchAtLogin": LaunchAtLoginService.isEnabled
         ])
         UserDefaults.standard.set(LaunchAtLoginService.isEnabled, forKey: "launchAtLogin")
+    }
+
+    private func installReminderRefreshObservers() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(refreshReminderNotificationsAfterSystemEvent),
+            name: NSApplication.didBecomeActiveNotification,
+            object: nil
+        )
+
+        let workspaceNotifications = NSWorkspace.shared.notificationCenter
+        workspaceNotifications.addObserver(
+            self,
+            selector: #selector(refreshReminderNotificationsAfterSystemEvent),
+            name: NSWorkspace.didWakeNotification,
+            object: nil
+        )
+        workspaceNotifications.addObserver(
+            self,
+            selector: #selector(refreshReminderNotificationsAfterSystemEvent),
+            name: NSWorkspace.screensDidWakeNotification,
+            object: nil
+        )
+        workspaceNotifications.addObserver(
+            self,
+            selector: #selector(refreshReminderNotificationsAfterSystemEvent),
+            name: NSWorkspace.sessionDidBecomeActiveNotification,
+            object: nil
+        )
+    }
+
+    @objc private func refreshReminderNotificationsAfterSystemEvent(_ notification: Notification) {
+        refreshReminderNotifications()
+    }
+
+    private func refreshReminderNotifications() {
+        reminderRefreshTask?.cancel()
+        reminderRefreshTask = Task {
+            await ReminderService.refreshFollowUpsFromStoredSettings()
+        }
     }
 }
 
