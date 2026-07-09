@@ -13,7 +13,6 @@ struct SettingsView: View {
     @AppStorage("reminderDate") private var reminderDateTimeInterval = Date().timeIntervalSinceReferenceDate
     @AppStorage("reminderRepeat") private var reminderRepeatRawValue = ReminderRepeat.none.rawValue
     @AppStorage("reminderWeekday") private var reminderWeekdayStorage = Calendar.current.component(.weekday, from: Date())
-    @AppStorage("hourlyReminderFollowUpsEnabled") private var hourlyFollowUpsEnabledStorage = false
     @AppStorage("reminderSettingsMigrated") private var reminderSettingsMigrated = false
 
     @State private var launchAtLogin = false
@@ -21,7 +20,6 @@ struct SettingsView: View {
     @State private var reminderDate = Date()
     @State private var reminderRepeat = ReminderRepeat.none
     @State private var reminderWeekday = Calendar.current.component(.weekday, from: Date())
-    @State private var hourlyFollowUpsEnabled = false
     @State private var isUpdatingLaunchAtLogin = false
     @State private var isUpdatingReminder = false
     @State private var showsReminderProgress = false
@@ -154,8 +152,6 @@ struct SettingsView: View {
                         DatePicker("Time", selection: $reminderDate, displayedComponents: .hourAndMinute)
                             .disabled(isUpdatingReminder)
 
-                        Toggle("Remind me hourly until I take today's selfie", isOn: $hourlyFollowUpsEnabled)
-                            .disabled(isUpdatingReminder)
                     }
                 }
 
@@ -217,7 +213,6 @@ struct SettingsView: View {
             reminderDate = Date(timeIntervalSinceReferenceDate: reminderDateTimeInterval)
             reminderRepeat = ReminderRepeat(rawValue: reminderRepeatRawValue) ?? .none
             reminderWeekday = reminderWeekdayStorage
-            hourlyFollowUpsEnabled = hourlyFollowUpsEnabledStorage
             isLoadingSettings = false
 
             Task {
@@ -341,8 +336,7 @@ struct SettingsView: View {
                 try await ReminderService.configureReminder(
                     date: dateToSchedule,
                     repeatMode: reminderRepeat,
-                    weekday: reminderWeekday,
-                    hourlyFollowUpsEnabled: hourlyFollowUpsEnabled
+                    weekday: reminderWeekday
                 )
                 reminderDate = dateToSchedule
             } else {
@@ -353,7 +347,6 @@ struct SettingsView: View {
             reminderDateTimeInterval = reminderDate.timeIntervalSinceReferenceDate
             reminderRepeatRawValue = reminderRepeat.rawValue
             reminderWeekdayStorage = reminderWeekday
-            hourlyFollowUpsEnabledStorage = hourlyFollowUpsEnabled
             notificationAuthorizationStatus = await ReminderService.authorizationStatus()
         } catch {
             notificationAuthorizationStatus = await ReminderService.authorizationStatus()
@@ -381,7 +374,6 @@ struct SettingsView: View {
             || abs(reminderDate.timeIntervalSinceReferenceDate - reminderDateTimeInterval) > 1
             || reminderRepeat.rawValue != reminderRepeatRawValue
             || reminderWeekday != reminderWeekdayStorage
-            || hourlyFollowUpsEnabled != hourlyFollowUpsEnabledStorage
     }
 
     private var canSaveReminder: Bool {

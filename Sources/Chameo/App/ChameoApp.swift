@@ -36,7 +36,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         guard ReminderService.shouldPresentReminderNotification(
             identifier: notification.request.identifier
         ) else {
-            await ReminderService.refreshFollowUpsFromStoredSettings()
+            await ReminderService.refreshRemindersFromStoredSettings()
             return []
         }
 
@@ -54,7 +54,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         guard ReminderService.shouldPresentReminderNotification(
             identifier: response.notification.request.identifier
         ) else {
-            await ReminderService.refreshFollowUpsFromStoredSettings()
+            await ReminderService.refreshRemindersFromStoredSettings()
             return
         }
 
@@ -108,7 +108,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     private func refreshReminderNotifications() {
         reminderRefreshTask?.cancel()
         reminderRefreshTask = Task {
-            await ReminderService.refreshFollowUpsFromStoredSettings()
+            await ReminderService.refreshRemindersFromStoredSettings()
         }
     }
 }

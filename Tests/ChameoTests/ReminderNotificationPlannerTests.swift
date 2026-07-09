@@ -9,7 +9,7 @@ final class ReminderNotificationPlannerTests: XCTestCase {
         return calendar
     }
 
-    func testDailyReminderSchedulesHourlyFollowUpsThroughEndOfDay() throws {
+    func testDailyReminderSchedulesPrimaryReminders() throws {
         let reminder = try date(2026, 6, 18, 9, 30)
         let now = try date(2026, 6, 18, 9, 0)
 
@@ -19,18 +19,12 @@ final class ReminderNotificationPlannerTests: XCTestCase {
             weekday: nil,
             now: now,
             completedAt: nil,
-            hourlyFollowUpsEnabled: true,
             limit: 20,
             calendar: calendar
         )
 
         XCTAssertEqual(notifications.first?.date, try date(2026, 6, 18, 9, 30))
-        XCTAssertEqual(notifications.first?.kind, .primary)
-        XCTAssertEqual(notifications[1].date, try date(2026, 6, 18, 10, 30))
-        XCTAssertEqual(notifications[1].kind, .followUp)
-        XCTAssertEqual(notifications[14].date, try date(2026, 6, 18, 23, 30))
-        XCTAssertEqual(notifications[15].date, try date(2026, 6, 19, 9, 30))
-        XCTAssertEqual(notifications[15].kind, .primary)
+        XCTAssertEqual(notifications[1].date, try date(2026, 6, 19, 9, 30))
     }
 
     func testCompletedDayIsSkipped() throws {
@@ -40,30 +34,27 @@ final class ReminderNotificationPlannerTests: XCTestCase {
             weekday: nil,
             now: try date(2026, 6, 18, 12, 0),
             completedAt: try date(2026, 6, 18, 11, 0),
-            hourlyFollowUpsEnabled: true,
             limit: 10,
             calendar: calendar
         )
 
         let completedDay = try date(2026, 6, 18, 0, 0)
         XCTAssertEqual(notifications.first?.date, try date(2026, 6, 19, 18, 0))
-        XCTAssertEqual(notifications.first?.kind, .primary)
         XCTAssertFalse(notifications.contains { calendar.isDate($0.date, inSameDayAs: completedDay) })
     }
 
-    func testFollowUpsDoNotCrossMidnight() throws {
+    func testOneTimeReminderSchedulesOnlyPrimaryNotification() throws {
         let notifications = ReminderNotificationPlanner.notifications(
             reminderDate: try date(2026, 6, 18, 23, 30),
             repeatMode: .none,
             weekday: nil,
             now: try date(2026, 6, 18, 12, 0),
             completedAt: nil,
-            hourlyFollowUpsEnabled: true,
             limit: 10,
             calendar: calendar
         )
 
-        XCTAssertEqual(notifications.map(\.kind), [.primary])
+        XCTAssertEqual(notifications.map(\.date), [try date(2026, 6, 18, 23, 30)])
     }
 
     private func date(_ year: Int, _ month: Int, _ day: Int, _ hour: Int, _ minute: Int) throws -> Date {
@@ -84,18 +75,18 @@ final class ReminderOperationQueueTests: XCTestCase {
 
         async let first: Void = queue.perform {
             try await Task.sleep(nanoseconds: 50_000_000)
-            await notifications.schedule("today-follow-up")
+            await notifications.schedule("stale-reminder")
         }
 
         try await Task.sleep(nanoseconds: 5_000_000)
 
         async let second: Void = queue.perform {
-            await notifications.remove("today-follow-up")
+            await notifications.remove("stale-reminder")
         }
 
         _ = try await (first, second)
         let pendingIdentifiers = await notifications.identifiers
-        XCTAssertFalse(pendingIdentifiers.contains("today-follow-up"))
+        XCTAssertFalse(pendingIdentifiers.contains("stale-reminder"))
     }
 }
 
@@ -105,8 +96,7 @@ final class ReminderSelfieCompletionTests: XCTestCase {
         "reminderEnabled",
         "reminderDate",
         "reminderRepeat",
-        "reminderWeekday",
-        "hourlyReminderFollowUpsEnabled"
+        "reminderWeekday"
     ]
 
     func testRecordingSelfieRemovesTodayPendingAndDeliveredReminderNotifications() async throws {
@@ -117,21 +107,21 @@ final class ReminderSelfieCompletionTests: XCTestCase {
         let unrelatedPending = "unrelated.pending"
         let unrelatedDelivered = "unrelated.delivered"
         let center = ReminderNotificationCenterRecorder(
-            pending: [context.todayPrimary, context.todayFollowUp, unrelatedPending],
-            delivered: [context.todayPrimary, context.todayFollowUp, ReminderService.requestIdentifier, unrelatedDelivered]
+            pending: [context.todayPrimary, context.legacyReminder, unrelatedPending],
+            delivered: [context.todayPrimary, context.legacyReminder, ReminderService.requestIdentifier, unrelatedDelivered]
         )
 
         await ReminderService.recordSelfieTaken(at: context.now, center: center)
 
         let pendingIdentifiers = await center.pendingIdentifiers
         XCTAssertFalse(pendingIdentifiers.contains(context.todayPrimary))
-        XCTAssertFalse(pendingIdentifiers.contains(context.todayFollowUp))
+        XCTAssertFalse(pendingIdentifiers.contains(context.legacyReminder))
         XCTAssertTrue(pendingIdentifiers.contains(context.tomorrowPrimary))
         XCTAssertTrue(pendingIdentifiers.contains(unrelatedPending))
 
         let deliveredIdentifiers = await center.deliveredIdentifiers
         XCTAssertFalse(deliveredIdentifiers.contains(context.todayPrimary))
-        XCTAssertFalse(deliveredIdentifiers.contains(context.todayFollowUp))
+        XCTAssertFalse(deliveredIdentifiers.contains(context.legacyReminder))
         XCTAssertFalse(deliveredIdentifiers.contains(ReminderService.requestIdentifier))
         XCTAssertTrue(deliveredIdentifiers.contains(unrelatedDelivered))
     }
@@ -143,20 +133,41 @@ final class ReminderSelfieCompletionTests: XCTestCase {
         let context = try configureReminderDefaults(completedAt: try date(2026, 6, 23, 10, 21))
         let unrelatedDelivered = "unrelated.delivered"
         let center = ReminderNotificationCenterRecorder(
-            pending: [context.todayPrimary, context.todayFollowUp],
-            delivered: [context.todayPrimary, context.todayFollowUp, ReminderService.requestIdentifier, unrelatedDelivered]
+            pending: [context.todayPrimary, context.legacyReminder],
+            delivered: [context.todayPrimary, context.legacyReminder, ReminderService.requestIdentifier, unrelatedDelivered]
         )
 
-        await ReminderService.refreshFollowUpsFromStoredSettings(now: context.now, center: center)
+        await ReminderService.refreshRemindersFromStoredSettings(now: context.now, center: center)
 
         let pendingIdentifiers = await center.pendingIdentifiers
         XCTAssertFalse(pendingIdentifiers.contains(context.todayPrimary))
-        XCTAssertFalse(pendingIdentifiers.contains(context.todayFollowUp))
+        XCTAssertFalse(pendingIdentifiers.contains(context.legacyReminder))
         XCTAssertTrue(pendingIdentifiers.contains(context.tomorrowPrimary))
 
         let deliveredIdentifiers = await center.deliveredIdentifiers
         XCTAssertFalse(deliveredIdentifiers.contains(context.todayPrimary))
-        XCTAssertFalse(deliveredIdentifiers.contains(context.todayFollowUp))
+        XCTAssertFalse(deliveredIdentifiers.contains(context.legacyReminder))
+        XCTAssertFalse(deliveredIdentifiers.contains(ReminderService.requestIdentifier))
+        XCTAssertTrue(deliveredIdentifiers.contains(unrelatedDelivered))
+    }
+
+    func testLaunchRefreshRemovesDeliveredNotificationsWhenPendingRemovalTimesOut() async throws {
+        let restoreDefaults = preserveReminderDefaults()
+        defer { restoreDefaults() }
+
+        let context = try configureReminderDefaults(completedAt: try date(2026, 6, 23, 10, 21))
+        let unrelatedDelivered = "unrelated.delivered"
+        let center = ReminderNotificationCenterRecorder(
+            pending: [context.todayPrimary, context.legacyReminder],
+            delivered: [context.todayPrimary, context.legacyReminder, ReminderService.requestIdentifier, unrelatedDelivered],
+            keepsPendingRequestsOnRemoval: true
+        )
+
+        await ReminderService.refreshRemindersFromStoredSettings(now: context.now, center: center)
+
+        let deliveredIdentifiers = await center.deliveredIdentifiers
+        XCTAssertFalse(deliveredIdentifiers.contains(context.todayPrimary))
+        XCTAssertFalse(deliveredIdentifiers.contains(context.legacyReminder))
         XCTAssertFalse(deliveredIdentifiers.contains(ReminderService.requestIdentifier))
         XCTAssertTrue(deliveredIdentifiers.contains(unrelatedDelivered))
     }
@@ -170,15 +181,15 @@ final class ReminderSelfieCompletionTests: XCTestCase {
         let unrelatedPending = "unrelated.pending"
         let unrelatedDelivered = "unrelated.delivered"
         let center = ReminderNotificationCenterRecorder(
-            pending: [context.todayPrimary, context.todayFollowUp, unrelatedPending],
+            pending: [context.todayPrimary, context.legacyReminder, unrelatedPending],
             delivered: [context.todayPrimary, ReminderService.requestIdentifier, unrelatedDelivered]
         )
 
-        await ReminderService.refreshFollowUpsFromStoredSettings(now: context.now, center: center)
+        await ReminderService.refreshRemindersFromStoredSettings(now: context.now, center: center)
 
         let pendingIdentifiers = await center.pendingIdentifiers
         XCTAssertFalse(pendingIdentifiers.contains(context.todayPrimary))
-        XCTAssertFalse(pendingIdentifiers.contains(context.todayFollowUp))
+        XCTAssertFalse(pendingIdentifiers.contains(context.legacyReminder))
         XCTAssertTrue(pendingIdentifiers.contains(unrelatedPending))
 
         let deliveredIdentifiers = await center.deliveredIdentifiers
@@ -246,7 +257,7 @@ final class ReminderSelfieCompletionTests: XCTestCase {
     private func configureReminderDefaults(completedAt: Date?) throws -> (
         now: Date,
         todayPrimary: String,
-        todayFollowUp: String,
+        legacyReminder: String,
         tomorrowPrimary: String
     ) {
         let reminder = try date(2026, 6, 23, 13, 30)
@@ -257,12 +268,11 @@ final class ReminderSelfieCompletionTests: XCTestCase {
         defaults.set(reminder.timeIntervalSinceReferenceDate, forKey: "reminderDate")
         defaults.set(ReminderRepeat.daily.rawValue, forKey: "reminderRepeat")
         defaults.set(3, forKey: "reminderWeekday")
-        defaults.set(true, forKey: "hourlyReminderFollowUpsEnabled")
 
         return (
             now: now,
             todayPrimary: ReminderService.primaryIdentifierPrefix + "20260623-1330",
-            todayFollowUp: ReminderService.followUpIdentifierPrefix + "20260623-1430",
+            legacyReminder: ReminderService.requestIdentifier + ".followUp.20260623-1430",
             tomorrowPrimary: ReminderService.primaryIdentifierPrefix + "20260624-1330"
         )
     }
@@ -293,10 +303,16 @@ private actor NotificationRecorder {
 private actor ReminderNotificationCenterRecorder: ReminderNotificationCenter {
     private var pending: Set<String>
     private var delivered: Set<String>
+    private let keepsPendingRequestsOnRemoval: Bool
 
-    init(pending: [String] = [], delivered: [String] = []) {
+    init(
+        pending: [String] = [],
+        delivered: [String] = [],
+        keepsPendingRequestsOnRemoval: Bool = false
+    ) {
         self.pending = Set(pending)
         self.delivered = Set(delivered)
+        self.keepsPendingRequestsOnRemoval = keepsPendingRequestsOnRemoval
     }
 
     var pendingIdentifiers: Set<String> {
@@ -324,6 +340,10 @@ private actor ReminderNotificationCenterRecorder: ReminderNotificationCenter {
     }
 
     func removePendingReminderNotifications(withIdentifiers identifiers: [String]) async {
+        guard !keepsPendingRequestsOnRemoval else {
+            return
+        }
+
         pending.subtract(identifiers)
     }
 

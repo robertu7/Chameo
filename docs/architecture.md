@@ -23,7 +23,6 @@ The app uses `NSStatusItem` plus `NSPopover` instead of SwiftUI `MenuBarExtra` b
   - reminder date/time
   - reminder repeat mode
   - reminder weekday
-  - hourly reminder follow-ups
 - `LibraryStore` owns the currently fetched Photos assets and library errors.
 - `CameraService` owns the `AVCaptureSession` and still photo capture.
 - `CaptureProgress` derives rolling captured and missed days from Photos asset creation dates; it does not persist a separate activity history.
@@ -55,7 +54,7 @@ Camera hardware starts only when the Camera tab is visible. It stops when the us
   - Reverse-geocodes asset locations into `City, Country` for Library rows.
 
 - `ReminderService`
-  - Schedules dated primary notifications plus optional dated hourly follow-ups.
+  - Schedules dated primary notifications.
   - Reconciles pending notifications when settings change and after a save, skipping completed days and clearing delivered reminders for completed days.
 
 ## UI Composition

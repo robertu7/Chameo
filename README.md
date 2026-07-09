@@ -25,7 +25,6 @@ The app is intentionally small: click the camera icon in the menu bar, take a ph
 - Optional location metadata on saved photos, off by default.
 - Reminder scheduling with none, daily, and weekly repeat modes.
 - Clicking a reminder notification opens the app directly to the Camera tab.
-- Optional hourly follow-up reminders stop for the day after a selfie is saved.
 - Permission-denied states include direct System Settings recovery actions.
 - Library deletion removes the original photo from Photos.
 - Optional launch-at-login support.

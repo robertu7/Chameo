@@ -62,7 +62,7 @@ Bundle key:
 
 Behavior:
 
-- The app schedules dated primary notifications and optional hourly follow-ups for upcoming reminder days.
+- The app schedules dated primary notifications for upcoming reminder days.
 - Updating reminder settings reconciles pending requests, and saving a selfie cancels remaining reminders and clears delivered reminder banners for that completed day.
 - Clicking a reminder notification opens the app to the Camera tab.
 

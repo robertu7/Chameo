@@ -4,7 +4,7 @@ import UserNotifications
 enum ReminderService {
     static let requestIdentifier = "com.robertu.Chameo.chameoReminder"
     static let primaryIdentifierPrefix = "\(requestIdentifier).primary."
-    static let followUpIdentifierPrefix = "\(requestIdentifier).followUp."
+    private static let legacyFollowUpIdentifierPrefix = "\(requestIdentifier).followUp."
     private static let maximumNotificationRequests = 60
     private static let operationQueue = ReminderOperationQueue()
 
@@ -21,15 +21,13 @@ enum ReminderService {
     static func configureReminder(
         date: Date,
         repeatMode: ReminderRepeat,
-        weekday: Int? = nil,
-        hourlyFollowUpsEnabled: Bool
+        weekday: Int? = nil
     ) async throws {
         try await operationQueue.perform {
             try await configureReminderNow(
                 date: date,
                 repeatMode: repeatMode,
-                weekday: weekday,
-                hourlyFollowUpsEnabled: hourlyFollowUpsEnabled
+                weekday: weekday
             )
         }
     }
@@ -37,8 +35,7 @@ enum ReminderService {
     private static func configureReminderNow(
         date: Date,
         repeatMode: ReminderRepeat,
-        weekday: Int?,
-        hourlyFollowUpsEnabled: Bool
+        weekday: Int?
     ) async throws {
         let center = UNUserNotificationCenter.current()
 
@@ -51,7 +48,6 @@ enum ReminderService {
             date: date,
             repeatMode: repeatMode,
             weekday: weekday,
-            hourlyFollowUpsEnabled: hourlyFollowUpsEnabled,
             center: center
         )
     }
@@ -89,7 +85,6 @@ enum ReminderService {
                     date: reminderDate,
                     repeatMode: repeatMode,
                     weekday: weekday,
-                    hourlyFollowUpsEnabled: UserDefaults.standard.bool(forKey: "hourlyReminderFollowUpsEnabled"),
                     center: center,
                     now: date
                 )
@@ -100,11 +95,11 @@ enum ReminderService {
         }
     }
 
-    static func refreshFollowUpsFromStoredSettings(now: Date = Date()) async {
-        await refreshFollowUpsFromStoredSettings(now: now, center: UNUserNotificationCenter.current())
+    static func refreshRemindersFromStoredSettings(now: Date = Date()) async {
+        await refreshRemindersFromStoredSettings(now: now, center: UNUserNotificationCenter.current())
     }
 
-    static func refreshFollowUpsFromStoredSettings(
+    static func refreshRemindersFromStoredSettings(
         now: Date,
         center: any ReminderNotificationCenter
     ) async {
@@ -125,17 +120,29 @@ enum ReminderService {
         let repeatMode = ReminderRepeat(
             rawValue: UserDefaults.standard.string(forKey: "reminderRepeat") ?? ""
         ) ?? .none
+        let isCompletedToday = hasSelfieTaken(on: now)
 
-        try? await operationQueue.perform {
-            try await reconcileNotifications(
-                date: reminderDate,
-                repeatMode: repeatMode,
-                weekday: UserDefaults.standard.integer(forKey: "reminderWeekday"),
-                hourlyFollowUpsEnabled: UserDefaults.standard.bool(forKey: "hourlyReminderFollowUpsEnabled"),
-                center: center,
-                now: now
-            )
-            if hasSelfieTaken(on: now) {
+        do {
+            try await operationQueue.perform {
+                do {
+                    try await reconcileNotifications(
+                        date: reminderDate,
+                        repeatMode: repeatMode,
+                        weekday: UserDefaults.standard.integer(forKey: "reminderWeekday"),
+                        center: center,
+                        now: now
+                    )
+                } catch {
+                    NSLog("Failed to reconcile reminder notifications during refresh: \(error.localizedDescription)")
+                }
+
+                if isCompletedToday {
+                    await removeDeliveredReminderNotifications(from: center)
+                }
+            }
+        } catch {
+            NSLog("Failed to refresh reminder notifications: \(error.localizedDescription)")
+            if isCompletedToday {
                 await removeDeliveredReminderNotifications(from: center)
             }
         }
@@ -145,7 +152,6 @@ enum ReminderService {
         date: Date,
         repeatMode: ReminderRepeat,
         weekday: Int?,
-        hourlyFollowUpsEnabled: Bool,
         center: any ReminderNotificationCenter,
         now: Date = Date()
     ) async throws {
@@ -153,7 +159,6 @@ enum ReminderService {
             date: date,
             repeatMode: repeatMode,
             weekday: weekday,
-            hourlyFollowUpsEnabled: hourlyFollowUpsEnabled,
             now: now
         )
         let desiredIdentifiers = Set(notifications.map(\.identifier))
@@ -190,7 +195,6 @@ enum ReminderService {
         date: Date,
         repeatMode: ReminderRepeat,
         weekday: Int?,
-        hourlyFollowUpsEnabled: Bool,
         now: Date
     ) -> [PlannedReminderNotification] {
         let lastSelfieDate = UserDefaults.standard.object(forKey: "lastSelfieDate") as? Double
@@ -201,7 +205,6 @@ enum ReminderService {
             weekday: weekday,
             now: now,
             completedAt: completedAt,
-            hourlyFollowUpsEnabled: hourlyFollowUpsEnabled,
             limit: maximumNotificationRequests
         )
     }
@@ -223,14 +226,8 @@ enum ReminderService {
     ) async throws {
         for notification in notifications {
             let content = UNMutableNotificationContent()
-            switch notification.kind {
-            case .primary:
-                content.title = "Take your Chameo"
-                content.body = "Capture today's photo for your timeline."
-            case .followUp:
-                content.title = "Your Chameo is still waiting"
-                content.body = "Take today's selfie to stop hourly reminders for today."
-            }
+            content.title = "Take your Chameo"
+            content.body = "Capture today's photo for your timeline."
             content.sound = .default
 
             let components = Calendar.current.dateComponents(
@@ -260,7 +257,7 @@ enum ReminderService {
     static func isReminderIdentifier(_ identifier: String) -> Bool {
         identifier == requestIdentifier
             || identifier.hasPrefix(primaryIdentifierPrefix)
-            || identifier.hasPrefix(followUpIdentifierPrefix)
+            || identifier.hasPrefix(legacyFollowUpIdentifierPrefix)
     }
 
     static func shouldPresentReminderNotification(identifier: String, at date: Date = Date()) -> Bool {
@@ -325,15 +322,9 @@ actor ReminderOperationQueue {
     }
 }
 
-enum ReminderNotificationKind: Equatable {
-    case primary
-    case followUp
-}
-
 struct PlannedReminderNotification: Equatable {
     let identifier: String
     let date: Date
-    let kind: ReminderNotificationKind
 }
 
 enum ReminderNotificationPlanner {
@@ -343,7 +334,6 @@ enum ReminderNotificationPlanner {
         weekday: Int?,
         now: Date,
         completedAt: Date?,
-        hourlyFollowUpsEnabled: Bool,
         limit: Int,
         calendar: Calendar = .current
     ) -> [PlannedReminderNotification] {
@@ -379,19 +369,7 @@ enum ReminderNotificationPlanner {
             let isCompleted = completedAt.map { calendar.isDate($0, inSameDayAs: day) } ?? false
             if isOccurrenceDay && !isCompleted {
                 if occurrence > now {
-                    result.append(notification(for: occurrence, kind: .primary, calendar: calendar))
-                }
-
-                if hourlyFollowUpsEnabled {
-                    var followUp = calendar.date(byAdding: .hour, value: 1, to: occurrence)
-                    while let date = followUp,
-                          calendar.isDate(date, inSameDayAs: occurrence),
-                          result.count < limit {
-                        if date > now {
-                            result.append(notification(for: date, kind: .followUp, calendar: calendar))
-                        }
-                        followUp = calendar.date(byAdding: .hour, value: 1, to: date)
-                    }
+                    result.append(notification(for: occurrence, calendar: calendar))
                 }
             }
 
@@ -406,18 +384,13 @@ enum ReminderNotificationPlanner {
 
     private static func notification(
         for date: Date,
-        kind: ReminderNotificationKind,
         calendar: Calendar
     ) -> PlannedReminderNotification {
         let components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
-        let prefix = switch kind {
-        case .primary: ReminderService.primaryIdentifierPrefix
-        case .followUp: ReminderService.followUpIdentifierPrefix
-        }
-        let identifier = prefix
+        let identifier = ReminderService.primaryIdentifierPrefix
             + String(format: "%04d%02d%02d-%02d%02d", components.year ?? 0, components.month ?? 0,
                      components.day ?? 0, components.hour ?? 0, components.minute ?? 0)
-        return PlannedReminderNotification(identifier: identifier, date: date, kind: kind)
+        return PlannedReminderNotification(identifier: identifier, date: date)
     }
 }
 
