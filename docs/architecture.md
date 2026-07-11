@@ -24,7 +24,8 @@ The app uses `NSStatusItem` plus `NSPopover` instead of SwiftUI `MenuBarExtra` b
   - reminder repeat mode
   - reminder weekday
 - `LibraryStore` owns the currently fetched Photos assets and library errors.
-- `CameraService` owns the `AVCaptureSession` and still photo capture.
+- `CameraService` owns main-actor camera UI state and still photo capture.
+- `CameraSessionController` serializes blocking `AVCaptureSession` configuration and lifecycle work.
 - `CaptureProgress` derives rolling captured and missed days from Photos asset creation dates; it does not persist a separate activity history.
 
 Camera hardware starts only when the Camera tab is visible. It stops when the user switches to Library or closes the popover.
@@ -53,6 +54,12 @@ Camera hardware starts only when the Camera tab is visible. It stops when the us
   - Fetches one current location for saved photo metadata.
   - Reverse-geocodes asset locations into `City, Country` for Library rows.
 
+- `TimelapseSelection` chooses the latest photo from each of the most recent 30 captured days.
+- `TimelapseService`
+  - Loads the selected Photos assets without blocking the main actor.
+  - Writes frames to a staged square H.264 MP4 and replaces the selected destination only after a successful export.
+  - Cancels Photos requests and video writing when its task is cancelled.
+
 - `ReminderService`
   - Schedules dated primary notifications.
   - Reconciles pending notifications when settings change and after a save, skipping completed days and clearing delivered reminders for completed days.
@@ -71,6 +78,7 @@ Camera hardware starts only when the Camera tab is visible. It stops when the us
   - Date-grouped photo list.
   - Thumbnail, local date/time, location name.
   - Inline destructive confirmation before Photos deletion.
+  - Standard Save panel and progress/error state for timelapse export.
 
 - `SettingsView`
   - Grouped settings sections for Album, Camera, Location, Startup, and Reminder.

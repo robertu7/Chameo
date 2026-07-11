@@ -358,7 +358,7 @@ struct SettingsView: View {
         reminderProgressTask?.cancel()
         showsReminderProgress = false
         reminderProgressTask = Task {
-            try? await Task.sleep(nanoseconds: 250_000_000)
+            try? await Task.sleep(for: .milliseconds(250))
             guard !Task.isCancelled else {
                 return
             }

@@ -39,13 +39,28 @@ BUILD_NUMBER="${CHAMEO_BUILD_NUMBER:-$(git -C "$ROOT_DIR" rev-list --count HEAD 
 if [[ -n "${CHAMEO_BUILD_ID:-}" ]]; then
   BUILD_ID="$CHAMEO_BUILD_ID"
 elif GIT_SHA="$(git -C "$ROOT_DIR" rev-parse --short HEAD 2>/dev/null)"; then
-  if git -C "$ROOT_DIR" diff --quiet --ignore-submodules HEAD --; then
+  if [[ -z "$(git -C "$ROOT_DIR" status --porcelain --untracked-files=normal 2>/dev/null)" ]]; then
     BUILD_ID="$GIT_SHA"
   else
     BUILD_ID="$GIT_SHA-dirty"
   fi
 else
   BUILD_ID="$(date -u +%Y%m%d%H%M%S)"
+fi
+
+if [[ ! "$APP_VERSION" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]]; then
+  echo "invalid app version: expected one to three dot-separated integers" >&2
+  exit 2
+fi
+
+if [[ ! "$BUILD_NUMBER" =~ ^[0-9]+$ ]]; then
+  echo "invalid build number: expected a non-negative integer" >&2
+  exit 2
+fi
+
+if [[ ! "$BUILD_ID" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$ ]]; then
+  echo "invalid build id: use 1-128 letters, numbers, dots, underscores, or hyphens" >&2
+  exit 2
 fi
 
 swift build -c "$BUILD_CONFIGURATION"
@@ -100,5 +115,8 @@ cat >"$INFO_PLIST" <<PLIST
 </plist>
 PLIST
 
+/usr/bin/plutil -lint "$INFO_PLIST" >/dev/null
+
 /usr/bin/codesign --force --sign - --entitlements "$ENTITLEMENTS" "$APP_BUNDLE"
+/usr/bin/codesign --verify --strict "$APP_BUNDLE"
 echo "$APP_BUNDLE"

@@ -21,6 +21,7 @@ The app is intentionally small: click the camera icon in the menu bar, take a ph
 - Library tab with thumbnails grouped by local date.
 - Library rows show local date/time and location name when available.
 - Library shows rolling 30-day capture progress and missed dates; today remains pending until it is complete.
+- Library exports the latest photo from each of the most recent 30 captured days as a square H.264 MP4.
 - Dedicated Photos.app album name configurable in Settings. If Photos already has an album with the same name, Chameo uses that album instead of creating another one. If the album is deleted externally, the next save recreates it.
 - Optional location metadata on saved photos, off by default.
 - Reminder scheduling with none, daily, and weekly repeat modes.
@@ -61,6 +62,7 @@ Chameo asks for permissions only when needed:
 - Photos: required to create/use the album, save photos, list library items, and delete photos from Photos.
 - Location: optional, only when `Save photo location` is enabled.
 - Notifications: requested when reminder settings are scheduled.
+- User-selected files: used only for the timelapse destination chosen in the standard Save dialog.
 
 Library deletion removes the original photo from Photos. Photos may move deleted items to Recently Deleted according to the system Photos behavior.
 

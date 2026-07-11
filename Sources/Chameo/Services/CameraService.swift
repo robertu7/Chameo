@@ -1,6 +1,7 @@
 @preconcurrency import AVFoundation
 import Foundation
 
+@MainActor
 final class CameraService: NSObject, ObservableObject {
     enum Status: Equatable {
         case idle
@@ -14,12 +15,12 @@ final class CameraService: NSObject, ObservableObject {
     @Published private(set) var status: Status = .idle
     @Published private(set) var lastError: String?
 
-    let session = AVCaptureSession()
+    var session: AVCaptureSession {
+        sessionController.session
+    }
 
-    private let sessionQueue = DispatchQueue(label: "com.robertu.Chameo.camera.session")
-    private let photoOutput = AVCapturePhotoOutput()
+    private let sessionController = CameraSessionController()
     private var captureDelegate: PhotoCaptureDelegate?
-    private var isConfigured = false
 
     func start() {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
@@ -44,11 +45,7 @@ final class CameraService: NSObject, ObservableObject {
     }
 
     func stop() {
-        sessionQueue.async { [session] in
-            if session.isRunning {
-                session.stopRunning()
-            }
-        }
+        sessionController.stop()
     }
 
     func capturePhoto(mirrored: Bool) async throws -> Data {
@@ -58,91 +55,53 @@ final class CameraService: NSObject, ObservableObject {
             throw CameraError.notReady
         }
 
-        return try await withTaskCancellationHandler {
-            try await withCheckedThrowingContinuation { continuation in
-                let settings = AVCapturePhotoSettings()
-                settings.flashMode = .off
-                if let connection = photoOutput.connection(with: .video),
-                   connection.isVideoMirroringSupported {
-                    connection.automaticallyAdjustsVideoMirroring = false
-                    connection.isVideoMirrored = mirrored
-                }
+        return try await withCheckedThrowingContinuation { continuation in
+            let settings = AVCapturePhotoSettings()
+            settings.flashMode = .off
+            if let connection = sessionController.photoOutput.connection(with: .video),
+               connection.isVideoMirroringSupported {
+                connection.automaticallyAdjustsVideoMirroring = false
+                connection.isVideoMirrored = mirrored
+            }
 
-                let delegate = PhotoCaptureDelegate { [weak self] result in
-                    Task { @MainActor in
-                        self?.captureDelegate = nil
-                        self?.status = .ready
+            let delegate = PhotoCaptureDelegate { [weak self] result in
+                Task { @MainActor in
+                    self?.captureDelegate = nil
+                    self?.status = .ready
 
-                        switch result {
-                        case .success(let data):
-                            continuation.resume(returning: data)
-                        case .failure(let error):
-                            self?.lastError = error.localizedDescription
-                            continuation.resume(throwing: error)
-                        }
+                    switch result {
+                    case .success(let data):
+                        continuation.resume(returning: data)
+                    case .failure(let error):
+                        self?.lastError = error.localizedDescription
+                        continuation.resume(throwing: error)
                     }
                 }
+            }
 
-                captureDelegate = delegate
-                photoOutput.capturePhoto(with: settings, delegate: delegate)
-            }
-        } onCancel: {
-            Task { @MainActor in
-                self.status = .ready
-            }
+            captureDelegate = delegate
+            sessionController.photoOutput.capturePhoto(with: settings, delegate: delegate)
         }
     }
 
     private func configureAndStart() {
         status = .idle
 
-        sessionQueue.async { [weak self] in
-            guard let self else { return }
-
-            do {
-                if !self.isConfigured {
-                    try self.configureSession()
-                    self.isConfigured = true
+        sessionController.start { [weak self] result in
+            Task { @MainActor in
+                guard let self else {
+                    return
                 }
 
-                if !self.session.isRunning {
-                    self.session.startRunning()
-                }
-
-                Task { @MainActor in
+                switch result {
+                case .success:
                     self.status = .ready
-                }
-            } catch {
-                Task { @MainActor in
+                case .failure(let error):
                     self.lastError = error.localizedDescription
                     self.status = .unavailable(error.localizedDescription)
                 }
             }
         }
-    }
-
-    private func configureSession() throws {
-        session.beginConfiguration()
-        session.sessionPreset = .photo
-
-        defer {
-            session.commitConfiguration()
-        }
-
-        guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .unspecified) else {
-            throw CameraError.noCamera
-        }
-
-        let input = try AVCaptureDeviceInput(device: device)
-        guard session.canAddInput(input) else {
-            throw CameraError.cannotAddInput
-        }
-        session.addInput(input)
-
-        guard session.canAddOutput(photoOutput) else {
-            throw CameraError.cannotAddOutput
-        }
-        session.addOutput(photoOutput)
     }
 }
 

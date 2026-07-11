@@ -1,4 +1,6 @@
+import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct LibraryView: View {
     @EnvironmentObject private var appState: AppState
@@ -6,6 +8,8 @@ struct LibraryView: View {
     let albumName: String
 
     @State private var didDeletePhoto = false
+    @State private var isExportingTimelapse = false
+    @State private var timelapseErrorMessage: String?
 
     private var sections: [LibrarySection] {
         LibrarySection.sections(for: libraryStore.assets)
@@ -60,6 +64,22 @@ struct LibraryView: View {
                             CaptureProgressView(progress: captureProgress)
                         }
 
+                        Button(action: exportTimelapse) {
+                            HStack {
+                                if isExportingTimelapse {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                        .accessibilityLabel("Creating timelapse")
+                                }
+
+                                Text(isExportingTimelapse ? "Creating Timelapse…" : "Create Timelapse")
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
+                        .disabled(isExportingTimelapse)
+
                         ForEach(sections) { section in
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(section.title)
@@ -98,7 +118,7 @@ struct LibraryView: View {
                 .background(Color(nsColor: .controlBackgroundColor))
             }
 
-            if let error = libraryStore.errorMessage {
+            if let error = libraryStore.errorMessage ?? timelapseErrorMessage {
                 PermissionStatusInline(
                     message: error,
                     destination: isPhotosPermissionError ? .photos : nil
@@ -125,6 +145,46 @@ struct LibraryView: View {
         .background(Color(nsColor: .controlBackgroundColor))
         .task {
             await libraryStore.reload(albumName: albumName)
+        }
+    }
+
+    @MainActor
+    private func exportTimelapse() {
+        guard !isExportingTimelapse else {
+            return
+        }
+
+        timelapseErrorMessage = nil
+        isExportingTimelapse = true
+
+        let savePanel = NSSavePanel()
+        savePanel.allowedContentTypes = [.mpeg4Movie]
+        savePanel.nameFieldStringValue = "Chameo Timelapse.mp4"
+        savePanel.prompt = "Create"
+
+        savePanel.begin { response in
+            guard response == .OK, let url = savePanel.url else {
+                isExportingTimelapse = false
+                return
+            }
+
+            Task {
+                let isAccessingSecurityScopedResource = url.startAccessingSecurityScopedResource()
+                defer {
+                    if isAccessingSecurityScopedResource {
+                        url.stopAccessingSecurityScopedResource()
+                    }
+                    isExportingTimelapse = false
+                }
+
+                do {
+                    let assets = libraryStore.timelapseAssets()
+                    try await TimelapseService.generate(assets: assets, to: url)
+                    NSWorkspace.shared.activateFileViewerSelecting([url])
+                } catch {
+                    timelapseErrorMessage = error.localizedDescription
+                }
+            }
         }
     }
 }

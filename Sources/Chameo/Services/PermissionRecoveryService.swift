@@ -35,6 +35,7 @@ enum PermissionRecoveryDestination {
 }
 
 enum PermissionRecoveryService {
+    @MainActor
     static func open(_ destination: PermissionRecoveryDestination) {
         guard let settingsURL = destination.settingsURL else {
             return

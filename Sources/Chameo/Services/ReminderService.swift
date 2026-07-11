@@ -1,5 +1,6 @@
 import Foundation
-import UserNotifications
+import OSLog
+@preconcurrency import UserNotifications
 
 enum ReminderService {
     static let requestIdentifier = "com.robertu.Chameo.chameoReminder"
@@ -7,6 +8,7 @@ enum ReminderService {
     private static let legacyFollowUpIdentifierPrefix = "\(requestIdentifier).followUp."
     private static let maximumNotificationRequests = 60
     private static let operationQueue = ReminderOperationQueue()
+    private static let logger = Logger(subsystem: "com.robertu.Chameo", category: "reminders")
 
     static func authorizationStatus() async -> UNAuthorizationStatus {
         await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
@@ -37,7 +39,7 @@ enum ReminderService {
         repeatMode: ReminderRepeat,
         weekday: Int?
     ) async throws {
-        let center = UNUserNotificationCenter.current()
+        let center = SystemReminderNotificationCenter()
 
         let granted = try await center.requestAuthorization(options: [.alert, .sound])
         guard granted else {
@@ -54,12 +56,12 @@ enum ReminderService {
 
     static func cancelReminder() async throws {
         try await operationQueue.perform {
-            try await removeAllReminderNotifications(from: UNUserNotificationCenter.current())
+            try await removeAllReminderNotifications(from: SystemReminderNotificationCenter())
         }
     }
 
     static func recordSelfieTaken(at date: Date = Date()) async {
-        await recordSelfieTaken(at: date, center: UNUserNotificationCenter.current())
+        await recordSelfieTaken(at: date, center: SystemReminderNotificationCenter())
     }
 
     static func recordSelfieTaken(
@@ -91,12 +93,14 @@ enum ReminderService {
                 await removeDeliveredReminderNotifications(from: center)
             }
         } catch {
-            NSLog("Failed to reconcile reminder notifications after selfie completion: \(error.localizedDescription)")
+            logger.error(
+                "Failed to reconcile reminders after a saved selfie: \(error.localizedDescription, privacy: .private)"
+            )
         }
     }
 
     static func refreshRemindersFromStoredSettings(now: Date = Date()) async {
-        await refreshRemindersFromStoredSettings(now: now, center: UNUserNotificationCenter.current())
+        await refreshRemindersFromStoredSettings(now: now, center: SystemReminderNotificationCenter())
     }
 
     static func refreshRemindersFromStoredSettings(
@@ -109,7 +113,9 @@ enum ReminderService {
                     try await removeAllReminderNotifications(from: center)
                 }
             } catch {
-                NSLog("Failed to remove disabled reminder notifications: \(error.localizedDescription)")
+                logger.error(
+                    "Failed to remove disabled reminders: \(error.localizedDescription, privacy: .private)"
+                )
             }
             return
         }
@@ -133,7 +139,9 @@ enum ReminderService {
                         now: now
                     )
                 } catch {
-                    NSLog("Failed to reconcile reminder notifications during refresh: \(error.localizedDescription)")
+                    logger.error(
+                        "Failed to reconcile reminders during refresh: \(error.localizedDescription, privacy: .private)"
+                    )
                 }
 
                 if isCompletedToday {
@@ -141,7 +149,7 @@ enum ReminderService {
                 }
             }
         } catch {
-            NSLog("Failed to refresh reminder notifications: \(error.localizedDescription)")
+            logger.error("Failed to refresh reminders: \(error.localizedDescription, privacy: .private)")
             if isCompletedToday {
                 await removeDeliveredReminderNotifications(from: center)
             }
@@ -185,7 +193,7 @@ enum ReminderService {
             if identifiersToRemove.isDisjoint(with: pendingIdentifiers) {
                 return
             }
-            try await Task.sleep(nanoseconds: 10_000_000)
+            try await Task.sleep(for: .milliseconds(10))
         }
 
         throw ReminderError.updateTimedOut
@@ -273,7 +281,7 @@ enum ReminderService {
     }
 }
 
-protocol ReminderNotificationCenter {
+protocol ReminderNotificationCenter: Sendable {
     func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool
     func add(_ request: UNNotificationRequest) async throws
     func pendingReminderNotificationIdentifiers() async -> [String]
@@ -282,21 +290,37 @@ protocol ReminderNotificationCenter {
     func removeDeliveredReminderNotifications(withIdentifiers identifiers: [String]) async
 }
 
-extension UNUserNotificationCenter: ReminderNotificationCenter {
+// UserNotifications is an Objective-C framework without Sendable annotations.
+// This value wrapper exposes only the framework's thread-safe asynchronous API.
+private struct SystemReminderNotificationCenter: @unchecked Sendable, ReminderNotificationCenter {
+    private let center: UNUserNotificationCenter
+
+    init(center: UNUserNotificationCenter = .current()) {
+        self.center = center
+    }
+
+    func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool {
+        try await center.requestAuthorization(options: options)
+    }
+
+    func add(_ request: UNNotificationRequest) async throws {
+        try await center.add(request)
+    }
+
     func pendingReminderNotificationIdentifiers() async -> [String] {
-        await pendingNotificationRequests().map(\.identifier)
+        await center.pendingNotificationRequests().map(\.identifier)
     }
 
     func deliveredReminderNotificationIdentifiers() async -> [String] {
-        await deliveredNotifications().map(\.request.identifier)
+        await center.deliveredNotifications().map(\.request.identifier)
     }
 
     func removePendingReminderNotifications(withIdentifiers identifiers: [String]) async {
-        removePendingNotificationRequests(withIdentifiers: identifiers)
+        center.removePendingNotificationRequests(withIdentifiers: identifiers)
     }
 
     func removeDeliveredReminderNotifications(withIdentifiers identifiers: [String]) async {
-        removeDeliveredNotifications(withIdentifiers: identifiers)
+        center.removeDeliveredNotifications(withIdentifiers: identifiers)
     }
 }
 
@@ -339,12 +363,20 @@ enum ReminderNotificationPlanner {
     ) -> [PlannedReminderNotification] {
         guard limit > 0 else { return [] }
 
+        if repeatMode == .none {
+            let isCompleted = completedAt.map { calendar.isDate($0, inSameDayAs: reminderDate) } ?? false
+            guard reminderDate > now, !isCompleted else {
+                return []
+            }
+            return [notification(for: reminderDate, calendar: calendar)]
+        }
+
         var result: [PlannedReminderNotification] = []
         var dayOffset = 0
         let today = calendar.startOfDay(for: now)
         let reminderTime = calendar.dateComponents([.hour, .minute], from: reminderDate)
 
-        while result.count < limit && dayOffset < 365 {
+        while result.count < limit {
             guard let day = calendar.date(byAdding: .day, value: dayOffset, to: today),
                   let occurrence = calendar.date(
                     bySettingHour: reminderTime.hour ?? 0,
@@ -358,7 +390,7 @@ enum ReminderNotificationPlanner {
             let isOccurrenceDay: Bool
             switch repeatMode {
             case .none:
-                isOccurrenceDay = calendar.isDate(occurrence, inSameDayAs: reminderDate)
+                isOccurrenceDay = false
             case .daily:
                 isOccurrenceDay = true
             case .weekly:
@@ -373,9 +405,6 @@ enum ReminderNotificationPlanner {
                 }
             }
 
-            if repeatMode == .none && day >= calendar.startOfDay(for: reminderDate) {
-                break
-            }
             dayOffset += 1
         }
 

@@ -44,4 +44,12 @@ final class LibraryStore: ObservableObject {
             errorMessage = currentError
         }
     }
+
+    func timelapseAssets() -> [ChameoAsset] {
+        TimelapseSelection.mostRecentDailyItems(
+            from: assets,
+            limit: 30,
+            date: \.createdAt
+        )
+    }
 }

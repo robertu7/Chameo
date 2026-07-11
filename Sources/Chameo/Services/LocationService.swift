@@ -1,4 +1,4 @@
-import CoreLocation
+@preconcurrency import CoreLocation
 import Foundation
 
 @MainActor
@@ -51,8 +51,9 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
     }
 
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        let authorizationStatus = manager.authorizationStatus
         Task { @MainActor in
-            switch manager.authorizationStatus {
+            switch authorizationStatus {
             case .authorizedAlways, .authorizedWhenInUse, .authorized:
                 authorizationContinuation?.resume(returning: true)
                 authorizationContinuation = nil

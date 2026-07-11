@@ -66,6 +66,19 @@ Behavior:
 - Updating reminder settings reconciles pending requests, and saving a selfie cancels remaining reminders and clears delivered reminder banners for that completed day.
 - Clicking a reminder notification opens the app to the Camera tab.
 
+## User-Selected Files
+
+Purpose: write a timelapse MP4 only to the destination selected in the standard Save dialog.
+
+Entitlement:
+
+- `com.apple.security.files.user-selected.read-write`
+
+Behavior:
+
+- Chameo holds security-scoped access only for the duration of the export.
+- Video is staged in an item-replacement directory so a failed export does not destroy an existing destination file.
+
 ## Library Deletion
 
 Library deletion uses PhotoKit asset deletion. Deleting a photo from Chameo removes the original asset from Photos, not just from the configured album.

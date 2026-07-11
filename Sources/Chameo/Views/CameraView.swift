@@ -148,7 +148,6 @@ struct CameraView: View {
                 capturedPreview = CapturedPreview(data: data)
                 statusMessage = "Preview ready. Keep or Cancel."
             }
-            await ReminderService.recordSelfieTaken()
         } catch {
             statusMessage = error.localizedDescription
         }
@@ -215,9 +214,11 @@ struct CameraView: View {
 private struct CapturedPreview: Identifiable {
     let id = UUID()
     let data: Data
+    let image: NSImage?
 
-    var image: NSImage? {
-        NSImage(data: data)
+    init(data: Data) {
+        self.data = data
+        self.image = NSImage(data: data)
     }
 }
 

@@ -42,6 +42,8 @@ Release automation can override those values:
 CHAMEO_VERSION=1.2.0 CHAMEO_BUILD_NUMBER=42 CHAMEO_BUILD_ID=ci-42 ./script/build_app.sh --release
 ```
 
+The build rejects malformed version metadata before compilation and marks the build id as dirty for both tracked and untracked changes.
+
 Settings shows the bundled version number and build id from `Info.plist`.
 
 ## App Icon

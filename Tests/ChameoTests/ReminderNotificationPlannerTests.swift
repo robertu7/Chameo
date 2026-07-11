@@ -57,6 +57,35 @@ final class ReminderNotificationPlannerTests: XCTestCase {
         XCTAssertEqual(notifications.map(\.date), [try date(2026, 6, 18, 23, 30)])
     }
 
+    func testOneTimeReminderMoreThanOneYearAwayIsScheduled() throws {
+        let reminder = try date(2028, 1, 1, 9, 30)
+        let notifications = ReminderNotificationPlanner.notifications(
+            reminderDate: reminder,
+            repeatMode: .none,
+            weekday: nil,
+            now: try date(2026, 6, 18, 12, 0),
+            completedAt: nil,
+            limit: 10,
+            calendar: calendar
+        )
+
+        XCTAssertEqual(notifications.map(\.date), [reminder])
+    }
+
+    func testWeeklyReminderFillsRequestedLimitBeyondOneYear() throws {
+        let notifications = ReminderNotificationPlanner.notifications(
+            reminderDate: try date(2026, 6, 18, 9, 30),
+            repeatMode: .weekly,
+            weekday: 5,
+            now: try date(2026, 6, 18, 9, 0),
+            completedAt: nil,
+            limit: 60,
+            calendar: calendar
+        )
+
+        XCTAssertEqual(notifications.count, 60)
+    }
+
     private func date(_ year: Int, _ month: Int, _ day: Int, _ hour: Int, _ minute: Int) throws -> Date {
         try XCTUnwrap(calendar.date(from: DateComponents(
             year: year,
@@ -74,11 +103,11 @@ final class ReminderOperationQueueTests: XCTestCase {
         let notifications = NotificationRecorder()
 
         async let first: Void = queue.perform {
-            try await Task.sleep(nanoseconds: 50_000_000)
+            try await Task.sleep(for: .milliseconds(50))
             await notifications.schedule("stale-reminder")
         }
 
-        try await Task.sleep(nanoseconds: 5_000_000)
+        try await Task.sleep(for: .milliseconds(5))
 
         async let second: Void = queue.perform {
             await notifications.remove("stale-reminder")
