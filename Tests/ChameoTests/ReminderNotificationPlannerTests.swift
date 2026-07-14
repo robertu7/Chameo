@@ -180,6 +180,22 @@ final class ReminderSelfieCompletionTests: XCTestCase {
         XCTAssertTrue(deliveredIdentifiers.contains(unrelatedDelivered))
     }
 
+    func testLaunchRefreshRemovesReminderRestoredShortlyAfterWake() async throws {
+        let restoreDefaults = preserveReminderDefaults()
+        defer { restoreDefaults() }
+
+        let context = try configureReminderDefaults(completedAt: try date(2026, 6, 23, 10, 21))
+        let center = ReminderNotificationCenterRecorder(
+            restoredDelivered: [context.todayPrimary],
+            restoreAfterDeliveredQueries: 1
+        )
+
+        await ReminderService.refreshRemindersFromStoredSettings(now: context.now, center: center)
+
+        let deliveredIdentifiers = await center.deliveredIdentifiers
+        XCTAssertFalse(deliveredIdentifiers.contains(context.todayPrimary))
+    }
+
     func testLaunchRefreshRemovesDeliveredNotificationsWhenPendingRemovalTimesOut() async throws {
         let restoreDefaults = preserveReminderDefaults()
         defer { restoreDefaults() }
@@ -332,15 +348,22 @@ private actor NotificationRecorder {
 private actor ReminderNotificationCenterRecorder: ReminderNotificationCenter {
     private var pending: Set<String>
     private var delivered: Set<String>
+    private var restoredDelivered: Set<String>
+    private var deliveredQueryCount = 0
+    private let restoreAfterDeliveredQueries: Int?
     private let keepsPendingRequestsOnRemoval: Bool
 
     init(
         pending: [String] = [],
         delivered: [String] = [],
+        restoredDelivered: [String] = [],
+        restoreAfterDeliveredQueries: Int? = nil,
         keepsPendingRequestsOnRemoval: Bool = false
     ) {
         self.pending = Set(pending)
         self.delivered = Set(delivered)
+        self.restoredDelivered = Set(restoredDelivered)
+        self.restoreAfterDeliveredQueries = restoreAfterDeliveredQueries
         self.keepsPendingRequestsOnRemoval = keepsPendingRequestsOnRemoval
     }
 
@@ -349,7 +372,7 @@ private actor ReminderNotificationCenterRecorder: ReminderNotificationCenter {
     }
 
     var deliveredIdentifiers: Set<String> {
-        delivered
+        delivered.union(restoredDelivered)
     }
 
     func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool {
@@ -365,7 +388,13 @@ private actor ReminderNotificationCenterRecorder: ReminderNotificationCenter {
     }
 
     func deliveredReminderNotificationIdentifiers() async -> [String] {
-        Array(delivered)
+        deliveredQueryCount += 1
+        if let restoreAfterDeliveredQueries,
+           deliveredQueryCount > restoreAfterDeliveredQueries {
+            delivered.formUnion(restoredDelivered)
+            restoredDelivered.removeAll()
+        }
+        return Array(delivered)
     }
 
     func removePendingReminderNotifications(withIdentifiers identifiers: [String]) async {

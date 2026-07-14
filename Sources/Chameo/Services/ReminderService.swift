@@ -7,6 +7,8 @@ enum ReminderService {
     static let primaryIdentifierPrefix = "\(requestIdentifier).primary."
     private static let legacyFollowUpIdentifierPrefix = "\(requestIdentifier).followUp."
     private static let maximumNotificationRequests = 60
+    private static let wakeDeliveredCleanupAttempts = 4
+    private static let wakeDeliveredCleanupDelay = Duration.milliseconds(500)
     private static let operationQueue = ReminderOperationQueue()
     private static let logger = Logger(subsystem: "com.robertu.Chameo", category: "reminders")
 
@@ -145,13 +147,19 @@ enum ReminderService {
                 }
 
                 if isCompletedToday {
-                    await removeDeliveredReminderNotifications(from: center)
+                    await removeDeliveredReminderNotifications(
+                        from: center,
+                        maximumAttempts: wakeDeliveredCleanupAttempts
+                    )
                 }
             }
         } catch {
             logger.error("Failed to refresh reminders: \(error.localizedDescription, privacy: .private)")
             if isCompletedToday {
-                await removeDeliveredReminderNotifications(from: center)
+                await removeDeliveredReminderNotifications(
+                    from: center,
+                    maximumAttempts: wakeDeliveredCleanupAttempts
+                )
             }
         }
     }
@@ -255,11 +263,24 @@ enum ReminderService {
         await removeDeliveredReminderNotifications(from: center)
     }
 
-    private static func removeDeliveredReminderNotifications(from center: any ReminderNotificationCenter) async {
-        let identifiers = await center.deliveredReminderNotificationIdentifiers().filter(isReminderIdentifier)
-        guard !identifiers.isEmpty else { return }
+    private static func removeDeliveredReminderNotifications(
+        from center: any ReminderNotificationCenter,
+        maximumAttempts: Int = 1
+    ) async {
+        for attempt in 1...max(1, maximumAttempts) {
+            let identifiers = await center.deliveredReminderNotificationIdentifiers().filter(isReminderIdentifier)
+            if !identifiers.isEmpty {
+                await center.removeDeliveredReminderNotifications(withIdentifiers: identifiers)
+                return
+            }
 
-        await center.removeDeliveredReminderNotifications(withIdentifiers: identifiers)
+            guard attempt < maximumAttempts else { return }
+            do {
+                try await Task.sleep(for: wakeDeliveredCleanupDelay)
+            } catch {
+                return
+            }
+        }
     }
 
     static func isReminderIdentifier(_ identifier: String) -> Bool {
