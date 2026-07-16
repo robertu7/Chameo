@@ -20,7 +20,6 @@ The app is intentionally small: click the camera icon in the menu bar, take a ph
 - Optional automatic face alignment produces consistent square photos and falls back to the original when alignment is unavailable.
 - Library tab with thumbnails grouped by local date.
 - Library rows show local date/time and location name when available.
-- Library shows rolling 30-day capture progress and missed dates; today remains pending until it is complete.
 - Library exports the latest photo from each of the most recent 30 captured days as a square H.264 MP4.
 - Dedicated Photos.app album name configurable in Settings. If Photos already has an album with the same name, Chameo uses that album instead of creating another one. If the album is deleted externally, the next save recreates it.
 - Optional location metadata on saved photos, off by default.

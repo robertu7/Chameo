@@ -15,10 +15,6 @@ struct LibraryView: View {
         LibrarySection.sections(for: libraryStore.assets)
     }
 
-    private var captureProgress: CaptureProgress? {
-        CaptureProgress.calculate(captureDates: libraryStore.assets.compactMap(\.createdAt))
-    }
-
     private var isPhotosPermissionError: Bool {
         switch PhotoLibraryService.authorizationStatus() {
         case .denied, .restricted:
@@ -60,10 +56,6 @@ struct LibraryView: View {
             } else {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 16) {
-                        if let captureProgress {
-                            CaptureProgressView(progress: captureProgress)
-                        }
-
                         Button(action: exportTimelapse) {
                             HStack {
                                 if isExportingTimelapse {
@@ -185,53 +177,6 @@ struct LibraryView: View {
                     timelapseErrorMessage = error.localizedDescription
                 }
             }
-        }
-    }
-}
-
-private struct CaptureProgressView: View {
-    let progress: CaptureProgress
-
-    private var missedDatesText: String {
-        progress.missedDates
-            .map { $0.formatted(.dateTime.month(.abbreviated).day()) }
-            .joined(separator: ", ")
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Label("30-Day Progress", systemImage: "calendar")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.secondary)
-
-                Spacer()
-
-                Text("\(progress.capturedDayCount)/\(progress.elapsedDayCount) days captured")
-                    .font(.callout)
-                    .fontWeight(.semibold)
-            }
-
-            if progress.elapsedDayCount == 0 {
-                Text("Today is pending. Tracking starts when the day is complete.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else if progress.missedDates.isEmpty {
-                Text("No missed days")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else {
-                Text("Missed: \(missedDatesText)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(12)
-        .background(.background, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(.quaternary, lineWidth: 1)
         }
     }
 }

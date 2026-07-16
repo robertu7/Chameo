@@ -26,8 +26,6 @@ The app uses `NSStatusItem` plus `NSPopover` instead of SwiftUI `MenuBarExtra` b
 - `LibraryStore` owns the currently fetched Photos assets and library errors.
 - `CameraService` owns main-actor camera UI state and still photo capture.
 - `CameraSessionController` serializes blocking `AVCaptureSession` configuration and lifecycle work.
-- `CaptureProgress` derives rolling captured and missed days from Photos asset creation dates; it does not persist a separate activity history.
-
 Camera hardware starts only when the Camera tab is visible. It stops when the user switches to Library or closes the popover.
 
 ## Services
@@ -74,7 +72,6 @@ Camera hardware starts only when the Camera tab is visible. It stops when the us
   - Inline status for capture, location, and save progress.
 
 - `LibraryView`
-  - Rolling 30-day captured and missed-day summary.
   - Date-grouped photo list.
   - Thumbnail, local date/time, location name.
   - Inline destructive confirmation before Photos deletion.
