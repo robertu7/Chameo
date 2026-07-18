@@ -53,6 +53,11 @@ Camera hardware starts only when the Camera tab is visible. It stops when the us
   - Aligns captured selfies with Core Image before preview/save when enabled.
   - Falls back to the original photo when face or landmark detection fails.
 
+- `FaceCaptureQualityService`
+  - Evaluates the largest detected face with Vision capture-quality revision 3.
+  - Runs asynchronously after capture for local diagnostics only.
+  - Does not reject, replace, delay, or otherwise change the captured photo.
+
 - `PhotoLibraryService`
   - Requests Photos read/write access.
   - Finds the first Photos album with the configured exact name, or creates that album if none exists.

@@ -1,7 +1,13 @@
 import CoreLocation
+import OSLog
 import SwiftUI
 
 struct CameraView: View {
+    private static let captureQualityLogger = Logger(
+        subsystem: "com.robertu.Chameo",
+        category: "capture-quality"
+    )
+
     @EnvironmentObject private var cameraService: CameraService
     @EnvironmentObject private var libraryStore: LibraryStore
     @AppStorage(AppPreferenceKey.autoAlignPhotos) private var autoAlignPhotos = true
@@ -141,6 +147,7 @@ struct CameraView: View {
 
         do {
             let data = try await cameraService.capturePhoto(mirrored: false)
+            recordCaptureQuality(for: data)
             if autoAlignPhotos {
                 statusMessage = "Aligning photo…"
                 let result = await FaceAlignmentService.alignmentResult(from: data)
@@ -155,6 +162,26 @@ struct CameraView: View {
         }
 
         isSaving = false
+    }
+
+    private func recordCaptureQuality(for data: Data) {
+        Task {
+            let evaluation = await FaceCaptureQualityService.evaluation(from: data)
+            switch evaluation {
+            case .scored(let score):
+                Self.captureQualityLogger.debug(
+                    "Vision face capture quality: \(score, privacy: .public)"
+                )
+            case .noFace:
+                Self.captureQualityLogger.debug("Vision capture quality found no face")
+            case .scoreUnavailable:
+                Self.captureQualityLogger.debug("Vision capture quality returned no score")
+            case .unreadableImage:
+                Self.captureQualityLogger.debug("Vision capture quality could not read the image")
+            case .analysisFailed:
+                Self.captureQualityLogger.debug("Vision capture quality analysis failed")
+            }
+        }
     }
 
     private func beginSavingCapturedPreview() {

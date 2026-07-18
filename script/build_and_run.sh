@@ -45,7 +45,7 @@ case "$MODE" in
     ;;
   --telemetry|telemetry)
     open_app
-    /usr/bin/log stream --info --style compact --predicate "subsystem == \"$BUNDLE_ID\""
+    /usr/bin/log stream --level debug --style compact --predicate "subsystem == \"$BUNDLE_ID\""
     ;;
   --verify|verify)
     open_app
