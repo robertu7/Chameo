@@ -14,6 +14,8 @@ final class CameraService: NSObject, ObservableObject {
 
     @Published private(set) var status: Status = .idle
     @Published private(set) var lastError: String?
+    @Published private(set) var activeCameraName: String?
+    @Published private(set) var isPreviewMirrored = true
 
     var session: AVCaptureSession {
         sessionController.session
@@ -22,6 +24,16 @@ final class CameraService: NSObject, ObservableObject {
     private let sessionController = CameraSessionController()
     private var captureDelegate: PhotoCaptureDelegate?
     private var shouldRunSession = false
+
+    override init() {
+        super.init()
+        sessionController.onActiveCameraChanged = { [weak self] info in
+            Task { @MainActor in
+                self?.activeCameraName = info.name
+                self?.isPreviewMirrored = info.shouldMirrorPreview
+            }
+        }
+    }
 
     func start() {
         shouldRunSession = true
@@ -69,14 +81,10 @@ final class CameraService: NSObject, ObservableObject {
         return try await withCheckedThrowingContinuation { continuation in
             let settings = AVCapturePhotoSettings()
             settings.flashMode = .off
-            if let connection = sessionController.photoOutput.connection(with: .video),
-               connection.isVideoMirroringSupported {
-                connection.automaticallyAdjustsVideoMirroring = false
-                connection.isVideoMirrored = mirrored
-            }
 
             let delegate = PhotoCaptureDelegate { [weak self] result in
                 Task { @MainActor in
+                    self?.sessionController.captureDidFinish()
                     self?.captureDelegate = nil
                     if let self {
                         self.status = self.shouldRunSession ? .ready : .idle
@@ -93,7 +101,11 @@ final class CameraService: NSObject, ObservableObject {
             }
 
             captureDelegate = delegate
-            sessionController.photoOutput.capturePhoto(with: settings, delegate: delegate)
+            sessionController.capturePhoto(
+                with: settings,
+                mirrored: mirrored,
+                delegate: delegate
+            )
         }
     }
 

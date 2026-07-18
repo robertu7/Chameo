@@ -101,6 +101,8 @@ cat >"$INFO_PLIST" <<PLIST
   <true/>
   <key>NSCameraUsageDescription</key>
   <string>Chameo uses the camera to capture photos for your daily selfie album.</string>
+  <key>NSCameraUseContinuityCameraDeviceType</key>
+  <true/>
   <key>NSPhotoLibraryUsageDescription</key>
   <string>Chameo stores and manages photos in a dedicated Photos album so they can sync with iCloud Photos.</string>
   <key>NSLocationUsageDescription</key>

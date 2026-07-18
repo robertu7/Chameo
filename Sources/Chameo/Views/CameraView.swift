@@ -34,8 +34,10 @@ struct CameraView: View {
                 )
             } else {
                 ZStack {
-                    CameraPreviewView(session: cameraService.session, mirrored: false)
-                        .scaleEffect(x: -1, y: 1, anchor: .center)
+                    CameraPreviewView(
+                        session: cameraService.session,
+                        mirrored: cameraService.isPreviewMirrored
+                    )
                         .overlay {
                             if shouldShowFaceGuide {
                                 CameraGuideView()

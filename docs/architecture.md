@@ -41,7 +41,11 @@ Camera hardware starts only when the Camera tab is visible. It stops when the us
 
 - `CameraService`
   - Requests camera permission.
-  - Configures `AVCaptureSession`.
+  - Configures `AVCaptureSession` with the system-preferred camera.
+  - Supports built-in, Continuity, and external cameras with automatic fallback
+    and defers preferred-camera changes until an active capture completes.
+  - Mirrors built-in and external camera previews while leaving Continuity
+    Camera previews unmirrored.
   - Captures still photos without preview mirroring.
 
 - `FaceAlignmentService`
