@@ -50,6 +50,7 @@ Behavior:
 
 - The app asks for location only when `Save photo location` is enabled and the user saves a photo.
 - If location is unavailable, the app saves without location and shows a status message.
+- Authorization and one-shot location requests time out instead of blocking a save indefinitely.
 - Library location names are reverse-geocoded from `PHAsset.location`.
 
 ## Notifications

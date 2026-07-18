@@ -21,8 +21,11 @@ final class CameraService: NSObject, ObservableObject {
 
     private let sessionController = CameraSessionController()
     private var captureDelegate: PhotoCaptureDelegate?
+    private var shouldRunSession = false
 
     func start() {
+        shouldRunSession = true
+
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
             configureAndStart()
@@ -30,10 +33,14 @@ final class CameraService: NSObject, ObservableObject {
             status = .requestingPermission
             AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
                 Task { @MainActor in
+                    guard let self, self.shouldRunSession else {
+                        return
+                    }
+
                     if granted {
-                        self?.configureAndStart()
+                        self.configureAndStart()
                     } else {
-                        self?.status = .unauthorized
+                        self.status = .unauthorized
                     }
                 }
             }
@@ -45,6 +52,10 @@ final class CameraService: NSObject, ObservableObject {
     }
 
     func stop() {
+        shouldRunSession = false
+        if status != .unauthorized {
+            status = .idle
+        }
         sessionController.stop()
     }
 
@@ -67,7 +78,9 @@ final class CameraService: NSObject, ObservableObject {
             let delegate = PhotoCaptureDelegate { [weak self] result in
                 Task { @MainActor in
                     self?.captureDelegate = nil
-                    self?.status = .ready
+                    if let self {
+                        self.status = self.shouldRunSession ? .ready : .idle
+                    }
 
                     switch result {
                     case .success(let data):
@@ -90,6 +103,12 @@ final class CameraService: NSObject, ObservableObject {
         sessionController.start { [weak self] result in
             Task { @MainActor in
                 guard let self else {
+                    return
+                }
+
+                guard self.shouldRunSession else {
+                    self.sessionController.stop()
+                    self.status = .idle
                     return
                 }
 

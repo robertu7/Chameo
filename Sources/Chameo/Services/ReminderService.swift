@@ -3,8 +3,8 @@ import OSLog
 @preconcurrency import UserNotifications
 
 enum ReminderService {
-    static let requestIdentifier = "com.robertu.Chameo.chameoReminder"
-    static let primaryIdentifierPrefix = "\(requestIdentifier).primary."
+    static let requestIdentifier = ReminderNotificationIdentifier.request
+    static let primaryIdentifierPrefix = ReminderNotificationIdentifier.primaryPrefix
     private static let legacyFollowUpIdentifierPrefix = "\(requestIdentifier).followUp."
     private static let maximumNotificationRequests = 60
     private static let wakeDeliveredCleanupAttempts = 4
@@ -70,25 +70,22 @@ enum ReminderService {
         at date: Date,
         center: any ReminderNotificationCenter
     ) async {
-        UserDefaults.standard.set(date.timeIntervalSinceReferenceDate, forKey: "lastSelfieDate")
+        UserDefaults.standard.set(
+            date.timeIntervalSinceReferenceDate,
+            forKey: AppPreferenceKey.lastSelfieDate
+        )
 
-        guard UserDefaults.standard.bool(forKey: "reminderEnabled") else {
+        let settings = StoredReminderSettings.load()
+        guard settings.isEnabled else {
             return
         }
-
-        let storedDate = UserDefaults.standard.double(forKey: "reminderDate")
-        let reminderDate = Date(timeIntervalSinceReferenceDate: storedDate)
-        let repeatMode = ReminderRepeat(
-            rawValue: UserDefaults.standard.string(forKey: "reminderRepeat") ?? ""
-        ) ?? .none
-        let weekday = UserDefaults.standard.integer(forKey: "reminderWeekday")
 
         do {
             try await operationQueue.perform {
                 try await reconcileNotifications(
-                    date: reminderDate,
-                    repeatMode: repeatMode,
-                    weekday: weekday,
+                    date: settings.date,
+                    repeatMode: settings.repeatMode,
+                    weekday: settings.weekday,
                     center: center,
                     now: date
                 )
@@ -109,7 +106,8 @@ enum ReminderService {
         now: Date,
         center: any ReminderNotificationCenter
     ) async {
-        guard UserDefaults.standard.bool(forKey: "reminderEnabled") else {
+        let settings = StoredReminderSettings.load()
+        guard settings.isEnabled else {
             do {
                 try await operationQueue.perform {
                     try await removeAllReminderNotifications(from: center)
@@ -122,21 +120,15 @@ enum ReminderService {
             return
         }
 
-        let reminderDate = Date(
-            timeIntervalSinceReferenceDate: UserDefaults.standard.double(forKey: "reminderDate")
-        )
-        let repeatMode = ReminderRepeat(
-            rawValue: UserDefaults.standard.string(forKey: "reminderRepeat") ?? ""
-        ) ?? .none
-        let isCompletedToday = hasSelfieTaken(on: now)
+        let isCompletedToday = hasSelfieTaken(on: now, settings: settings)
 
         do {
             try await operationQueue.perform {
                 do {
                     try await reconcileNotifications(
-                        date: reminderDate,
-                        repeatMode: repeatMode,
-                        weekday: UserDefaults.standard.integer(forKey: "reminderWeekday"),
+                        date: settings.date,
+                        repeatMode: settings.repeatMode,
+                        weekday: settings.weekday,
                         center: center,
                         now: now
                     )
@@ -213,27 +205,25 @@ enum ReminderService {
         weekday: Int?,
         now: Date
     ) -> [PlannedReminderNotification] {
-        let lastSelfieDate = UserDefaults.standard.object(forKey: "lastSelfieDate") as? Double
-        let completedAt = lastSelfieDate.map(Date.init(timeIntervalSinceReferenceDate:))
         return ReminderNotificationPlanner.notifications(
             reminderDate: date,
             repeatMode: repeatMode,
             weekday: weekday,
             now: now,
-            completedAt: completedAt,
+            completedAt: StoredReminderSettings.load().lastSelfieDate,
             limit: maximumNotificationRequests
         )
     }
 
-    private static func hasSelfieTaken(on date: Date) -> Bool {
-        guard let lastSelfieDate = UserDefaults.standard.object(forKey: "lastSelfieDate") as? Double else {
+    private static func hasSelfieTaken(
+        on date: Date,
+        settings: StoredReminderSettings = .load()
+    ) -> Bool {
+        guard let lastSelfieDate = settings.lastSelfieDate else {
             return false
         }
 
-        return Calendar.current.isDate(
-            Date(timeIntervalSinceReferenceDate: lastSelfieDate),
-            inSameDayAs: date
-        )
+        return Calendar.current.isDate(lastSelfieDate, inSameDayAs: date)
     }
 
     private static func schedule(
@@ -294,166 +284,11 @@ enum ReminderService {
             return true
         }
 
-        guard UserDefaults.standard.bool(forKey: "reminderEnabled") else {
+        let settings = StoredReminderSettings.load()
+        guard settings.isEnabled else {
             return false
         }
 
-        return !hasSelfieTaken(on: date)
-    }
-}
-
-protocol ReminderNotificationCenter: Sendable {
-    func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool
-    func add(_ request: UNNotificationRequest) async throws
-    func pendingReminderNotificationIdentifiers() async -> [String]
-    func deliveredReminderNotificationIdentifiers() async -> [String]
-    func removePendingReminderNotifications(withIdentifiers identifiers: [String]) async
-    func removeDeliveredReminderNotifications(withIdentifiers identifiers: [String]) async
-}
-
-// UserNotifications is an Objective-C framework without Sendable annotations.
-// This value wrapper exposes only the framework's thread-safe asynchronous API.
-private struct SystemReminderNotificationCenter: @unchecked Sendable, ReminderNotificationCenter {
-    private let center: UNUserNotificationCenter
-
-    init(center: UNUserNotificationCenter = .current()) {
-        self.center = center
-    }
-
-    func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool {
-        try await center.requestAuthorization(options: options)
-    }
-
-    func add(_ request: UNNotificationRequest) async throws {
-        try await center.add(request)
-    }
-
-    func pendingReminderNotificationIdentifiers() async -> [String] {
-        await center.pendingNotificationRequests().map(\.identifier)
-    }
-
-    func deliveredReminderNotificationIdentifiers() async -> [String] {
-        await center.deliveredNotifications().map(\.request.identifier)
-    }
-
-    func removePendingReminderNotifications(withIdentifiers identifiers: [String]) async {
-        center.removePendingNotificationRequests(withIdentifiers: identifiers)
-    }
-
-    func removeDeliveredReminderNotifications(withIdentifiers identifiers: [String]) async {
-        center.removeDeliveredNotifications(withIdentifiers: identifiers)
-    }
-}
-
-actor ReminderOperationQueue {
-    private var tail: Task<Void, Never>?
-
-    func perform(_ operation: @escaping @Sendable () async throws -> Void) async throws {
-        let previous = tail
-        let operationTask = Task<Result<Void, Error>, Never> {
-            await previous?.value
-            do {
-                try await operation()
-                return .success(())
-            } catch {
-                return .failure(error)
-            }
-        }
-        tail = Task {
-            _ = await operationTask.value
-        }
-
-        try await operationTask.value.get()
-    }
-}
-
-struct PlannedReminderNotification: Equatable {
-    let identifier: String
-    let date: Date
-}
-
-enum ReminderNotificationPlanner {
-    static func notifications(
-        reminderDate: Date,
-        repeatMode: ReminderRepeat,
-        weekday: Int?,
-        now: Date,
-        completedAt: Date?,
-        limit: Int,
-        calendar: Calendar = .current
-    ) -> [PlannedReminderNotification] {
-        guard limit > 0 else { return [] }
-
-        if repeatMode == .none {
-            let isCompleted = completedAt.map { calendar.isDate($0, inSameDayAs: reminderDate) } ?? false
-            guard reminderDate > now, !isCompleted else {
-                return []
-            }
-            return [notification(for: reminderDate, calendar: calendar)]
-        }
-
-        var result: [PlannedReminderNotification] = []
-        var dayOffset = 0
-        let today = calendar.startOfDay(for: now)
-        let reminderTime = calendar.dateComponents([.hour, .minute], from: reminderDate)
-
-        while result.count < limit {
-            guard let day = calendar.date(byAdding: .day, value: dayOffset, to: today),
-                  let occurrence = calendar.date(
-                    bySettingHour: reminderTime.hour ?? 0,
-                    minute: reminderTime.minute ?? 0,
-                    second: 0,
-                    of: day
-                  ) else {
-                break
-            }
-
-            let isOccurrenceDay: Bool
-            switch repeatMode {
-            case .none:
-                isOccurrenceDay = false
-            case .daily:
-                isOccurrenceDay = true
-            case .weekly:
-                let reminderWeekday = weekday ?? calendar.component(.weekday, from: reminderDate)
-                isOccurrenceDay = calendar.component(.weekday, from: day) == reminderWeekday
-            }
-
-            let isCompleted = completedAt.map { calendar.isDate($0, inSameDayAs: day) } ?? false
-            if isOccurrenceDay && !isCompleted {
-                if occurrence > now {
-                    result.append(notification(for: occurrence, calendar: calendar))
-                }
-            }
-
-            dayOffset += 1
-        }
-
-        return result
-    }
-
-    private static func notification(
-        for date: Date,
-        calendar: Calendar
-    ) -> PlannedReminderNotification {
-        let components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
-        let identifier = ReminderService.primaryIdentifierPrefix
-            + String(format: "%04d%02d%02d-%02d%02d", components.year ?? 0, components.month ?? 0,
-                     components.day ?? 0, components.hour ?? 0, components.minute ?? 0)
-        return PlannedReminderNotification(identifier: identifier, date: date)
-    }
-}
-
-enum ReminderError: LocalizedError {
-    case notAuthorized
-    case updateTimedOut
-
-    var errorDescription: String? {
-        switch self {
-        case .notAuthorized:
-            return "Notification permission is required to schedule reminders."
-        case .updateTimedOut:
-            return "The reminder update did not finish. Please try again."
-        }
+        return !hasSelfieTaken(on: date, settings: settings)
     }
 }

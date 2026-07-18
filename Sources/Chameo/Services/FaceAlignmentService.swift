@@ -10,12 +10,6 @@ struct FaceAlignmentResult {
 }
 
 enum FaceAlignmentService {
-    static func alignedPhotoData(from data: Data) async throws -> Data {
-        try await Task.detached(priority: .userInitiated) {
-            try align(data).data
-        }.value
-    }
-
     static func alignmentResult(from data: Data) async -> FaceAlignmentResult {
         do {
             return try await Task.detached(priority: .userInitiated) {

@@ -65,11 +65,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
     private func configureUserDefaults() {
         UserDefaults.standard.register(defaults: [
-            "showGrid": true,
-            "saveLocation": false,
-            "launchAtLogin": LaunchAtLoginService.isEnabled
+            AppPreferenceKey.showFaceGuide: true,
+            AppPreferenceKey.saveLocation: false,
+            AppPreferenceKey.launchAtLogin: LaunchAtLoginService.isEnabled
         ])
-        UserDefaults.standard.set(LaunchAtLoginService.isEnabled, forKey: "launchAtLogin")
+        UserDefaults.standard.set(
+            LaunchAtLoginService.isEnabled,
+            forKey: AppPreferenceKey.launchAtLogin
+        )
     }
 
     private func installReminderRefreshObservers() {

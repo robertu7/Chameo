@@ -70,4 +70,5 @@ Library deletion removes the original photo from Photos. Photos may move deleted
 - [Architecture](docs/architecture.md)
 - [Development](docs/development.md)
 - [Permissions & Privacy](docs/permissions.md)
+- [Production Readiness](docs/production-readiness.md)
 - [Roadmap](docs/roadmap.md)

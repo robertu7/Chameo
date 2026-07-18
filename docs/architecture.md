@@ -7,6 +7,7 @@ Chameo is a SwiftPM macOS app using a small AppKit shell and SwiftUI feature vie
 - `ChameoApp.swift` owns app launch, default preference migration, notification response handling, and menu-bar-only activation.
 - `StatusPopoverController.swift` creates the `NSStatusItem`, hosts the SwiftUI popover, and exposes `showCamera()` for notification clicks.
 - `ContentView.swift` coordinates the Camera, Library, Settings, bottom status area, and camera lifecycle.
+- `SettingsView.swift` composes independent General and Reminder settings tabs; each tab owns only its feature state and operations.
 
 The app uses `NSStatusItem` plus `NSPopover` instead of SwiftUI `MenuBarExtra` because notification taps need to open the popover programmatically.
 
@@ -23,10 +24,14 @@ The app uses `NSStatusItem` plus `NSPopover` instead of SwiftUI `MenuBarExtra` b
   - reminder date/time
   - reminder repeat mode
   - reminder weekday
+- `AppPreferenceKey` is the canonical key namespace for those preferences.
+- `StoredReminderSettings` is the typed read boundary used by background reminder reconciliation.
 - `LibraryStore` owns the currently fetched Photos assets and library errors.
 - `CameraService` owns main-actor camera UI state and still photo capture.
 - `CameraSessionController` serializes blocking `AVCaptureSession` configuration and lifecycle work.
-Camera hardware starts only when the Camera tab is visible. It stops when the user switches to Library or closes the popover.
+- `LocationService` coalesces overlapping authorization/location requests and bounds both with a timeout.
+
+Camera hardware starts only when the Camera tab is visible. It stops when the user switches to Library or closes the popover. Permission callbacks re-check that lifecycle intent before starting hardware.
 
 ## Services
 
@@ -46,6 +51,7 @@ Camera hardware starts only when the Camera tab is visible. It stops when the us
   - Saves images into Photos.app with optional `CLLocation`.
   - Fetches album assets and thumbnails.
   - Deletes selected original assets from Photos.
+  - Serializes find-or-create album operations so overlapping saves/settings actions cannot create duplicate exact-name albums.
 
 - `LocationService`
   - Requests when-in-use authorization.
@@ -61,6 +67,11 @@ Camera hardware starts only when the Camera tab is visible. It stops when the us
 - `ReminderService`
   - Schedules dated primary notifications.
   - Reconciles pending notifications when settings change and after a save, skipping completed days and clearing delivered reminders for completed days.
+- `ReminderSchedule`
+  - Validates persisted weekday values.
+  - Provides the canonical next-occurrence calculation for both Settings previews and notification planning.
+- `ReminderNotificationCenter`
+  - Isolates the UserNotifications framework boundary and serializes reminder reconciliation operations.
 
 ## UI Composition
 

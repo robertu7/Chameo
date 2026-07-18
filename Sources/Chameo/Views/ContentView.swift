@@ -7,9 +7,9 @@ struct ContentView: View {
     @EnvironmentObject private var libraryStore: LibraryStore
     @Environment(\.openSettings) private var openSettings
 
-    @AppStorage("albumName") private var albumName = "Chameo"
-    @AppStorage("showGrid") private var showFaceGuide = true
-    @AppStorage("saveLocation") private var saveLocation = false
+    @AppStorage(AppPreferenceKey.albumName) private var albumName = "Chameo"
+    @AppStorage(AppPreferenceKey.showFaceGuide) private var showFaceGuide = true
+    @AppStorage(AppPreferenceKey.saveLocation) private var saveLocation = false
 
     @State private var statusMessage: String?
 

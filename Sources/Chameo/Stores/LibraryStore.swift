@@ -3,21 +3,41 @@ import Photos
 
 @MainActor
 final class LibraryStore: ObservableObject {
+    typealias AssetLoader = (String) async throws -> [ChameoAsset]
+
     @Published private(set) var assets: [ChameoAsset] = []
     @Published private(set) var isLoading = false
     @Published var errorMessage: String?
 
+    private let assetLoader: AssetLoader
+    private var reloadGeneration = 0
+
+    init(assetLoader: @escaping AssetLoader = PhotoLibraryService.fetchAssets) {
+        self.assetLoader = assetLoader
+    }
+
     func reload(albumName: String) async {
+        reloadGeneration += 1
+        let generation = reloadGeneration
         isLoading = true
         errorMessage = nil
 
         do {
-            assets = try await PhotoLibraryService.fetchAssets(albumName: albumName)
+            let loadedAssets = try await assetLoader(albumName)
+            guard generation == reloadGeneration else {
+                return
+            }
+            assets = loadedAssets
         } catch {
+            guard generation == reloadGeneration else {
+                return
+            }
             errorMessage = error.localizedDescription
         }
 
-        isLoading = false
+        if generation == reloadGeneration {
+            isLoading = false
+        }
     }
 
     func deleteFromLibrary(_ asset: ChameoAsset, albumName: String) async -> Bool {

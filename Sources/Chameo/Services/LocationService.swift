@@ -3,9 +3,13 @@ import Foundation
 
 @MainActor
 final class LocationService: NSObject, CLLocationManagerDelegate {
+    private static let requestTimeout = Duration.seconds(15)
+
     private let manager = CLLocationManager()
-    private var locationContinuation: CheckedContinuation<CLLocation?, Never>?
-    private var authorizationContinuation: CheckedContinuation<Bool, Never>?
+    private var locationContinuations: [CheckedContinuation<CLLocation?, Never>] = []
+    private var authorizationContinuations: [CheckedContinuation<Bool, Never>] = []
+    private var authorizationTimeoutTask: Task<Void, Never>?
+    private var locationTimeoutTask: Task<Void, Never>?
 
     override init() {
         super.init()
@@ -29,8 +33,19 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
         }
 
         return await withCheckedContinuation { continuation in
-            locationContinuation = continuation
+            locationContinuations.append(continuation)
+            guard locationContinuations.count == 1 else {
+                return
+            }
+
             manager.requestLocation()
+            locationTimeoutTask = Task { [weak self] in
+                try? await Task.sleep(for: Self.requestTimeout)
+                guard !Task.isCancelled else {
+                    return
+                }
+                self?.finishLocationRequest(with: nil)
+            }
         }
     }
 
@@ -42,8 +57,17 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
             return false
         case .notDetermined:
             return await withCheckedContinuation { continuation in
-                authorizationContinuation = continuation
-                manager.requestWhenInUseAuthorization()
+                authorizationContinuations.append(continuation)
+                if authorizationContinuations.count == 1 {
+                    manager.requestWhenInUseAuthorization()
+                    authorizationTimeoutTask = Task { [weak self] in
+                        try? await Task.sleep(for: Self.requestTimeout)
+                        guard !Task.isCancelled else {
+                            return
+                        }
+                        self?.finishAuthorizationRequest(with: false)
+                    }
+                }
             }
         @unknown default:
             return false
@@ -55,34 +79,47 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
         Task { @MainActor in
             switch authorizationStatus {
             case .authorizedAlways, .authorizedWhenInUse, .authorized:
-                authorizationContinuation?.resume(returning: true)
-                authorizationContinuation = nil
+                finishAuthorizationRequest(with: true)
             case .denied, .restricted:
-                authorizationContinuation?.resume(returning: false)
-                authorizationContinuation = nil
-                locationContinuation?.resume(returning: nil)
-                locationContinuation = nil
+                finishAuthorizationRequest(with: false)
+                finishLocationRequest(with: nil)
             case .notDetermined:
                 break
             @unknown default:
-                authorizationContinuation?.resume(returning: false)
-                authorizationContinuation = nil
+                finishAuthorizationRequest(with: false)
+                finishLocationRequest(with: nil)
             }
         }
     }
 
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         Task { @MainActor in
-            locationContinuation?.resume(returning: locations.last)
-            locationContinuation = nil
+            finishLocationRequest(with: locations.last)
         }
     }
 
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         Task { @MainActor in
-            locationContinuation?.resume(returning: nil)
-            locationContinuation = nil
+            finishLocationRequest(with: nil)
         }
+    }
+
+    private func finishAuthorizationRequest(with isAuthorized: Bool) {
+        authorizationTimeoutTask?.cancel()
+        authorizationTimeoutTask = nil
+
+        let continuations = authorizationContinuations
+        authorizationContinuations.removeAll()
+        continuations.forEach { $0.resume(returning: isAuthorized) }
+    }
+
+    private func finishLocationRequest(with location: CLLocation?) {
+        locationTimeoutTask?.cancel()
+        locationTimeoutTask = nil
+
+        let continuations = locationContinuations
+        locationContinuations.removeAll()
+        continuations.forEach { $0.resume(returning: location) }
     }
 }
 

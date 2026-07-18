@@ -86,6 +86,24 @@ final class ReminderNotificationPlannerTests: XCTestCase {
         XCTAssertEqual(notifications.count, 60)
     }
 
+    func testWeeklyReminderFallsBackFromInvalidStoredWeekday() throws {
+        let reminder = try date(2026, 6, 18, 9, 30)
+        let notifications = ReminderNotificationPlanner.notifications(
+            reminderDate: reminder,
+            repeatMode: .weekly,
+            weekday: 0,
+            now: try date(2026, 6, 18, 9, 0),
+            completedAt: nil,
+            limit: 2,
+            calendar: calendar
+        )
+
+        XCTAssertEqual(notifications.map(\.date), [
+            try date(2026, 6, 18, 9, 30),
+            try date(2026, 6, 25, 9, 30)
+        ])
+    }
+
     private func date(_ year: Int, _ month: Int, _ day: Int, _ hour: Int, _ minute: Int) throws -> Date {
         try XCTUnwrap(calendar.date(from: DateComponents(
             year: year,
@@ -121,11 +139,11 @@ final class ReminderOperationQueueTests: XCTestCase {
 
 final class ReminderSelfieCompletionTests: XCTestCase {
     private static let reminderDefaultKeys = [
-        "lastSelfieDate",
-        "reminderEnabled",
-        "reminderDate",
-        "reminderRepeat",
-        "reminderWeekday"
+        AppPreferenceKey.lastSelfieDate,
+        AppPreferenceKey.reminderEnabled,
+        AppPreferenceKey.reminderDate,
+        AppPreferenceKey.reminderRepeat,
+        AppPreferenceKey.reminderWeekday
     ]
 
     func testRecordingSelfieRemovesTodayPendingAndDeliveredReminderNotifications() async throws {
@@ -222,7 +240,7 @@ final class ReminderSelfieCompletionTests: XCTestCase {
         defer { restoreDefaults() }
 
         let context = try configureReminderDefaults(completedAt: nil)
-        UserDefaults.standard.set(false, forKey: "reminderEnabled")
+        UserDefaults.standard.set(false, forKey: AppPreferenceKey.reminderEnabled)
         let unrelatedPending = "unrelated.pending"
         let unrelatedDelivered = "unrelated.delivered"
         let center = ReminderNotificationCenterRecorder(
@@ -247,9 +265,12 @@ final class ReminderSelfieCompletionTests: XCTestCase {
         let restoreDefaults = preserveReminderDefaults()
         defer { restoreDefaults() }
 
-        UserDefaults.standard.set(true, forKey: "reminderEnabled")
+        UserDefaults.standard.set(true, forKey: AppPreferenceKey.reminderEnabled)
         let completedAt = try date(2026, 6, 23, 10, 21)
-        UserDefaults.standard.set(completedAt.timeIntervalSinceReferenceDate, forKey: "lastSelfieDate")
+        UserDefaults.standard.set(
+            completedAt.timeIntervalSinceReferenceDate,
+            forKey: AppPreferenceKey.lastSelfieDate
+        )
 
         XCTAssertFalse(ReminderService.shouldPresentReminderNotification(
             identifier: ReminderService.primaryIdentifierPrefix + "20260623-1330",
@@ -269,8 +290,8 @@ final class ReminderSelfieCompletionTests: XCTestCase {
         let restoreDefaults = preserveReminderDefaults()
         defer { restoreDefaults() }
 
-        UserDefaults.standard.set(false, forKey: "reminderEnabled")
-        UserDefaults.standard.removeObject(forKey: "lastSelfieDate")
+        UserDefaults.standard.set(false, forKey: AppPreferenceKey.reminderEnabled)
+        UserDefaults.standard.removeObject(forKey: AppPreferenceKey.lastSelfieDate)
 
         XCTAssertFalse(ReminderService.shouldPresentReminderNotification(
             identifier: ReminderService.primaryIdentifierPrefix + "20260623-1330",
@@ -308,11 +329,17 @@ final class ReminderSelfieCompletionTests: XCTestCase {
         let reminder = try date(2026, 6, 23, 13, 30)
         let now = try date(2026, 6, 23, 10, 21)
         let defaults = UserDefaults.standard
-        defaults.set(completedAt?.timeIntervalSinceReferenceDate, forKey: "lastSelfieDate")
-        defaults.set(true, forKey: "reminderEnabled")
-        defaults.set(reminder.timeIntervalSinceReferenceDate, forKey: "reminderDate")
-        defaults.set(ReminderRepeat.daily.rawValue, forKey: "reminderRepeat")
-        defaults.set(3, forKey: "reminderWeekday")
+        defaults.set(
+            completedAt?.timeIntervalSinceReferenceDate,
+            forKey: AppPreferenceKey.lastSelfieDate
+        )
+        defaults.set(true, forKey: AppPreferenceKey.reminderEnabled)
+        defaults.set(
+            reminder.timeIntervalSinceReferenceDate,
+            forKey: AppPreferenceKey.reminderDate
+        )
+        defaults.set(ReminderRepeat.daily.rawValue, forKey: AppPreferenceKey.reminderRepeat)
+        defaults.set(3, forKey: AppPreferenceKey.reminderWeekday)
 
         return (
             now: now,

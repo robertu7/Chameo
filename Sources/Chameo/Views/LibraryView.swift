@@ -291,9 +291,15 @@ private struct LibraryRow: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .task(id: asset.id) {
-            thumbnail = await PhotoLibraryService.thumbnail(for: asset.asset, size: CGSize(width: 128, height: 128))
             isLoadingLocationName = true
-            locationName = await LocationNameService.name(for: asset.asset.location)
+            async let loadedThumbnail = PhotoLibraryService.thumbnail(
+                for: asset.asset,
+                size: CGSize(width: 128, height: 128)
+            )
+            async let loadedLocationName = LocationNameService.name(for: asset.asset.location)
+
+            thumbnail = await loadedThumbnail
+            locationName = await loadedLocationName
             isLoadingLocationName = false
         }
     }

@@ -24,6 +24,18 @@ Use SwiftPM for compilation:
 swift build
 ```
 
+Run the automated test suite:
+
+```bash
+swift test
+```
+
+Run the Swift 6 concurrency migration audit while the package remains in Swift 5 language mode:
+
+```bash
+swift build -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency
+```
+
 Use the project script to build and stage the app bundle:
 
 ```bash
@@ -101,3 +113,5 @@ plutil -p dist/Chameo.app/Contents/Info.plist
 - Do not write to Photos on `Take`; write only on `Save to Photos`.
 - Keep destructive Photos deletion behind inline confirmation.
 - If reminder settings do not change, saving Settings should not request notification permission.
+- Add durable preference keys through `AppPreferenceKey`; background code should read reminder preferences through `StoredReminderSettings`.
+- Keep reminder recurrence rules in `ReminderSchedule` so UI previews and scheduled notifications cannot diverge.

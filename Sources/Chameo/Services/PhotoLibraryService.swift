@@ -4,6 +4,8 @@ import Foundation
 import Photos
 
 enum PhotoLibraryService {
+    private static let albumCoordinator = PhotoAlbumCoordinator()
+
     static func authorizationStatus() -> PHAuthorizationStatus {
         PHPhotoLibrary.authorizationStatus(for: .readWrite)
     }
@@ -60,47 +62,11 @@ enum PhotoLibraryService {
 
     static func createAlbum(named albumName: String) async throws -> PHAssetCollection {
         try await ensureAuthorized()
-
-        let normalizedName = normalizedAlbumName(albumName)
-        var albumPlaceholder: PHObjectPlaceholder?
-        try await PHPhotoLibrary.shared().performChanges {
-            let request = PHAssetCollectionChangeRequest.creationRequestForAssetCollection(withTitle: normalizedName)
-            albumPlaceholder = request.placeholderForCreatedAssetCollection
-        }
-
-        guard let localIdentifier = albumPlaceholder?.localIdentifier else {
-            throw PhotoLibraryError.albumCreationFailed
-        }
-
-        let result = PHAssetCollection.fetchAssetCollections(withLocalIdentifiers: [localIdentifier], options: nil)
-        guard let album = result.firstObject else {
-            throw PhotoLibraryError.albumCreationFailed
-        }
-
-        return album
+        return try await albumCoordinator.album(named: normalizedAlbumName(albumName))
     }
 
     static func ensureAlbum(named albumName: String) async throws -> PHAssetCollection {
-        if let existingAlbum = fetchAlbum(named: albumName) {
-            return existingAlbum
-        }
-
-        var albumPlaceholder: PHObjectPlaceholder?
-        try await PHPhotoLibrary.shared().performChanges {
-            let request = PHAssetCollectionChangeRequest.creationRequestForAssetCollection(withTitle: albumName)
-            albumPlaceholder = request.placeholderForCreatedAssetCollection
-        }
-
-        guard let localIdentifier = albumPlaceholder?.localIdentifier else {
-            throw PhotoLibraryError.albumCreationFailed
-        }
-
-        let result = PHAssetCollection.fetchAssetCollections(withLocalIdentifiers: [localIdentifier], options: nil)
-        guard let album = result.firstObject else {
-            throw PhotoLibraryError.albumCreationFailed
-        }
-
-        return album
+        try await albumCoordinator.album(named: normalizedAlbumName(albumName))
     }
 
     static func savePhoto(data: Data, albumName: String, location: CLLocation? = nil) async throws -> ChameoAsset {
@@ -114,13 +80,16 @@ enum PhotoLibraryService {
 
         var assetPlaceholder: PHObjectPlaceholder?
         try await PHPhotoLibrary.shared().performChanges {
+            guard let albumRequest = PHAssetCollectionChangeRequest(for: album) else {
+                return
+            }
+
             let assetRequest = PHAssetCreationRequest.forAsset()
             assetRequest.creationDate = Date()
             assetRequest.location = location
             assetRequest.addResource(with: .photo, fileURL: temporaryURL, options: nil)
 
-            guard let placeholder = assetRequest.placeholderForCreatedAsset,
-                  let albumRequest = PHAssetCollectionChangeRequest(for: album) else {
+            guard let placeholder = assetRequest.placeholderForCreatedAsset else {
                 return
             }
 
@@ -220,6 +189,32 @@ enum PhotoLibraryService {
                 completion.resume(throwing: PhotoLibraryError.changeTimedOut)
             }
         }
+    }
+}
+
+private actor PhotoAlbumCoordinator {
+    func album(named name: String) async throws -> PHAssetCollection {
+        if let existingAlbum = PhotoLibraryService.fetchAlbum(named: name) {
+            return existingAlbum
+        }
+
+        var albumPlaceholder: PHObjectPlaceholder?
+        try await PHPhotoLibrary.shared().performChanges {
+            let request = PHAssetCollectionChangeRequest.creationRequestForAssetCollection(
+                withTitle: name
+            )
+            albumPlaceholder = request.placeholderForCreatedAssetCollection
+        }
+
+        guard let localIdentifier = albumPlaceholder?.localIdentifier,
+              let album = PHAssetCollection.fetchAssetCollections(
+                withLocalIdentifiers: [localIdentifier],
+                options: nil
+              ).firstObject else {
+            throw PhotoLibraryError.albumCreationFailed
+        }
+
+        return album
     }
 }
 

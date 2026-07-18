@@ -4,7 +4,7 @@ import SwiftUI
 struct CameraView: View {
     @EnvironmentObject private var cameraService: CameraService
     @EnvironmentObject private var libraryStore: LibraryStore
-    @AppStorage("autoAlignPhotos") private var autoAlignPhotos = true
+    @AppStorage(AppPreferenceKey.autoAlignPhotos) private var autoAlignPhotos = true
 
     let albumName: String
     let showFaceGuide: Bool
