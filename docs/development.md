@@ -83,7 +83,7 @@ The script writes `Assets/AppIcon.iconset/` and packages `Assets/AppIcon.icns`. 
 `.codex/environments/environment.toml` wires the Codex app Run action to:
 
 ```bash
-./script/build_app.sh
+./script/build_and_run.sh
 ```
 
 ## Debugging Tips

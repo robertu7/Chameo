@@ -3,6 +3,7 @@ import Foundation
 @MainActor
 final class AppState: ObservableObject {
     @Published var selectedTab = ChameoTab.camera
+    @Published var selectedLibraryDay: Date?
 }
 
 enum ChameoTab: String, CaseIterable, Identifiable {

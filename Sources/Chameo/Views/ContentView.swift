@@ -78,7 +78,7 @@ struct ContentView: View {
         .frame(width: 448)
         .task {
             syncCameraLifecycle()
-            await libraryStore.reload(albumName: albumName)
+            await reloadLibraryIfAuthorized(albumName: albumName)
         }
         .onDisappear {
             cameraService.stop()
@@ -88,7 +88,7 @@ struct ContentView: View {
         }
         .onChange(of: albumName) { _, newValue in
             Task {
-                await libraryStore.reload(albumName: newValue)
+                await reloadLibraryIfAuthorized(albumName: newValue)
             }
         }
     }
@@ -98,6 +98,17 @@ struct ContentView: View {
             cameraService.start()
         } else {
             cameraService.stop()
+        }
+    }
+
+    private func reloadLibraryIfAuthorized(albumName: String) async {
+        switch PhotoLibraryService.authorizationStatus() {
+        case .authorized, .limited:
+            await libraryStore.reload(albumName: albumName)
+        case .notDetermined, .denied, .restricted:
+            return
+        @unknown default:
+            return
         }
     }
 }

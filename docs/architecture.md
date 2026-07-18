@@ -6,6 +6,8 @@ Chameo is a SwiftPM macOS app using a small AppKit shell and SwiftUI feature vie
 
 - `ChameoApp.swift` owns app launch, default preference migration, notification response handling, and menu-bar-only activation.
 - `StatusPopoverController.swift` creates the `NSStatusItem`, hosts the SwiftUI popover, and exposes `showCamera()` for notification clicks.
+  It also maps the shared daily capture status onto the menu-bar symbol and
+  routes status-item clicks to Camera or today's Library entry.
 - `ContentView.swift` coordinates the Camera, Library, Settings, bottom status area, and camera lifecycle.
 - `SettingsView.swift` composes independent General and Reminder settings tabs; each tab owns only its feature state and operations.
 
@@ -15,6 +17,7 @@ The app uses `NSStatusItem` plus `NSPopover` instead of SwiftUI `MenuBarExtra` b
 
 - `AppState` stores popover-level UI state:
   - selected tab
+  - selected Library day
 - `@AppStorage` stores durable preferences:
   - album name
   - camera face guide
@@ -26,7 +29,8 @@ The app uses `NSStatusItem` plus `NSPopover` instead of SwiftUI `MenuBarExtra` b
   - reminder weekday
 - `AppPreferenceKey` is the canonical key namespace for those preferences.
 - `StoredReminderSettings` is the typed read boundary used by background reminder reconciliation.
-- `LibraryStore` owns the currently fetched Photos assets and library errors.
+- `LibraryStore` owns the currently fetched Photos assets, snapshot validity,
+  library errors, and the Photos-backed daily completion status.
 - `CameraService` owns main-actor camera UI state and still photo capture.
 - `CameraSessionController` serializes blocking `AVCaptureSession` configuration and lifecycle work.
 - `LocationService` coalesces overlapping authorization/location requests and bounds both with a timeout.
@@ -83,8 +87,10 @@ Camera hardware starts only when the Camera tab is visible. It stops when the us
   - Inline status for capture, location, and save progress.
 
 - `LibraryView`
-  - Date-grouped photo list.
-  - Thumbnail, local date/time, location name.
+  - Month calendar with captured, pending, missed, future, and pre-tracking
+    states.
+  - Hover, focus, and selected-day previews with thumbnails, local date/time,
+    location name, and multiple-photo access.
   - Inline destructive confirmation before Photos deletion.
   - Standard Save panel and progress/error state for timelapse export.
 

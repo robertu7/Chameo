@@ -9,22 +9,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     private let libraryStore = LibraryStore()
     private var statusPopoverController: StatusPopoverController?
     private var reminderRefreshTask: Task<Void, Never>?
+    private var libraryRefreshTask: Task<Void, Never>?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         configureUserDefaults()
         NSApp.setActivationPolicy(.accessory)
         UNUserNotificationCenter.current().delegate = self
-        installReminderRefreshObservers()
+        installRefreshObservers()
         statusPopoverController = StatusPopoverController(
             appState: appState,
             cameraService: cameraService,
             libraryStore: libraryStore
         )
-        refreshReminderNotifications()
+        refreshAppState()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
         reminderRefreshTask?.cancel()
+        libraryRefreshTask?.cancel()
         NotificationCenter.default.removeObserver(self)
         NSWorkspace.shared.notificationCenter.removeObserver(self)
     }
@@ -65,6 +67,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
     private func configureUserDefaults() {
         UserDefaults.standard.register(defaults: [
+            AppPreferenceKey.albumName: "Chameo",
             AppPreferenceKey.showFaceGuide: true,
             AppPreferenceKey.saveLocation: false,
             AppPreferenceKey.launchAtLogin: LaunchAtLoginService.isEnabled
@@ -75,10 +78,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         )
     }
 
-    private func installReminderRefreshObservers() {
+    private func installRefreshObservers() {
         NotificationCenter.default.addObserver(
             self,
-            selector: #selector(refreshReminderNotificationsAfterSystemEvent),
+            selector: #selector(refreshAfterSystemEvent(_:)),
             name: NSApplication.didBecomeActiveNotification,
             object: nil
         )
@@ -86,32 +89,55 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         let workspaceNotifications = NSWorkspace.shared.notificationCenter
         workspaceNotifications.addObserver(
             self,
-            selector: #selector(refreshReminderNotificationsAfterSystemEvent),
+            selector: #selector(refreshAfterSystemEvent(_:)),
             name: NSWorkspace.didWakeNotification,
             object: nil
         )
         workspaceNotifications.addObserver(
             self,
-            selector: #selector(refreshReminderNotificationsAfterSystemEvent),
+            selector: #selector(refreshAfterSystemEvent(_:)),
             name: NSWorkspace.screensDidWakeNotification,
             object: nil
         )
         workspaceNotifications.addObserver(
             self,
-            selector: #selector(refreshReminderNotificationsAfterSystemEvent),
+            selector: #selector(refreshAfterSystemEvent(_:)),
             name: NSWorkspace.sessionDidBecomeActiveNotification,
             object: nil
         )
     }
 
-    @objc private func refreshReminderNotificationsAfterSystemEvent(_ notification: Notification) {
+    @objc private func refreshAfterSystemEvent(_ notification: Notification) {
+        refreshAppState()
+    }
+
+    private func refreshAppState() {
         refreshReminderNotifications()
+        refreshLibrary()
     }
 
     private func refreshReminderNotifications() {
         reminderRefreshTask?.cancel()
         reminderRefreshTask = Task {
             await ReminderService.refreshRemindersFromStoredSettings()
+        }
+    }
+
+    private func refreshLibrary() {
+        libraryRefreshTask?.cancel()
+
+        switch PhotoLibraryService.authorizationStatus() {
+        case .authorized, .limited:
+            break
+        case .notDetermined, .denied, .restricted:
+            return
+        @unknown default:
+            return
+        }
+
+        let albumName = UserDefaults.standard.string(forKey: AppPreferenceKey.albumName) ?? "Chameo"
+        libraryRefreshTask = Task {
+            await libraryStore.reload(albumName: albumName)
         }
     }
 }

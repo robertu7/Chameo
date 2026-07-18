@@ -7,10 +7,12 @@ final class LibraryStore: ObservableObject {
 
     @Published private(set) var assets: [ChameoAsset] = []
     @Published private(set) var isLoading = false
+    @Published private(set) var hasLoaded = false
     @Published var errorMessage: String?
 
     private let assetLoader: AssetLoader
     private var reloadGeneration = 0
+    private var requestedAlbumName: String?
 
     init(assetLoader: @escaping AssetLoader = PhotoLibraryService.fetchAssets) {
         self.assetLoader = assetLoader
@@ -19,6 +21,13 @@ final class LibraryStore: ObservableObject {
     func reload(albumName: String) async {
         reloadGeneration += 1
         let generation = reloadGeneration
+
+        if requestedAlbumName != albumName {
+            requestedAlbumName = albumName
+            assets = []
+            hasLoaded = false
+        }
+
         isLoading = true
         errorMessage = nil
 
@@ -28,6 +37,7 @@ final class LibraryStore: ObservableObject {
                 return
             }
             assets = loadedAssets
+            hasLoaded = true
         } catch {
             guard generation == reloadGeneration else {
                 return
@@ -70,6 +80,23 @@ final class LibraryStore: ObservableObject {
             from: assets,
             limit: 30,
             date: \.createdAt
+        )
+    }
+
+    func dailyStatus(
+        on date: Date = Date(),
+        today: Date = Date(),
+        calendar: Calendar = .current
+    ) -> DailyCaptureStatus {
+        let hasUsableSnapshot = (hasLoaded || !assets.isEmpty)
+            && (errorMessage == nil || !assets.isEmpty)
+
+        return DailyCaptureHistory.status(
+            for: date,
+            captureDates: assets.compactMap(\.createdAt),
+            today: today,
+            calendar: calendar,
+            isAvailable: hasUsableSnapshot
         )
     }
 }

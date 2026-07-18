@@ -11,10 +11,6 @@ struct LibraryView: View {
     @State private var isExportingTimelapse = false
     @State private var timelapseErrorMessage: String?
 
-    private var sections: [LibrarySection] {
-        LibrarySection.sections(for: libraryStore.assets)
-    }
-
     private var isPhotosPermissionError: Bool {
         switch PhotoLibraryService.authorizationStatus() {
         case .denied, .restricted:
@@ -26,7 +22,7 @@ struct LibraryView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if libraryStore.isLoading {
+            if libraryStore.isLoading && !libraryStore.hasLoaded {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if isPhotosPermissionError {
@@ -40,74 +36,18 @@ struct LibraryView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if libraryStore.assets.isEmpty {
-                ContentUnavailableView {
-                    Label("No Chameos", systemImage: "photo")
-                } description: {
-                    Text("Photos saved to \(PhotoLibraryService.normalizedAlbumName(albumName)) appear here.")
-                } actions: {
-                    Button {
-                        appState.selectedTab = .camera
-                    } label: {
-                        Label("Take First Chameo", systemImage: "camera")
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 16) {
-                        Button(action: exportTimelapse) {
-                            HStack {
-                                if isExportingTimelapse {
-                                    ProgressView()
-                                        .controlSize(.small)
-                                        .accessibilityLabel("Creating timelapse")
-                                }
-
-                                Text(isExportingTimelapse ? "Creating Timelapse…" : "Create Timelapse")
-                            }
-                            .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
-                        .disabled(isExportingTimelapse)
-
-                        ForEach(sections) { section in
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text(section.title)
-                                    .font(.caption)
-                                    .fontWeight(.semibold)
-                                    .foregroundStyle(.secondary)
-                                    .textCase(.uppercase)
-                                    .padding(.horizontal, 2)
-
-                                VStack(spacing: 1) {
-                                    ForEach(section.assets) { asset in
-                                        LibraryRow(asset: asset) {
-                                            let didDelete = await libraryStore.deleteFromLibrary(asset, albumName: albumName)
-
-                                            if didDelete {
-                                                didDeletePhoto = true
-                                            }
-                                        }
-
-                                        if asset.id != section.assets.last?.id {
-                                            Divider()
-                                                .padding(.leading, 76)
-                                        }
-                                    }
-                                }
-                                .background(.background, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-                                .overlay {
-                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                        .stroke(.quaternary, lineWidth: 1)
-                                }
-                            }
-                        }
-                    }
-                    .padding(14)
-                }
-                .background(Color(nsColor: .controlBackgroundColor))
+                CalendarLibraryView(
+                    assets: libraryStore.assets,
+                    selectedDay: $appState.selectedLibraryDay,
+                    isRefreshing: libraryStore.isLoading,
+                    isExportingTimelapse: isExportingTimelapse,
+                    onTakeChameo: {
+                        appState.selectedTab = .camera
+                    },
+                    onExportTimelapse: exportTimelapse,
+                    onDelete: delete
+                )
             }
 
             if let error = libraryStore.errorMessage ?? timelapseErrorMessage {
@@ -137,6 +77,13 @@ struct LibraryView: View {
         .background(Color(nsColor: .controlBackgroundColor))
         .task {
             await libraryStore.reload(albumName: albumName)
+        }
+    }
+
+    private func delete(_ asset: ChameoAsset) async {
+        let didDelete = await libraryStore.deleteFromLibrary(asset, albumName: albumName)
+        if didDelete {
+            didDeletePhoto = true
         }
     }
 
@@ -177,130 +124,6 @@ struct LibraryView: View {
                     timelapseErrorMessage = error.localizedDescription
                 }
             }
-        }
-    }
-}
-
-private struct LibrarySection: Identifiable {
-    let id: Date
-    let title: String
-    let assets: [ChameoAsset]
-
-    static func sections(for assets: [ChameoAsset]) -> [LibrarySection] {
-        let calendar = Calendar.current
-        let grouped = Dictionary(grouping: assets) { asset in
-            calendar.startOfDay(for: asset.createdAt ?? .distantPast)
-        }
-
-        return grouped
-            .map { day, assets in
-                LibrarySection(
-                    id: day,
-                    title: sectionTitle(for: day, calendar: calendar),
-                    assets: assets.sorted { ($0.createdAt ?? .distantPast) > ($1.createdAt ?? .distantPast) }
-                )
-            }
-            .sorted { $0.id > $1.id }
-    }
-
-    private static func sectionTitle(for day: Date, calendar: Calendar) -> String {
-        if calendar.isDateInToday(day) {
-            return "Today"
-        }
-
-        if calendar.isDateInYesterday(day) {
-            return "Yesterday"
-        }
-
-        return DateFormatters.librarySectionDate.string(from: day)
-    }
-}
-
-private struct LibraryRow: View {
-    let asset: ChameoAsset
-    let onDelete: () async -> Void
-
-    @State private var thumbnail: NSImage?
-    @State private var locationName = ""
-    @State private var isLoadingLocationName = false
-    @State private var isConfirmingDeletion = false
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Group {
-                if let thumbnail {
-                    Image(nsImage: thumbnail)
-                        .resizable()
-                        .scaledToFill()
-                } else {
-                    Image(systemName: "photo")
-                        .font(.title2)
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-            }
-            .frame(width: 56, height: 56)
-            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(asset.createdAt.map(DateFormatters.libraryDate.string(from:)) ?? "Unknown Date")
-                    .font(.callout)
-                HStack(spacing: 5) {
-                    if isLoadingLocationName {
-                        ProgressView()
-                            .controlSize(.small)
-                            .scaleEffect(0.65)
-                            .frame(width: 12, height: 12)
-                    }
-
-                    Text(isLoadingLocationName ? "Loading location..." : locationName)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            if isConfirmingDeletion {
-                HStack(spacing: 6) {
-                    Button("Delete", role: .destructive) {
-                        isConfirmingDeletion = false
-                        Task {
-                            await onDelete()
-                        }
-                    }
-                    .buttonStyle(.borderless)
-
-                    Button("Cancel") {
-                        isConfirmingDeletion = false
-                    }
-                    .buttonStyle(.borderless)
-                }
-            } else {
-                Button {
-                    isConfirmingDeletion = true
-                } label: {
-                    Label("Delete Photo", systemImage: "trash")
-                }
-                .labelStyle(.iconOnly)
-                .buttonStyle(.borderless)
-                .help("Delete Photo")
-            }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .task(id: asset.id) {
-            isLoadingLocationName = true
-            async let loadedThumbnail = PhotoLibraryService.thumbnail(
-                for: asset.asset,
-                size: CGSize(width: 128, height: 128)
-            )
-            async let loadedLocationName = LocationNameService.name(for: asset.asset.location)
-
-            thumbnail = await loadedThumbnail
-            locationName = await loadedLocationName
-            isLoadingLocationName = false
         }
     }
 }

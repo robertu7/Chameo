@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 
 @MainActor
@@ -10,6 +11,7 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
     private let popover: NSPopover
     private var localEventMonitor: Any?
     private var globalEventMonitor: Any?
+    private var libraryStatusObservation: AnyCancellable?
 
     init(appState: AppState, cameraService: CameraService, libraryStore: LibraryStore) {
         self.appState = appState
@@ -26,6 +28,14 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
             button.target = self
         }
 
+        observeDailyStatus()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(calendarDayChanged(_:)),
+            name: .NSCalendarDayChanged,
+            object: nil
+        )
+
         popover.behavior = .transient
         popover.delegate = self
         popover.contentSize = NSSize(width: 448, height: 448)
@@ -41,12 +51,23 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
         if popover.isShown {
             close()
         } else {
-            show()
+            switch libraryStore.dailyStatus() {
+            case .captured:
+                showLibraryToday()
+            default:
+                showCamera()
+            }
         }
     }
 
     func showCamera() {
         appState.selectedTab = .camera
+        show()
+    }
+
+    func showLibraryToday() {
+        appState.selectedLibraryDay = Calendar.current.startOfDay(for: Date())
+        appState.selectedTab = .library
         show()
     }
 
@@ -76,6 +97,58 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
         } else {
             cameraService.stop()
         }
+    }
+
+    private func observeDailyStatus() {
+        libraryStatusObservation = Publishers.CombineLatest3(
+            libraryStore.$assets,
+            libraryStore.$hasLoaded,
+            libraryStore.$errorMessage
+        )
+        .sink { [weak self] assets, hasLoaded, errorMessage in
+            let hasUsableSnapshot = (hasLoaded || !assets.isEmpty)
+                && (errorMessage == nil || !assets.isEmpty)
+            let status = DailyCaptureHistory.status(
+                for: Date(),
+                captureDates: assets.compactMap(\.createdAt),
+                isAvailable: hasUsableSnapshot
+            )
+            self?.updateStatusItem(for: status)
+        }
+    }
+
+    @objc private func calendarDayChanged(_ notification: Notification) {
+        updateStatusItem(for: libraryStore.dailyStatus())
+    }
+
+    private func updateStatusItem(for status: DailyCaptureStatus) {
+        guard let button = statusItem.button else {
+            return
+        }
+
+        let symbolName: String
+        let description: String
+
+        switch status {
+        case .captured:
+            symbolName = "camera.fill"
+            description = "Today's Chameo is captured"
+        case .pendingToday:
+            symbolName = "camera"
+            description = "Today's Chameo is not captured yet"
+        case .unknown:
+            symbolName = "questionmark.circle"
+            description = "Today's Chameo status is unavailable"
+        case .missed, .future, .outsideTracking:
+            symbolName = "camera"
+            description = "Take today's Chameo"
+        }
+
+        button.image = NSImage(
+            systemSymbolName: symbolName,
+            accessibilityDescription: description
+        )
+        button.toolTip = description
     }
 
     private func startOutsideClickMonitoring() {

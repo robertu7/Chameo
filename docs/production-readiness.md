@@ -6,7 +6,8 @@ menu-bar app for personal use on macOS 14 or newer.
 ## Automated Gates
 
 - `swift test` covers reminder recurrence and reconciliation, typed preference
-  loading, timelapse day selection, and face-alignment geometry.
+  loading, daily capture status and calendar boundaries, timelapse day
+  selection, and face-alignment geometry.
 - A complete strict-concurrency compiler audit passes while the package remains
   in Swift 5 language mode.
 - `script/build_app.sh --release` builds the release executable, stages the app

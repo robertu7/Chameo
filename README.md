@@ -10,7 +10,8 @@ The app is intentionally small: click the camera icon in the menu bar, take a ph
 
 ## Features
 
-- Menu bar camera icon with a compact popover UI.
+- Menu bar completion indicator with a compact popover UI. It opens Camera while
+  today's Chameo is pending and today's Library entry after capture.
 - Camera tab with mirrored live preview and optional face guide.
 - Capture preview flow:
   - `Take Photo` captures into memory only.
@@ -18,8 +19,10 @@ The app is intentionally small: click the camera icon in the menu bar, take a ph
   - `Retake` discards the in-memory preview without touching Photos.
   - Return performs the primary action; Escape retakes from preview.
 - Optional automatic face alignment produces consistent square photos and falls back to the original when alignment is unavailable.
-- Library tab with thumbnails grouped by local date.
-- Library rows show local date/time and location name when available.
+- Calendar-first Library showing captured, pending, missed, future, and
+  pre-tracking days.
+- Hover, keyboard focus, and selection preview a day's thumbnails, local
+  date/time, and location name when available.
 - Library exports the latest photo from each of the most recent 30 captured days as a square H.264 MP4.
 - Dedicated Photos.app album name configurable in Settings. If Photos already has an album with the same name, Chameo uses that album instead of creating another one. If the album is deleted externally, the next save recreates it.
 - Optional location metadata on saved photos, off by default.
