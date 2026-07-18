@@ -7,6 +7,7 @@ final class CameraSessionController: @unchecked Sendable {
     let session = AVCaptureSession()
     let photoOutput = AVCapturePhotoOutput()
     var onActiveCameraChanged: ((ActiveCameraInfo) -> Void)?
+    var onAvailableCamerasChanged: (([CameraOption]) -> Void)?
 
     private let sessionQueue = DispatchQueue(label: "com.robertu.Chameo.camera.session")
     private let discoverySession = AVCaptureDevice.DiscoverySession(
@@ -17,6 +18,7 @@ final class CameraSessionController: @unchecked Sendable {
     private lazy var preferredCameraObserver = PreferredCameraObserver { [weak self] uniqueID in
         self?.systemPreferredCameraChanged(to: uniqueID)
     }
+    private var deviceDiscoveryObservation: NSKeyValueObservation?
 
     private var isConfigured = false
     private var activeVideoInput: AVCaptureDeviceInput?
@@ -26,6 +28,12 @@ final class CameraSessionController: @unchecked Sendable {
 
     init() {
         _ = preferredCameraObserver
+        deviceDiscoveryObservation = discoverySession.observe(
+            \.devices,
+            options: [.initial, .new]
+        ) { [weak self] _, _ in
+            self?.availableDevicesChanged()
+        }
     }
 
     func start(completion: @escaping @Sendable (Result<Void, Error>) -> Void) {
@@ -36,6 +44,7 @@ final class CameraSessionController: @unchecked Sendable {
                     isConfigured = true
                 }
 
+                publishAvailableCameras()
                 if !session.isRunning {
                     session.startRunning()
                 }
@@ -84,6 +93,30 @@ final class CameraSessionController: @unchecked Sendable {
             hasPendingPreferredCameraChange = false
             pendingPreferredCameraUniqueID = nil
             applyPreferredCamera(uniqueID: pendingUniqueID)
+        }
+    }
+
+    func selectCamera(
+        uniqueID: String,
+        completion: @escaping @Sendable (Result<Void, Error>) -> Void
+    ) {
+        sessionQueue.async { [self] in
+            guard let device = discoverySession.devices.first(
+                where: { $0.uniqueID == uniqueID }
+            ) else {
+                completion(.failure(CameraError.cameraUnavailable))
+                return
+            }
+
+            do {
+                if device.uniqueID != activeVideoInput?.device.uniqueID {
+                    try switchInput(to: device)
+                }
+                AVCaptureDevice.userPreferredCamera = device
+                completion(.success(()))
+            } catch {
+                completion(.failure(error))
+            }
         }
     }
 
@@ -138,7 +171,7 @@ final class CameraSessionController: @unchecked Sendable {
         do {
             try switchInput(to: device)
         } catch {
-            // Keep the existing input when a newly preferred camera cannot be used.
+            // Keep the existing input when an automatic selection cannot be used.
         }
     }
 
@@ -147,6 +180,7 @@ final class CameraSessionController: @unchecked Sendable {
         let candidates = discoveredDevices.map(CameraSelectionCandidate.init)
         let preferredUniqueID = CameraSelectionPolicy.preferredUniqueID(
             systemPreferredUniqueID: AVCaptureDevice.systemPreferredCamera?.uniqueID,
+            userPreferredUniqueID: AVCaptureDevice.userPreferredCamera?.uniqueID,
             candidates: candidates
         )
 
@@ -176,6 +210,31 @@ final class CameraSessionController: @unchecked Sendable {
         publishActiveCamera(device)
     }
 
+    private func availableDevicesChanged() {
+        sessionQueue.async { [self] in
+            publishAvailableCameras()
+
+            guard isConfigured else {
+                return
+            }
+
+            let availableIDs = Set(discoverySession.devices.map(\.uniqueID))
+            if let systemPreferredID = AVCaptureDevice.systemPreferredCamera?.uniqueID,
+               availableIDs.contains(systemPreferredID) {
+                applyPreferredCamera(uniqueID: systemPreferredID)
+            } else if let activeID = activeVideoInput?.device.uniqueID,
+                      !availableIDs.contains(activeID) {
+                applyPreferredCamera(uniqueID: nil)
+            }
+        }
+    }
+
+    private func publishAvailableCameras() {
+        onAvailableCamerasChanged?(
+            discoverySession.devices.map(CameraOption.init)
+        )
+    }
+
     private func publishActiveCamera(_ device: AVCaptureDevice) {
         let info = ActiveCameraInfo(
             uniqueID: device.uniqueID,
@@ -186,6 +245,25 @@ final class CameraSessionController: @unchecked Sendable {
             )
         )
         onActiveCameraChanged?(info)
+    }
+}
+
+struct CameraOption: Equatable, Identifiable, Sendable {
+    let id: String
+    let name: String
+    let isContinuityCamera: Bool
+
+    init(device: AVCaptureDevice) {
+        id = device.uniqueID
+        name = device.localizedName
+        isContinuityCamera = device.isContinuityCamera
+    }
+
+    var displayName: String {
+        guard name.count > 30 else {
+            return name
+        }
+        return "\(name.prefix(27))…"
     }
 }
 
@@ -214,11 +292,17 @@ struct CameraSelectionCandidate: Equatable, Sendable {
 enum CameraSelectionPolicy {
     static func preferredUniqueID(
         systemPreferredUniqueID: String?,
+        userPreferredUniqueID: String?,
         candidates: [CameraSelectionCandidate]
     ) -> String? {
         if let systemPreferredUniqueID,
            candidates.contains(where: { $0.uniqueID == systemPreferredUniqueID }) {
             return systemPreferredUniqueID
+        }
+
+        if let userPreferredUniqueID,
+           candidates.contains(where: { $0.uniqueID == userPreferredUniqueID }) {
+            return userPreferredUniqueID
         }
 
         return candidates.first(where: \.isBuiltIn)?.uniqueID ?? candidates.first?.uniqueID

@@ -1,8 +1,14 @@
 @preconcurrency import AVFoundation
 import Foundation
+import OSLog
 
 @MainActor
 final class CameraService: NSObject, ObservableObject {
+    private static let logger = Logger(
+        subsystem: "com.robertu.Chameo",
+        category: "camera"
+    )
+
     enum Status: Equatable {
         case idle
         case requestingPermission
@@ -10,11 +16,14 @@ final class CameraService: NSObject, ObservableObject {
         case ready
         case unavailable(String)
         case capturing
+        case switchingCamera
     }
 
     @Published private(set) var status: Status = .idle
     @Published private(set) var lastError: String?
+    @Published private(set) var activeCameraID: String?
     @Published private(set) var activeCameraName: String?
+    @Published private(set) var availableCameras: [CameraOption] = []
     @Published private(set) var isPreviewMirrored = true
 
     var session: AVCaptureSession {
@@ -29,8 +38,21 @@ final class CameraService: NSObject, ObservableObject {
         super.init()
         sessionController.onActiveCameraChanged = { [weak self] info in
             Task { @MainActor in
+                Self.logger.info(
+                    "Active camera: \(info.name, privacy: .public), Continuity: \(info.isContinuityCamera, privacy: .public)"
+                )
+                self?.activeCameraID = info.uniqueID
                 self?.activeCameraName = info.name
                 self?.isPreviewMirrored = info.shouldMirrorPreview
+            }
+        }
+        sessionController.onAvailableCamerasChanged = { [weak self] cameras in
+            Task { @MainActor in
+                let names = cameras.map(\.name).joined(separator: ", ")
+                Self.logger.debug(
+                    "Available cameras (\(cameras.count, privacy: .public)): \(names, privacy: .public)"
+                )
+                self?.availableCameras = cameras
             }
         }
     }
@@ -109,6 +131,29 @@ final class CameraService: NSObject, ObservableObject {
         }
     }
 
+    func selectCamera(uniqueID: String) async throws {
+        guard case .ready = status else {
+            throw CameraError.notReady
+        }
+        status = .switchingCamera
+
+        do {
+            try await withCheckedThrowingContinuation { continuation in
+                sessionController.selectCamera(uniqueID: uniqueID) { result in
+                    continuation.resume(with: result)
+                }
+            }
+            status = shouldRunSession ? .ready : .idle
+        } catch {
+            lastError = error.localizedDescription
+            Self.logger.error(
+                "Camera selection failed: \(error.localizedDescription, privacy: .public)"
+            )
+            status = shouldRunSession ? .ready : .idle
+            throw error
+        }
+    }
+
     private func configureAndStart() {
         status = .idle
 
@@ -162,6 +207,7 @@ enum CameraError: LocalizedError {
     case noCamera
     case cannotAddInput
     case cannotAddOutput
+    case cameraUnavailable
     case missingPhotoData
     case notReady
 
@@ -173,6 +219,8 @@ enum CameraError: LocalizedError {
             return "The camera could not be added to the capture session."
         case .cannotAddOutput:
             return "The photo output could not be added to the capture session."
+        case .cameraUnavailable:
+            return "The selected camera is no longer available."
         case .missingPhotoData:
             return "The captured photo did not contain image data."
         case .notReady:

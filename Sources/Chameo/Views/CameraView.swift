@@ -52,6 +52,8 @@ struct CameraView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
 
                     cameraOverlay
+
+                    cameraSelectionOverlay
                 }
                 .frame(width: 392, height: 294)
                 .padding(.top, 14)
@@ -109,9 +111,86 @@ struct CameraView: View {
             ProgressView("Capturing")
                 .padding(12)
                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+        case .switchingCamera:
+            ProgressView("Switching camera")
+                .padding(12)
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
         case .ready:
             EmptyView()
         }
+    }
+
+    @ViewBuilder
+    private var cameraSelectionOverlay: some View {
+        if cameraService.availableCameras.count > 1,
+           let activeCameraName = cameraService.activeCameraName {
+            Menu {
+                ForEach(cameraService.availableCameras) { camera in
+                    Button {
+                        selectCamera(uniqueID: camera.id)
+                    } label: {
+                        HStack {
+                            Label(
+                                camera.displayName,
+                                systemImage: camera.isContinuityCamera
+                                    ? "iphone"
+                                    : "video"
+                            )
+                            if camera.id == cameraService.activeCameraID {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+            } label: {
+                cameraSelectionLabel(
+                    activeCameraName,
+                    isContinuityCamera: activeCameraIsContinuity
+                )
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .accessibilityLabel("Camera")
+            .disabled(!canCapture || isSaving)
+            .padding(8)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+    }
+
+    private var activeCameraIsContinuity: Bool {
+        cameraService.availableCameras.first(
+            where: { $0.id == cameraService.activeCameraID }
+        )?.isContinuityCamera ?? false
+    }
+
+    private func cameraSelectionLabel(
+        _ name: String,
+        isContinuityCamera: Bool
+    ) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: isContinuityCamera ? "iphone" : "video")
+                .foregroundStyle(.secondary)
+
+            Text(name)
+                .lineLimit(1)
+                .truncationMode(.tail)
+
+            Spacer(minLength: 0)
+
+            Image(systemName: "chevron.down")
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
+        }
+        .font(.caption)
+        .foregroundStyle(.primary)
+        .padding(.horizontal, 10)
+        .frame(width: 220, height: 28)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 7))
+        .overlay {
+            RoundedRectangle(cornerRadius: 7)
+                .stroke(.white.opacity(0.18), lineWidth: 0.5)
+        }
+        .contentShape(RoundedRectangle(cornerRadius: 7))
     }
 
     private var canCapture: Bool {
@@ -139,6 +218,24 @@ struct CameraView: View {
         isSaving = true
         Task {
             await takeChameo()
+        }
+    }
+
+    private func selectCamera(uniqueID: String) {
+        guard uniqueID != cameraService.activeCameraID else {
+            return
+        }
+
+        Task {
+            do {
+                try await cameraService.selectCamera(uniqueID: uniqueID)
+                let cameraName = cameraService.availableCameras.first(
+                    where: { $0.id == uniqueID }
+                )?.name ?? "selected camera"
+                statusMessage = "Using \(cameraName)"
+            } catch {
+                statusMessage = error.localizedDescription
+            }
         }
     }
 

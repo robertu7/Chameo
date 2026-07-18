@@ -44,6 +44,9 @@ Camera hardware starts only when the Camera tab is visible. It stops when the us
   - Configures `AVCaptureSession` with the system-preferred camera.
   - Supports built-in, Continuity, and external cameras with automatic fallback
     and defers preferred-camera changes until an active capture completes.
+  - Publishes the live camera list and persists explicit user selections through
+    AVFoundation's user-preferred camera.
+  - Logs available cameras, active-camera changes, and selection failures.
   - Mirrors built-in and external camera previews while leaving Continuity
     Camera previews unmirrored.
   - Captures still photos without preview mirroring.
@@ -95,6 +98,7 @@ Camera hardware starts only when the Camera tab is visible. It stops when the us
 
 - `CameraView`
   - Live camera preview.
+  - Compact active-camera badge and a camera menu when multiple devices exist.
   - On-device single-photo quality evaluation with advisory retake guidance.
   - Capture-to-memory preview.
   - `Save to Photos` and `Retake` flow.

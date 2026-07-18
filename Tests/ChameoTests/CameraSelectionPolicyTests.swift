@@ -11,6 +11,7 @@ final class CameraSelectionPolicyTests: XCTestCase {
         XCTAssertEqual(
             CameraSelectionPolicy.preferredUniqueID(
                 systemPreferredUniqueID: "continuity",
+                userPreferredUniqueID: nil,
                 candidates: candidates
             ),
             "continuity"
@@ -26,6 +27,7 @@ final class CameraSelectionPolicyTests: XCTestCase {
         XCTAssertEqual(
             CameraSelectionPolicy.preferredUniqueID(
                 systemPreferredUniqueID: "disconnected",
+                userPreferredUniqueID: nil,
                 candidates: candidates
             ),
             "built-in"
@@ -41,6 +43,7 @@ final class CameraSelectionPolicyTests: XCTestCase {
         XCTAssertEqual(
             CameraSelectionPolicy.preferredUniqueID(
                 systemPreferredUniqueID: nil,
+                userPreferredUniqueID: nil,
                 candidates: candidates
             ),
             "external"
@@ -51,8 +54,41 @@ final class CameraSelectionPolicyTests: XCTestCase {
         XCTAssertNil(
             CameraSelectionPolicy.preferredUniqueID(
                 systemPreferredUniqueID: nil,
+                userPreferredUniqueID: nil,
                 candidates: []
             )
+        )
+    }
+
+    func testUserPreferredCameraWinsWhenSystemPreferenceIsUnavailable() {
+        let candidates = [
+            CameraSelectionCandidate(uniqueID: "built-in", isBuiltIn: true),
+            CameraSelectionCandidate(uniqueID: "continuity", isBuiltIn: false),
+        ]
+
+        XCTAssertEqual(
+            CameraSelectionPolicy.preferredUniqueID(
+                systemPreferredUniqueID: nil,
+                userPreferredUniqueID: "continuity",
+                candidates: candidates
+            ),
+            "continuity"
+        )
+    }
+
+    func testBuiltInFallbackWinsWhenStoredUserPreferenceIsDisconnected() {
+        let candidates = [
+            CameraSelectionCandidate(uniqueID: "external", isBuiltIn: false),
+            CameraSelectionCandidate(uniqueID: "built-in", isBuiltIn: true),
+        ]
+
+        XCTAssertEqual(
+            CameraSelectionPolicy.preferredUniqueID(
+                systemPreferredUniqueID: nil,
+                userPreferredUniqueID: "disconnected",
+                candidates: candidates
+            ),
+            "built-in"
         )
     }
 
