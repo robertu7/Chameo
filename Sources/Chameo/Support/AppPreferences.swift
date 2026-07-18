@@ -1,6 +1,7 @@
 import Foundation
 
 enum AppPreferenceKey {
+    static let acceptedFaceCaptureQualityScores = "acceptedFaceCaptureQualityScores"
     static let albumName = "albumName"
     static let autoAlignPhotos = "autoAlignPhotos"
     static let lastSelfieDate = "lastSelfieDate"

@@ -14,13 +14,6 @@ expanding the feature set.
 
 ### Capture Experience
 
-- Support the system- and user-preferred cameras, including Continuity Camera,
-  while preserving a reliable built-in-camera fallback. Offer camera selection
-  only if automatic selection proves insufficient.
-- Use Vision face-capture quality to identify captures affected by blur,
-  lighting, focus, occlusion, pose, or expression. Prototype a short burst that
-  selects the best frame instead of rejecting a single photo against an
-  arbitrary quality threshold.
 - Explore subtle live framing guidance based on face position, size, eye-line,
   and stability. Consider an optional hands-free countdown after the face
   remains well framed and stable.
@@ -78,5 +71,9 @@ owner's own Macs:
   keyboard actions.
 - Added optional automatic face alignment with square output and fallback to the
   original photo when alignment fails.
+- Added system-preferred camera support with Continuity Camera and reliable
+  built-in-camera fallback.
+- Added on-device Vision face-capture quality scoring with advisory retake
+  guidance calibrated from the user's accepted photos.
 - Automatically recreate the configured Photos album on the next save if it was
   deleted externally.

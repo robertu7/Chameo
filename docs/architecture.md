@@ -55,8 +55,13 @@ Camera hardware starts only when the Camera tab is visible. It stops when the us
 
 - `FaceCaptureQualityService`
   - Evaluates the largest detected face with Vision capture-quality revision 3.
-  - Runs asynchronously after capture for local diagnostics only.
-  - Does not reject, replace, delay, or otherwise change the captured photo.
+  - Scores each single capture before preview and logs local diagnostics.
+
+- `CaptureQualityHistoryStore`
+  - Retains the 30 most recent scores for successfully saved photos.
+  - Establishes a per-user baseline after 10 accepted captures.
+  - Recommends a retake for no-face captures or scores clearly below that
+    baseline, while always allowing the user to keep the photo.
 
 - `PhotoLibraryService`
   - Requests Photos read/write access.
@@ -90,6 +95,7 @@ Camera hardware starts only when the Camera tab is visible. It stops when the us
 
 - `CameraView`
   - Live camera preview.
+  - On-device single-photo quality evaluation with advisory retake guidance.
   - Capture-to-memory preview.
   - `Save to Photos` and `Retake` flow.
   - Contextual Return and Escape keyboard actions.

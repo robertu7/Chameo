@@ -147,15 +147,36 @@ struct CameraView: View {
 
         do {
             let data = try await cameraService.capturePhoto(mirrored: false)
-            recordCaptureQuality(for: data)
+            statusMessage = "Checking photo…"
+            let qualityEvaluation = await FaceCaptureQualityService.evaluation(from: data)
+            logCaptureQuality(qualityEvaluation)
+            let qualitySuggestion = CaptureQualityPolicy.suggestion(
+                for: qualityEvaluation,
+                acceptedScores: CaptureQualityHistoryStore.acceptedScores()
+            )
+
             if autoAlignPhotos {
                 statusMessage = "Aligning photo…"
                 let result = await FaceAlignmentService.alignmentResult(from: data)
-                capturedPreview = CapturedPreview(data: result.data)
-                statusMessage = result.message ?? "Preview ready. Keep or Cancel."
+                capturedPreview = CapturedPreview(
+                    data: result.data,
+                    qualityEvaluation: qualityEvaluation,
+                    qualitySuggestion: qualitySuggestion
+                )
+                statusMessage = previewStatusMessage(
+                    alignmentMessage: result.message,
+                    qualitySuggestion: qualitySuggestion
+                )
             } else {
-                capturedPreview = CapturedPreview(data: data)
-                statusMessage = "Preview ready. Keep or Cancel."
+                capturedPreview = CapturedPreview(
+                    data: data,
+                    qualityEvaluation: qualityEvaluation,
+                    qualitySuggestion: qualitySuggestion
+                )
+                statusMessage = previewStatusMessage(
+                    alignmentMessage: nil,
+                    qualitySuggestion: qualitySuggestion
+                )
             }
         } catch {
             statusMessage = error.localizedDescription
@@ -164,23 +185,33 @@ struct CameraView: View {
         isSaving = false
     }
 
-    private func recordCaptureQuality(for data: Data) {
-        Task {
-            let evaluation = await FaceCaptureQualityService.evaluation(from: data)
-            switch evaluation {
-            case .scored(let score):
-                Self.captureQualityLogger.debug(
-                    "Vision face capture quality: \(score, privacy: .public)"
-                )
-            case .noFace:
-                Self.captureQualityLogger.debug("Vision capture quality found no face")
-            case .scoreUnavailable:
-                Self.captureQualityLogger.debug("Vision capture quality returned no score")
-            case .unreadableImage:
-                Self.captureQualityLogger.debug("Vision capture quality could not read the image")
-            case .analysisFailed:
-                Self.captureQualityLogger.debug("Vision capture quality analysis failed")
-            }
+    private func previewStatusMessage(
+        alignmentMessage: String?,
+        qualitySuggestion: CaptureQualitySuggestion?
+    ) -> String {
+        if let alignmentMessage {
+            return alignmentMessage
+        }
+        if qualitySuggestion != nil {
+            return "Preview ready. Retake recommended or keep anyway."
+        }
+        return "Preview ready. Keep or Retake."
+    }
+
+    private func logCaptureQuality(_ evaluation: FaceCaptureQualityEvaluation) {
+        switch evaluation {
+        case .scored(let score):
+            Self.captureQualityLogger.debug(
+                "Vision face capture quality: \(score, privacy: .public)"
+            )
+        case .noFace:
+            Self.captureQualityLogger.debug("Vision capture quality found no face")
+        case .scoreUnavailable:
+            Self.captureQualityLogger.debug("Vision capture quality returned no score")
+        case .unreadableImage:
+            Self.captureQualityLogger.debug("Vision capture quality could not read the image")
+        case .analysisFailed:
+            Self.captureQualityLogger.debug("Vision capture quality analysis failed")
         }
     }
 
@@ -217,6 +248,9 @@ struct CameraView: View {
                 albumName: albumName,
                 location: location
             )
+            CaptureQualityHistoryStore.recordAccepted(
+                capturedPreview.qualityEvaluation
+            )
             await ReminderService.recordSelfieTaken()
             photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
             await libraryStore.reload(albumName: albumName)
@@ -244,10 +278,18 @@ private struct CapturedPreview: Identifiable {
     let id = UUID()
     let data: Data
     let image: NSImage?
+    let qualityEvaluation: FaceCaptureQualityEvaluation
+    let qualitySuggestion: CaptureQualitySuggestion?
 
-    init(data: Data) {
+    init(
+        data: Data,
+        qualityEvaluation: FaceCaptureQualityEvaluation,
+        qualitySuggestion: CaptureQualitySuggestion?
+    ) {
         self.data = data
         self.image = NSImage(data: data)
+        self.qualityEvaluation = qualityEvaluation
+        self.qualitySuggestion = qualitySuggestion
     }
 }
 
@@ -268,6 +310,9 @@ private struct CapturedPreviewView: View {
                     .frame(width: 392, height: 294)
                     .background(.black)
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .overlay(alignment: .bottom) {
+                        qualitySuggestionBanner
+                    }
             } else {
                 Rectangle()
                     .fill(.quaternary)
@@ -278,19 +323,13 @@ private struct CapturedPreviewView: View {
                     }
                     .frame(width: 392, height: 294)
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .overlay(alignment: .bottom) {
+                        qualitySuggestionBanner
+                    }
             }
 
             HStack {
-                Button("Retake", role: .destructive, action: onRetake)
-                    .keyboardShortcut(.cancelAction)
-                    .disabled(isSaving)
-
-                Spacer()
-
-                Button(isSaving ? "Saving…" : "Save to Photos", action: onKeep)
-                    .buttonStyle(.borderedProminent)
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(isSaving)
+                actionButtons
             }
             .frame(width: 392)
 
@@ -312,6 +351,55 @@ private struct CapturedPreviewView: View {
         }
         .frame(width: 420, height: 380, alignment: .top)
         .padding(.top, 14)
+    }
+
+    @ViewBuilder
+    private var qualitySuggestionBanner: some View {
+        if let suggestion = preview.qualitySuggestion {
+            Label(suggestion.message, systemImage: "exclamationmark.triangle.fill")
+                .font(.caption)
+                .foregroundStyle(.primary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(.regularMaterial)
+                .accessibilityLabel("Retake suggested. \(suggestion.message)")
+        }
+    }
+
+    private var keepButtonTitle: String {
+        if isSaving {
+            return "Saving…"
+        }
+        return preview.qualitySuggestion == nil ? "Save to Photos" : "Keep Anyway"
+    }
+
+    @ViewBuilder
+    private var actionButtons: some View {
+        if preview.qualitySuggestion != nil {
+            Button("Retake", role: .destructive, action: onRetake)
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.cancelAction)
+                .disabled(isSaving)
+
+            Spacer()
+
+            Button(keepButtonTitle, action: onKeep)
+                .buttonStyle(.bordered)
+                .keyboardShortcut("s", modifiers: .command)
+                .disabled(isSaving)
+        } else {
+            Button("Retake", role: .destructive, action: onRetake)
+                .keyboardShortcut(.cancelAction)
+                .disabled(isSaving)
+
+            Spacer()
+
+            Button(keepButtonTitle, action: onKeep)
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.defaultAction)
+                .disabled(isSaving)
+        }
     }
 }
 
