@@ -41,13 +41,13 @@ struct CalendarLibraryView: View {
     }
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
             calendarHeader
             weekdayHeader
 
             LazyVGrid(
-                columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7),
-                spacing: 4
+                columns: Array(repeating: GridItem(.flexible(), spacing: 3), count: 7),
+                spacing: 3
             ) {
                 ForEach(dates, id: \.self) { date in
                     let status = DailyCaptureHistory.status(
@@ -65,6 +65,7 @@ struct CalendarLibraryView: View {
                             calendar: calendar
                         ),
                         isSelected: calendar.isDate(date, inSameDayAs: selectedDay ?? .distantPast),
+                        isFocused: calendar.isDate(date, inSameDayAs: focusedDay ?? .distantPast),
                         focusedDay: $focusedDay,
                         onSelect: {
                             select(date)
@@ -210,68 +211,80 @@ private struct CalendarDayCell: View {
     let status: DailyCaptureStatus
     let isInDisplayedMonth: Bool
     let isSelected: Bool
+    let isFocused: Bool
     let focusedDay: FocusState<Date?>.Binding
     let onSelect: () -> Void
     let onHover: (Bool) -> Void
 
+    @State private var isHovered = false
+
     var body: some View {
         Button(action: onSelect) {
             ZStack {
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .fill(isSelected ? Color.accentColor.opacity(0.16) : Color.clear)
+                Circle()
+                    .fill(backgroundColor)
+                    .frame(width: 29, height: 29)
 
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .stroke(
-                        isSelected ? Color.accentColor : borderColor,
-                        lineWidth: isSelected ? 1.5 : 1
-                    )
+                Circle()
+                    .stroke(isFocused ? Color.accentColor : Color.clear, lineWidth: 1)
+                    .frame(width: 29, height: 29)
 
-                Text(date.formatted(.dateTime.day()))
-                    .font(.caption)
-                    .fontWeight(Calendar.current.isDateInToday(date) ? .semibold : .regular)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                    .padding(5)
+                VStack(spacing: 1) {
+                    Text(date.formatted(.dateTime.day()))
+                        .font(.caption)
+                        .fontWeight(Calendar.current.isDateInToday(date) ? .semibold : .regular)
 
-                statusIndicator
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                    .padding(5)
+                    CalendarStatusDot(status: status)
+                }
             }
-            .frame(height: 37)
-            .contentShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .frame(maxWidth: .infinity)
+            .frame(height: 29)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .focused(focusedDay, equals: date)
-        .onHover(perform: onHover)
+        .onHover { isHovering in
+            isHovered = isHovering
+            onHover(isHovering)
+        }
         .opacity(isInDisplayedMonth ? 1 : 0.35)
+        .help(status.accessibilityDescription)
         .accessibilityLabel(date.formatted(date: .complete, time: .omitted))
         .accessibilityValue(status.accessibilityDescription)
     }
 
-    @ViewBuilder
-    private var statusIndicator: some View {
-        switch status {
-        case .captured:
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(.green)
-        case .pendingToday:
-            Image(systemName: "camera.circle")
-                .foregroundStyle(Color.accentColor)
-        case .missed:
-            Image(systemName: "minus.circle")
-                .foregroundStyle(.tertiary)
-        case .unknown:
-            Image(systemName: "questionmark.circle")
-                .foregroundStyle(.secondary)
-        case .future, .outsideTracking:
-            EmptyView()
+    private var backgroundColor: Color {
+        if isSelected {
+            return Color.accentColor.opacity(0.16)
         }
+        if isHovered {
+            return Color.secondary.opacity(0.08)
+        }
+        return .clear
+    }
+}
+
+private struct CalendarStatusDot: View {
+    let status: DailyCaptureStatus
+
+    var body: some View {
+        Circle()
+            .fill(color ?? .clear)
+            .frame(width: 5, height: 5)
+            .accessibilityHidden(true)
     }
 
-    private var borderColor: Color {
-        if Calendar.current.isDateInToday(date) {
-            return Color.accentColor.opacity(0.65)
+    private var color: Color? {
+        switch status {
+        case .captured:
+            return .green
+        case .pendingToday:
+            return .orange
+        case .missed:
+            return Color(nsColor: .secondaryLabelColor)
+        case .future, .outsideTracking, .unknown:
+            return nil
         }
-        return Color.secondary.opacity(0.18)
     }
 }
 
@@ -292,43 +305,11 @@ private struct CalendarDayPreview: View {
     }
 
     var body: some View {
-        HStack(spacing: 10) {
-            if assets.isEmpty {
-                emptyPreview
+        Group {
+            if let selectedAsset {
+                populatedPreview(selectedAsset)
             } else {
-                assetStrip
-
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(date.formatted(date: .long, time: .omitted))
-                        .font(.callout)
-                        .fontWeight(.medium)
-                        .lineLimit(1)
-
-                    if let selectedAsset {
-                        Text(selectedAsset.createdAt.map(DateFormatters.libraryDate.string(from:)) ?? "Unknown Date")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
-
-                    HStack(spacing: 5) {
-                        if isLoadingLocationName {
-                            ProgressView()
-                                .controlSize(.small)
-                                .scaleEffect(0.65)
-                                .frame(width: 12, height: 12)
-                        }
-
-                        Text(locationText)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-                deleteControls
+                emptyPreview
             }
         }
         .task(id: selectedAsset?.id) {
@@ -350,6 +331,61 @@ private struct CalendarDayPreview: View {
             self.selectedAssetID = assetIDs.first
             isConfirmingDeletion = false
         }
+    }
+
+    private func populatedPreview(_ selectedAsset: ChameoAsset) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            CalendarAssetImage(asset: selectedAsset, size: 96)
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    Text(date.formatted(date: .long, time: .omitted))
+                        .font(.callout)
+                        .fontWeight(.semibold)
+                        .lineLimit(1)
+
+                    Spacer(minLength: 4)
+
+                    deleteControls
+                }
+
+                HStack(spacing: 5) {
+                    CalendarStatusDot(status: status)
+
+                    Text(status.accessibilityDescription)
+
+                    Spacer()
+
+                    Text(selectedAsset.createdAt?.formatted(date: .omitted, time: .shortened) ?? "Unknown Time")
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+                HStack(spacing: 5) {
+                    if isLoadingLocationName {
+                        ProgressView()
+                            .controlSize(.small)
+                            .scaleEffect(0.65)
+                            .frame(width: 12, height: 12)
+                    } else {
+                        Image(systemName: "location")
+                            .accessibilityHidden(true)
+                    }
+
+                    Text(locationText)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+                if assets.count > 1 {
+                    assetStrip
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .frame(maxHeight: .infinity, alignment: .center)
     }
 
     private var emptyPreview: some View {
@@ -381,11 +417,12 @@ private struct CalendarDayPreview: View {
 
     private var assetStrip: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 5) {
+            HStack(spacing: 4) {
                 ForEach(assets) { asset in
                     CalendarAssetThumbnail(
                         asset: asset,
-                        isSelected: selectedAsset?.id == asset.id
+                        isSelected: selectedAsset?.id == asset.id,
+                        size: 28
                     ) {
                         selectedAssetID = asset.id
                         isConfirmingDeletion = false
@@ -393,13 +430,14 @@ private struct CalendarDayPreview: View {
                 }
             }
         }
-        .frame(width: assets.count > 1 ? 116 : 54, height: 54)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(height: 30)
     }
 
     @ViewBuilder
     private var deleteControls: some View {
         if isConfirmingDeletion {
-            VStack(spacing: 4) {
+            HStack(spacing: 6) {
                 Button("Delete", role: .destructive) {
                     guard let selectedAsset else { return }
                     isConfirmingDeletion = false
@@ -462,41 +500,51 @@ private struct CalendarDayPreview: View {
     }
 }
 
-private struct CalendarAssetThumbnail: View {
+private struct CalendarAssetImage: View {
     let asset: ChameoAsset
-    let isSelected: Bool
-    let onSelect: () -> Void
+    let size: CGFloat
 
     @State private var thumbnail: NSImage?
 
     var body: some View {
-        Button(action: onSelect) {
-            Group {
-                if let thumbnail {
-                    Image(nsImage: thumbnail)
-                        .resizable()
-                        .scaledToFill()
-                } else {
-                    Image(systemName: "photo")
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-            }
-            .frame(width: 52, height: 52)
-            .background(.background)
-            .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: 7, style: .continuous)
-                    .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
+        Group {
+            if let thumbnail {
+                Image(nsImage: thumbnail)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                Image(systemName: "photo")
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(asset.createdAt.map(DateFormatters.libraryDate.string(from:)) ?? "Chameo")
+        .frame(width: size, height: size)
+        .background(Color.secondary.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .task(id: asset.id) {
             thumbnail = await PhotoLibraryService.thumbnail(
                 for: asset.asset,
-                size: CGSize(width: 128, height: 128)
+                size: CGSize(width: size * 2, height: size * 2)
             )
         }
+    }
+}
+
+private struct CalendarAssetThumbnail: View {
+    let asset: ChameoAsset
+    let isSelected: Bool
+    let size: CGFloat
+    let onSelect: () -> Void
+
+    var body: some View {
+        Button(action: onSelect) {
+            CalendarAssetImage(asset: asset, size: size)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
+                }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(asset.createdAt.map(DateFormatters.libraryDate.string(from:)) ?? "Chameo")
     }
 }

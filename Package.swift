@@ -13,7 +13,10 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "Chameo",
-            path: "Sources/Chameo"
+            path: "Sources/Chameo",
+            resources: [
+                .copy("Resources/MenuBarIcons")
+            ]
         ),
         .testTarget(
             name: "ChameoTests",

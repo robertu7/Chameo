@@ -71,6 +71,7 @@ mkdir -p "$APP_MACOS" "$APP_RESOURCES"
 cp "$BUILD_BINARY" "$APP_BINARY"
 chmod +x "$APP_BINARY"
 cp "$APP_ICON" "$APP_RESOURCES/AppIcon.icns"
+cp -R "$ROOT_DIR/Sources/Chameo/Resources/MenuBarIcons" "$APP_RESOURCES/MenuBarIcons"
 
 cat >"$INFO_PLIST" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>

@@ -8,6 +8,8 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
     private let cameraService: CameraService
     private let libraryStore: LibraryStore
     private let statusItem: NSStatusItem
+    private let capturedStatusImage = StatusMenuIcon.image(named: "eye-captured")
+    private let nonCapturedStatusImage = StatusMenuIcon.image(named: "eye")
     private let popover: NSPopover
     private var localEventMonitor: Any?
     private var globalEventMonitor: Any?
@@ -23,7 +25,7 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
         super.init()
 
         if let button = statusItem.button {
-            button.image = NSImage(systemSymbolName: "camera", accessibilityDescription: "Chameo")
+            button.image = nonCapturedStatusImage
             button.action = #selector(togglePopover(_:))
             button.target = self
         }
@@ -126,28 +128,24 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
             return
         }
 
-        let symbolName: String
         let description: String
 
         switch status {
         case .captured:
-            symbolName = "camera.fill"
+            button.image = capturedStatusImage
             description = "Today's Chameo is captured"
         case .pendingToday:
-            symbolName = "camera"
+            button.image = nonCapturedStatusImage
             description = "Today's Chameo is not captured yet"
         case .unknown:
-            symbolName = "questionmark.circle"
+            button.image = nonCapturedStatusImage
             description = "Today's Chameo status is unavailable"
         case .missed, .future, .outsideTracking:
-            symbolName = "camera"
+            button.image = nonCapturedStatusImage
             description = "Take today's Chameo"
         }
 
-        button.image = NSImage(
-            systemSymbolName: symbolName,
-            accessibilityDescription: description
-        )
+        button.setAccessibilityLabel(description)
         button.toolTip = description
     }
 
@@ -194,5 +192,33 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
         }
 
         close()
+    }
+}
+
+private enum StatusMenuIcon {
+    static func image(named name: String) -> NSImage {
+        let resourceURL = Bundle.main.url(
+            forResource: name,
+            withExtension: "pdf",
+            subdirectory: "MenuBarIcons"
+        ) ?? Bundle.module.url(
+            forResource: name,
+            withExtension: "pdf",
+            subdirectory: "MenuBarIcons"
+        )
+
+        if let resourceURL,
+           let image = NSImage(contentsOf: resourceURL) {
+            image.size = NSSize(width: 18, height: 18)
+            image.isTemplate = false
+            return image
+        }
+
+        let fallback = NSImage(
+            systemSymbolName: "eye",
+            accessibilityDescription: "Chameo"
+        ) ?? NSImage(size: NSSize(width: 18, height: 18))
+        fallback.isTemplate = true
+        return fallback
     }
 }
