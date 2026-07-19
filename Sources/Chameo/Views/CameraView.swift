@@ -24,7 +24,7 @@ struct CameraView: View {
     @State private var locationPermissionDenied = false
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: ChameoLayout.sectionSpacing) {
             if let capturedPreview {
                 CapturedPreviewView(
                     preview: capturedPreview,
@@ -49,13 +49,13 @@ struct CameraView: View {
                                 CameraGuideView()
                             }
                         }
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .clipShape(RoundedRectangle(cornerRadius: ChameoLayout.cornerRadius))
 
                     cameraOverlay
 
                     cameraSelectionOverlay
                 }
-                .frame(width: 392, height: livePreviewHeight)
+                .frame(width: ChameoLayout.previewWidth, height: livePreviewHeight)
 
                 Button {
                     beginCapture()
@@ -85,7 +85,11 @@ struct CameraView: View {
                 }
             }
         }
-        .frame(width: 420, height: 380, alignment: .top)
+        .frame(
+            width: ChameoLayout.contentWidth,
+            height: ChameoLayout.contentHeight,
+            alignment: .top
+        )
         .task {
             photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
         }
@@ -190,17 +194,17 @@ struct CameraView: View {
             Spacer(minLength: 0)
 
             Image(systemName: "chevron.down")
-                .font(.caption2.weight(.semibold))
+                .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
         }
         .font(.caption)
         .foregroundStyle(.primary)
         .padding(.horizontal, 10)
-        .frame(width: 220, height: 28)
+        .frame(width: 220, height: ChameoLayout.compactControlSize)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 7))
         .overlay {
             RoundedRectangle(cornerRadius: 7)
-                .stroke(.white.opacity(0.18), lineWidth: 0.5)
+                .stroke(.primary.opacity(0.12), lineWidth: 0.5)
         }
         .contentShape(RoundedRectangle(cornerRadius: 7))
     }

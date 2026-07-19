@@ -44,7 +44,7 @@ struct CalendarLibraryView: View {
     }
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: ChameoLayout.compactSpacing) {
             calendarHeader
             weekdayHeader
                 .padding(.top, 12)
@@ -93,26 +93,17 @@ struct CalendarLibraryView: View {
             )
             .frame(height: 88)
         }
-        .padding(12)
+        .padding(ChameoLayout.sectionSpacing)
         .background(
             Color.white,
-            in: RoundedRectangle(cornerRadius: 8, style: .continuous)
+            in: RoundedRectangle(cornerRadius: ChameoLayout.cornerRadius)
         )
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: ChameoLayout.cornerRadius)
                 .stroke(Color.black.opacity(0.08), lineWidth: 1)
         }
-        .padding(.horizontal, 14)
-        .padding(.bottom, 12)
-        .overlay(alignment: .topTrailing) {
-            if isRefreshing {
-                ProgressView()
-                    .controlSize(.small)
-                    .padding(.top, 17)
-                    .padding(.trailing, 112)
-                    .accessibilityLabel("Refreshing Library")
-            }
-        }
+        .padding(.horizontal, ChameoLayout.outerInset)
+        .padding(.bottom, ChameoLayout.sectionSpacing)
         .task {
             let initialDay = selectedDay ?? calendar.startOfDay(for: Date())
             selectedDay = initialDay
@@ -125,8 +116,8 @@ struct CalendarLibraryView: View {
     }
 
     private var calendarHeader: some View {
-        HStack(spacing: 6) {
-            HStack(spacing: 12) {
+        HStack(spacing: ChameoLayout.compactSpacing) {
+            HStack(spacing: 0) {
                 Button {
                     changeMonth(by: -1)
                 } label: {
@@ -134,6 +125,11 @@ struct CalendarLibraryView: View {
                 }
                 .labelStyle(.iconOnly)
                 .buttonStyle(.borderless)
+                .frame(
+                    width: ChameoLayout.compactControlSize,
+                    height: ChameoLayout.compactControlSize
+                )
+                .contentShape(Rectangle())
                 .help("Previous Month")
 
                 Button {
@@ -143,12 +139,24 @@ struct CalendarLibraryView: View {
                 }
                 .labelStyle(.iconOnly)
                 .buttonStyle(.borderless)
+                .frame(
+                    width: ChameoLayout.compactControlSize,
+                    height: ChameoLayout.compactControlSize
+                )
+                .contentShape(Rectangle())
                 .help("Next Month")
             }
-            .padding(.trailing, 4)
 
-            Text(displayedMonth.formatted(.dateTime.month(.wide).year()))
-                .font(.headline)
+            HStack(spacing: ChameoLayout.compactSpacing) {
+                Text(displayedMonth.formatted(.dateTime.month(.wide).year()))
+                    .font(.headline)
+
+                if isRefreshing {
+                    ProgressView()
+                        .controlSize(.small)
+                        .accessibilityLabel("Refreshing Library")
+                }
+            }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             Button("Today") {
@@ -178,8 +186,8 @@ struct CalendarLibraryView: View {
         ) {
             ForEach(weekdaySymbols, id: \.self) { symbol in
                 Text(symbol)
-                    .font(.caption2)
-                    .fontWeight(.semibold)
+                    .font(.caption)
+                    .bold()
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity)
             }
@@ -276,21 +284,32 @@ private struct CalendarStatusDot: View {
 
     var body: some View {
         Circle()
-            .fill(color ?? .clear)
-            .frame(width: 5, height: 5)
+            .fill(fillColor)
+            .overlay {
+                Circle()
+                    .stroke(strokeColor, lineWidth: status == .missed ? 1 : 0)
+            }
+            .frame(width: 6, height: 6)
             .accessibilityHidden(true)
     }
 
-    private var color: Color? {
+    private var fillColor: Color {
         switch status {
         case .captured:
             return .green
         case .pendingToday:
             return .orange
+        case .missed, .future, .outsideTracking, .unknown:
+            return .clear
+        }
+    }
+
+    private var strokeColor: Color {
+        switch status {
         case .missed:
             return Color(nsColor: .secondaryLabelColor)
-        case .future, .outsideTracking, .unknown:
-            return nil
+        case .captured, .pendingToday, .future, .outsideTracking, .unknown:
+            return .clear
         }
     }
 }
@@ -470,6 +489,11 @@ private struct CalendarDayPreview: View {
             }
             .labelStyle(.iconOnly)
             .buttonStyle(.borderless)
+            .frame(
+                width: ChameoLayout.compactControlSize,
+                height: ChameoLayout.compactControlSize
+            )
+            .contentShape(Rectangle())
             .help("Delete Photo")
         }
     }

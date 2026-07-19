@@ -18,7 +18,7 @@ struct ContentView: View {
             TabPicker(selection: $appState.selectedTab)
                 .frame(height: 24)
                 .fixedSize(horizontal: true, vertical: false)
-                .padding([.top, .horizontal], 14)
+                .padding([.top, .horizontal], ChameoLayout.outerInset)
                 .padding(.bottom, 28)
 
             Group {
@@ -34,7 +34,10 @@ struct ContentView: View {
                     LibraryView(albumName: albumName)
                 }
             }
-            .frame(width: 420, height: 380)
+            .frame(
+                width: ChameoLayout.contentWidth,
+                height: ChameoLayout.contentHeight
+            )
 
             Divider()
 
@@ -46,6 +49,10 @@ struct ContentView: View {
                     Label("Settings", systemImage: "gearshape")
                 }
                 .labelStyle(.iconOnly)
+                .frame(
+                    width: ChameoLayout.compactControlSize,
+                    height: ChameoLayout.compactControlSize
+                )
                 .help("Settings")
 
                 Spacer()
@@ -67,11 +74,15 @@ struct ContentView: View {
                     Label("Quit", systemImage: "power")
                 }
                 .labelStyle(.iconOnly)
+                .frame(
+                    width: ChameoLayout.compactControlSize,
+                    height: ChameoLayout.compactControlSize
+                )
                 .help("Quit Chameo")
             }
-            .padding(12)
+            .padding(ChameoLayout.sectionSpacing)
         }
-        .frame(width: 448)
+        .frame(width: ChameoLayout.popoverWidth)
         .task {
             syncCameraLifecycle()
             await reloadLibraryIfAuthorized(albumName: albumName)
