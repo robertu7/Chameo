@@ -15,15 +15,11 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Picker("View", selection: $appState.selectedTab) {
-                ForEach(ChameoTab.allCases) { tab in
-                    Label(tab.title, systemImage: tab.systemImage).tag(tab)
-                }
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .padding([.top, .horizontal], 14)
-            .padding(.bottom, 10)
+            TabPicker(selection: $appState.selectedTab)
+                .frame(height: 24)
+                .fixedSize(horizontal: true, vertical: false)
+                .padding([.top, .horizontal], 14)
+                .padding(.bottom, 28)
 
             Group {
                 switch appState.selectedTab {

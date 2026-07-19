@@ -55,8 +55,7 @@ struct CameraView: View {
 
                     cameraSelectionOverlay
                 }
-                .frame(width: 392, height: 294)
-                .padding(.top, 14)
+                .frame(width: 392, height: livePreviewHeight)
 
                 Button {
                     beginCapture()
@@ -90,6 +89,19 @@ struct CameraView: View {
         .task {
             photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
         }
+    }
+
+    private var livePreviewHeight: CGFloat {
+        var height: CGFloat = 322
+
+        if case .unauthorized = cameraService.status {
+            height -= 28
+        }
+        if saveLocation && locationPermissionDenied {
+            height -= 28
+        }
+
+        return height
     }
 
     @ViewBuilder
@@ -404,7 +416,7 @@ private struct CapturedPreviewView: View {
                 Image(nsImage: image)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 392, height: 294)
+                    .frame(width: 392, height: imageHeight)
                     .background(.black)
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     .overlay(alignment: .bottom) {
@@ -418,7 +430,7 @@ private struct CapturedPreviewView: View {
                             .font(.largeTitle)
                             .foregroundStyle(.secondary)
                     }
-                    .frame(width: 392, height: 294)
+                    .frame(width: 392, height: imageHeight)
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     .overlay(alignment: .bottom) {
                         qualitySuggestionBanner
@@ -447,7 +459,19 @@ private struct CapturedPreviewView: View {
             }
         }
         .frame(width: 420, height: 380, alignment: .top)
-        .padding(.top, 14)
+    }
+
+    private var imageHeight: CGFloat {
+        var height: CGFloat = 322
+
+        if photosPermissionDenied {
+            height -= 28
+        }
+        if locationPermissionDenied {
+            height -= 28
+        }
+
+        return height
     }
 
     @ViewBuilder

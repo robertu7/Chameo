@@ -74,7 +74,6 @@ struct LibraryView: View {
                 .padding(.bottom, 8)
             }
         }
-        .background(Color(nsColor: .controlBackgroundColor))
         .task {
             await libraryStore.reload(albumName: albumName)
         }

@@ -11,10 +11,13 @@ struct CalendarLibraryView: View {
     let onDelete: (ChameoAsset) async -> Void
 
     @State private var displayedMonth = Calendar.current.startOfDay(for: Date())
-    @State private var hoveredDay: Date?
     @FocusState private var focusedDay: Date?
 
-    private let calendar = Calendar.current
+    private var calendar: Calendar {
+        var calendar = Calendar.current
+        calendar.firstWeekday = 2
+        return calendar
+    }
 
     private var captureDates: [Date] {
         assets.compactMap(\.createdAt)
@@ -28,7 +31,7 @@ struct CalendarLibraryView: View {
     }
 
     private var previewDay: Date {
-        hoveredDay ?? focusedDay ?? selectedDay ?? calendar.startOfDay(for: Date())
+        focusedDay ?? selectedDay ?? calendar.startOfDay(for: Date())
     }
 
     private var assetsByDay: [Date: [ChameoAsset]] {
@@ -44,6 +47,7 @@ struct CalendarLibraryView: View {
         VStack(spacing: 6) {
             calendarHeader
             weekdayHeader
+                .padding(.top, 12)
 
             LazyVGrid(
                 columns: Array(repeating: GridItem(.flexible(), spacing: 3), count: 7),
@@ -69,13 +73,6 @@ struct CalendarLibraryView: View {
                         focusedDay: $focusedDay,
                         onSelect: {
                             select(date)
-                        },
-                        onHover: { isHovering in
-                            if isHovering {
-                                hoveredDay = date
-                            } else if hoveredDay.map({ calendar.isDate($0, inSameDayAs: date) }) == true {
-                                hoveredDay = nil
-                            }
                         }
                     )
                 }
@@ -94,9 +91,19 @@ struct CalendarLibraryView: View {
                 onTakeChameo: onTakeChameo,
                 onDelete: onDelete
             )
-            .frame(maxHeight: .infinity)
+            .frame(height: 88)
         }
         .padding(12)
+        .background(
+            Color.white,
+            in: RoundedRectangle(cornerRadius: 8, style: .continuous)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(Color.black.opacity(0.08), lineWidth: 1)
+        }
+        .padding(.horizontal, 14)
+        .padding(.bottom, 12)
         .overlay(alignment: .topTrailing) {
             if isRefreshing {
                 ProgressView()
@@ -119,23 +126,26 @@ struct CalendarLibraryView: View {
 
     private var calendarHeader: some View {
         HStack(spacing: 6) {
-            Button {
-                changeMonth(by: -1)
-            } label: {
-                Label("Previous Month", systemImage: "chevron.left")
-            }
-            .labelStyle(.iconOnly)
-            .buttonStyle(.borderless)
-            .help("Previous Month")
+            HStack(spacing: 12) {
+                Button {
+                    changeMonth(by: -1)
+                } label: {
+                    Label("Previous Month", systemImage: "chevron.left")
+                }
+                .labelStyle(.iconOnly)
+                .buttonStyle(.borderless)
+                .help("Previous Month")
 
-            Button {
-                changeMonth(by: 1)
-            } label: {
-                Label("Next Month", systemImage: "chevron.right")
+                Button {
+                    changeMonth(by: 1)
+                } label: {
+                    Label("Next Month", systemImage: "chevron.right")
+                }
+                .labelStyle(.iconOnly)
+                .buttonStyle(.borderless)
+                .help("Next Month")
             }
-            .labelStyle(.iconOnly)
-            .buttonStyle(.borderless)
-            .help("Next Month")
+            .padding(.trailing, 4)
 
             Text(displayedMonth.formatted(.dateTime.month(.wide).year()))
                 .font(.headline)
@@ -144,7 +154,7 @@ struct CalendarLibraryView: View {
             Button("Today") {
                 select(Date())
             }
-            .buttonStyle(.borderless)
+            .buttonStyle(.bordered)
 
             Button(action: onExportTimelapse) {
                 if isExportingTimelapse {
@@ -176,15 +186,7 @@ struct CalendarLibraryView: View {
         }
     }
 
-    private var weekdaySymbols: [String] {
-        let symbols = DateFormatter().veryShortStandaloneWeekdaySymbols ?? []
-        guard symbols.count == 7 else {
-            return symbols
-        }
-
-        let startIndex = max(0, min(6, calendar.firstWeekday - 1))
-        return Array(symbols[startIndex...] + symbols[..<startIndex])
-    }
+    private let weekdaySymbols = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
 
     private func select(_ date: Date) {
         let day = calendar.startOfDay(for: date)
@@ -193,16 +195,22 @@ struct CalendarLibraryView: View {
     }
 
     private func changeMonth(by value: Int) {
-        guard let newMonth = calendar.date(
-            byAdding: .month,
-            value: value,
-            to: displayedMonth
-        ) else {
+        guard
+            let newMonth = calendar.date(
+                byAdding: .month,
+                value: value,
+                to: displayedMonth
+            )
+        else {
             return
         }
 
         displayedMonth = newMonth
-        selectedDay = calendar.dateInterval(of: .month, for: newMonth)?.start
+        if let firstDay = calendar.dateInterval(of: .month, for: newMonth)?.start,
+            firstDay <= calendar.startOfDay(for: Date())
+        {
+            selectedDay = firstDay
+        }
     }
 }
 
@@ -214,7 +222,6 @@ private struct CalendarDayCell: View {
     let isFocused: Bool
     let focusedDay: FocusState<Date?>.Binding
     let onSelect: () -> Void
-    let onHover: (Bool) -> Void
 
     @State private var isHovered = false
 
@@ -242,10 +249,10 @@ private struct CalendarDayCell: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .disabled(status == .future)
         .focused(focusedDay, equals: date)
         .onHover { isHovering in
             isHovered = isHovering
-            onHover(isHovering)
         }
         .opacity(isInDisplayedMonth ? 1 : 0.35)
         .help(status.accessibilityDescription)
@@ -335,7 +342,7 @@ private struct CalendarDayPreview: View {
 
     private func populatedPreview(_ selectedAsset: ChameoAsset) -> some View {
         HStack(alignment: .top, spacing: 12) {
-            CalendarAssetImage(asset: selectedAsset, size: 96)
+            CalendarAssetImage(asset: selectedAsset, size: 72)
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 8) {
@@ -356,7 +363,9 @@ private struct CalendarDayPreview: View {
 
                     Spacer()
 
-                    Text(selectedAsset.createdAt?.formatted(date: .omitted, time: .shortened) ?? "Unknown Time")
+                    Text(
+                        selectedAsset.createdAt?.formatted(date: .omitted, time: .shortened)
+                            ?? "Unknown Time")
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -422,7 +431,7 @@ private struct CalendarDayPreview: View {
                     CalendarAssetThumbnail(
                         asset: asset,
                         isSelected: selectedAsset?.id == asset.id,
-                        size: 28
+                        size: 22
                     ) {
                         selectedAssetID = asset.id
                         isConfirmingDeletion = false
@@ -431,7 +440,7 @@ private struct CalendarDayPreview: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .frame(height: 30)
+        .frame(height: 24)
     }
 
     @ViewBuilder
@@ -545,6 +554,7 @@ private struct CalendarAssetThumbnail: View {
                 }
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(asset.createdAt.map(DateFormatters.libraryDate.string(from:)) ?? "Chameo")
+        .accessibilityLabel(
+            asset.createdAt.map(DateFormatters.libraryDate.string(from:)) ?? "Chameo")
     }
 }
