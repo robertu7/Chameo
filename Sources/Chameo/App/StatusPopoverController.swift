@@ -8,12 +8,11 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
     private let cameraService: CameraService
     private let libraryStore: LibraryStore
     private let statusItem: NSStatusItem
-    private let capturedStatusImage = StatusMenuIcon.image(named: "eye-captured")
-    private let nonCapturedStatusImage = StatusMenuIcon.image(named: "eye")
     private let popover: NSPopover
     private var localEventMonitor: Any?
     private var globalEventMonitor: Any?
     private var libraryStatusObservation: AnyCancellable?
+    private var appearanceObservation: NSKeyValueObservation?
 
     init(appState: AppState, cameraService: CameraService, libraryStore: LibraryStore) {
         self.appState = appState
@@ -25,12 +24,16 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
         super.init()
 
         if let button = statusItem.button {
-            button.image = nonCapturedStatusImage
+            button.image = StatusMenuIcon.image(
+                named: "eye",
+                appearance: NSApp.effectiveAppearance
+            )
             button.action = #selector(togglePopover(_:))
             button.target = self
         }
 
         observeDailyStatus()
+        observeAppearance()
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(calendarDayChanged(_:)),
@@ -119,6 +122,18 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
         }
     }
 
+    private func observeAppearance() {
+        appearanceObservation = NSApp.observe(
+            \.effectiveAppearance,
+            options: [.new]
+        ) { [weak self] _, _ in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.updateStatusItem(for: self.libraryStore.dailyStatus())
+            }
+        }
+    }
+
     @objc private func calendarDayChanged(_ notification: Notification) {
         updateStatusItem(for: libraryStore.dailyStatus())
     }
@@ -129,22 +144,27 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
         }
 
         let description: String
+        let iconName: String
 
         switch status {
         case .captured:
-            button.image = capturedStatusImage
+            iconName = "eye-captured"
             description = "Today's Chameo is captured"
         case .pendingToday:
-            button.image = nonCapturedStatusImage
+            iconName = "eye"
             description = "Today's Chameo is not captured yet"
         case .unknown:
-            button.image = nonCapturedStatusImage
+            iconName = "eye"
             description = "Today's Chameo status is unavailable"
         case .missed, .future, .outsideTracking:
-            button.image = nonCapturedStatusImage
+            iconName = "eye"
             description = "Take today's Chameo"
         }
 
+        button.image = StatusMenuIcon.image(
+            named: iconName,
+            appearance: NSApp.effectiveAppearance
+        )
         button.setAccessibilityLabel(description)
         button.toolTip = description
     }
@@ -196,8 +216,17 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
 }
 
 private enum StatusMenuIcon {
-    static func image(named name: String) -> NSImage {
+    static func image(named name: String, appearance: NSAppearance) -> NSImage {
+        let resourceName = appearance.isDark ? "\(name)-dark" : name
         let resourceURL = Bundle.main.url(
+            forResource: resourceName,
+            withExtension: "pdf",
+            subdirectory: "MenuBarIcons"
+        ) ?? Bundle.module.url(
+            forResource: resourceName,
+            withExtension: "pdf",
+            subdirectory: "MenuBarIcons"
+        ) ?? Bundle.main.url(
             forResource: name,
             withExtension: "pdf",
             subdirectory: "MenuBarIcons"
@@ -220,5 +249,11 @@ private enum StatusMenuIcon {
         ) ?? NSImage(size: NSSize(width: 18, height: 18))
         fallback.isTemplate = true
         return fallback
+    }
+}
+
+private extension NSAppearance {
+    var isDark: Bool {
+        bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
     }
 }

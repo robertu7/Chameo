@@ -58,21 +58,6 @@ struct LibraryView: View {
                 .padding(.horizontal, 14)
                 .padding(.bottom, 8)
             }
-
-            if didDeletePhoto {
-                HStack(spacing: 8) {
-                    Image(systemName: "checkmark.circle")
-                        .foregroundStyle(.secondary)
-
-                    Text("Deleted from Photos")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-
-                    Spacer()
-                }
-                .padding(.horizontal, 14)
-                .padding(.bottom, 8)
-            }
         }
         .task {
             await libraryStore.reload(albumName: albumName)

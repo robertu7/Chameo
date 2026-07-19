@@ -95,12 +95,12 @@ struct CalendarLibraryView: View {
         }
         .padding(ChameoLayout.sectionSpacing)
         .background(
-            Color.white,
+            Color(nsColor: .controlBackgroundColor),
             in: RoundedRectangle(cornerRadius: ChameoLayout.cornerRadius)
         )
         .overlay {
             RoundedRectangle(cornerRadius: ChameoLayout.cornerRadius)
-                .stroke(Color.black.opacity(0.08), lineWidth: 1)
+                .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
         }
         .padding(.horizontal, ChameoLayout.outerInset)
         .padding(.bottom, ChameoLayout.sectionSpacing)
