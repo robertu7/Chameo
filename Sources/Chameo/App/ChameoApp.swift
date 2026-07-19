@@ -8,6 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     private let cameraService = CameraService()
     private let libraryStore = LibraryStore()
     private var statusPopoverController: StatusPopoverController?
+    private var permissionOnboardingWindowController: PermissionOnboardingWindowController?
     private var reminderRefreshTask: Task<Void, Never>?
     private var libraryRefreshTask: Task<Void, Never>?
 
@@ -16,12 +17,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         NSApp.setActivationPolicy(.accessory)
         UNUserNotificationCenter.current().delegate = self
         installRefreshObservers()
-        statusPopoverController = StatusPopoverController(
-            appState: appState,
-            cameraService: cameraService,
-            libraryStore: libraryStore
-        )
-        refreshAppState()
+
+        switch AppStartupPolicy.destination(
+            hasCompletedPermissionOnboarding: UserDefaults.standard.bool(
+                forKey: AppPreferenceKey.hasCompletedPermissionOnboarding
+            )
+        ) {
+        case .permissionOnboarding:
+            presentPermissionOnboarding()
+        case .mainExperience:
+            startMainExperience(showCamera: false)
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -68,6 +74,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     private func configureUserDefaults() {
         UserDefaults.standard.register(defaults: [
             AppPreferenceKey.albumName: "Chameo",
+            AppPreferenceKey.hasCompletedPermissionOnboarding: false,
             AppPreferenceKey.showFaceGuide: true,
             AppPreferenceKey.saveLocation: false,
             AppPreferenceKey.launchAtLogin: LaunchAtLoginService.isEnabled
@@ -108,7 +115,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     }
 
     @objc private func refreshAfterSystemEvent(_ notification: Notification) {
+        if let permissionOnboardingWindowController {
+            permissionOnboardingWindowController.refreshPermissionStatuses()
+            return
+        }
+
         refreshAppState()
+    }
+
+    private func presentPermissionOnboarding() {
+        let controller = PermissionOnboardingWindowController(onCompletion: { [weak self] in
+            self?.finishPermissionOnboarding()
+        })
+        permissionOnboardingWindowController = controller
+        controller.present()
+    }
+
+    private func finishPermissionOnboarding() {
+        permissionOnboardingWindowController = nil
+        startMainExperience(showCamera: true)
+    }
+
+    private func startMainExperience(showCamera: Bool) {
+        if statusPopoverController == nil {
+            statusPopoverController = StatusPopoverController(
+                appState: appState,
+                cameraService: cameraService,
+                libraryStore: libraryStore
+            )
+        }
+
+        refreshAppState()
+
+        if showCamera {
+            statusPopoverController?.showCamera()
+        }
     }
 
     private func refreshAppState() {

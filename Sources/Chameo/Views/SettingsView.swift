@@ -1,19 +1,36 @@
 import SwiftUI
 
 struct SettingsView: View {
-    var body: some View {
-        TabView {
-            GeneralSettingsView()
-            .tabItem {
-                Label("General", systemImage: "gearshape")
-            }
+    @AppStorage(AppPreferenceKey.hasCompletedPermissionOnboarding)
+    private var hasCompletedPermissionOnboarding = false
 
-            ReminderSettingsView()
-            .tabItem {
-                Label("Reminder", systemImage: "bell")
+    var body: some View {
+        Group {
+            if hasCompletedPermissionOnboarding {
+                settingsTabs
+            } else {
+                ContentUnavailableView {
+                    Label("Finish Chameo Setup", systemImage: "lock.fill")
+                } description: {
+                    Text("Allow Camera and Photos access in the Welcome window before using Settings.")
+                }
             }
         }
         .frame(width: 460, height: 360)
         .scenePadding()
+    }
+
+    private var settingsTabs: some View {
+        TabView {
+            GeneralSettingsView()
+                .tabItem {
+                    Label("General", systemImage: "gearshape")
+                }
+
+            ReminderSettingsView()
+                .tabItem {
+                    Label("Reminder", systemImage: "bell")
+                }
+        }
     }
 }

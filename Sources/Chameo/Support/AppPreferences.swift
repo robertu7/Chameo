@@ -4,6 +4,7 @@ enum AppPreferenceKey {
     static let acceptedFaceCaptureQualityScores = "acceptedFaceCaptureQualityScores"
     static let albumName = "albumName"
     static let autoAlignPhotos = "autoAlignPhotos"
+    static let hasCompletedPermissionOnboarding = "hasCompletedPermissionOnboarding"
     static let lastSelfieDate = "lastSelfieDate"
     static let launchAtLogin = "launchAtLogin"
     static let reminderDate = "reminderDate"
