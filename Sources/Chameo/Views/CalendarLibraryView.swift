@@ -91,7 +91,8 @@ struct CalendarLibraryView: View {
                 onTakeChameo: onTakeChameo,
                 onDelete: onDelete
             )
-            .frame(height: 88)
+            .frame(height: 96)
+            .padding(.top, ChameoLayout.compactSpacing)
         }
         .padding(ChameoLayout.sectionSpacing)
         .background(
@@ -361,7 +362,7 @@ private struct CalendarDayPreview: View {
 
     private func populatedPreview(_ selectedAsset: ChameoAsset) -> some View {
         HStack(alignment: .top, spacing: 12) {
-            CalendarAssetImage(asset: selectedAsset, size: 72)
+            CalendarAssetImage(asset: selectedAsset, size: 96)
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 8) {
@@ -372,22 +373,15 @@ private struct CalendarDayPreview: View {
 
                     Spacer(minLength: 4)
 
-                    deleteControls
-                }
-
-                HStack(spacing: 5) {
-                    CalendarStatusDot(status: status)
-
-                    Text(status.accessibilityDescription)
-
-                    Spacer()
-
                     Text(
                         selectedAsset.createdAt?.formatted(date: .omitted, time: .shortened)
                             ?? "Unknown Time")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    deleteControls
                 }
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .frame(height: ChameoLayout.compactControlSize)
 
                 HStack(spacing: 5) {
                     if isLoadingLocationName {
@@ -408,12 +402,13 @@ private struct CalendarDayPreview: View {
                 .foregroundStyle(.secondary)
 
                 if assets.count > 1 {
+                    Spacer(minLength: 0)
                     assetStrip
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
-        .frame(maxHeight: .infinity, alignment: .center)
+        .frame(maxHeight: .infinity, alignment: .top)
     }
 
     private var emptyPreview: some View {
