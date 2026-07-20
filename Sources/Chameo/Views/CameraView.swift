@@ -616,11 +616,15 @@ private struct CapturedPreviewView: View {
                 .frame(width: 392)
             }
         }
-        .frame(width: 420, height: 380, alignment: .top)
+        .frame(
+            width: ChameoLayout.contentWidth,
+            height: ChameoLayout.contentHeight,
+            alignment: .top
+        )
     }
 
     private var imageHeight: CGFloat {
-        var height: CGFloat = 322
+        var height = ChameoLayout.livePreviewHeight
 
         if photosPermissionDenied {
             height -= 28

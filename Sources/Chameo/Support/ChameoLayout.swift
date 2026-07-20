@@ -2,10 +2,11 @@ import CoreGraphics
 
 enum ChameoLayout {
     static let popoverWidth: CGFloat = 448
+    static let popoverHeight: CGFloat = 526
     static let contentWidth: CGFloat = 420
-    static let contentHeight: CGFloat = 380
+    static let contentHeight: CGFloat = 407
     static let previewWidth: CGFloat = 392
-    static let livePreviewHeight: CGFloat = 322
+    static let livePreviewHeight: CGFloat = 349
 
     static let outerInset: CGFloat = 14
     static let sectionSpacing: CGFloat = 12

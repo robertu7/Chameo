@@ -52,7 +52,10 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
 
         popover.behavior = .transient
         popover.delegate = self
-        popover.contentSize = NSSize(width: 448, height: 448)
+        popover.contentSize = NSSize(
+            width: ChameoLayout.popoverWidth,
+            height: ChameoLayout.popoverHeight
+        )
         popover.contentViewController = NSHostingController(
             rootView: ContentView()
                 .environmentObject(appState)

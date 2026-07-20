@@ -39,7 +39,8 @@ struct ContentView: View {
             }
             .frame(
                 width: ChameoLayout.contentWidth,
-                height: ChameoLayout.contentHeight
+                height: ChameoLayout.contentHeight,
+                alignment: .top
             )
 
             Divider()
