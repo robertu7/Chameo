@@ -21,6 +21,7 @@ The app uses `NSStatusItem` plus `NSPopover` instead of SwiftUI `MenuBarExtra` b
 - `@AppStorage` stores durable preferences:
   - album name
   - camera face guide
+  - hands-free capture countdown
   - automatic photo alignment
   - save location
   - launch at login
@@ -105,6 +106,8 @@ Camera hardware starts only when the Camera tab is visible. It stops when the us
   - Live camera preview.
   - Advisory live framing based on face size, position, eye-line, and stability,
     with one short hint and a green Ready state.
+  - Optional silent 3-second hands-free capture after Ready, cancelled whenever
+    framing or Camera lifecycle state changes.
   - Compact active-camera badge and a camera menu when multiple devices exist.
   - On-device single-photo quality evaluation with advisory retake guidance.
   - Capture-to-memory preview.

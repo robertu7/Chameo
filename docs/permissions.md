@@ -20,6 +20,8 @@ Behavior:
 - When `Show Face Guide` is enabled, Chameo analyzes throttled live frames
   on-device with Vision to derive advisory face position, size, eye-line, and
   stability guidance.
+- The optional hands-free setting uses only the derived Ready state to run a
+  silent 3-second countdown and follows the normal in-memory preview flow.
 - Live frames and derived face geometry are not stored or logged.
 - Disabling the guide or leaving Camera stops live analysis.
 

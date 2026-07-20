@@ -4,6 +4,7 @@ import SwiftUI
 
 struct GeneralSettingsView: View {
     @AppStorage(AppPreferenceKey.albumName) private var albumName = "Chameo"
+    @AppStorage(AppPreferenceKey.handsFreeCountdown) private var handsFreeCountdown = false
     @AppStorage(AppPreferenceKey.showFaceGuide) private var showFaceGuide = true
     @AppStorage(AppPreferenceKey.autoAlignPhotos) private var autoAlignPhotos = true
     @AppStorage(AppPreferenceKey.saveLocation) private var saveLocation = false
@@ -77,6 +78,12 @@ struct GeneralSettingsView: View {
 
             Section("Camera") {
                 Toggle("Show Face Guide", isOn: $showFaceGuide)
+                Toggle("Hands-Free Countdown", isOn: $handsFreeCountdown)
+                    .disabled(!showFaceGuide)
+
+                Text("Starts a silent 3-second countdown when framing is Ready.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 Toggle("Auto Align Photos", isOn: $autoAlignPhotos)
             }
 

@@ -8,6 +8,7 @@ struct ContentView: View {
     @Environment(\.openSettings) private var openSettings
 
     @AppStorage(AppPreferenceKey.albumName) private var albumName = "Chameo"
+    @AppStorage(AppPreferenceKey.handsFreeCountdown) private var handsFreeCountdown = false
     @AppStorage(AppPreferenceKey.showFaceGuide) private var showFaceGuide = true
     @AppStorage(AppPreferenceKey.saveLocation) private var saveLocation = false
 
@@ -26,6 +27,7 @@ struct ContentView: View {
                 case .camera:
                     CameraView(
                         albumName: albumName,
+                        handsFreeCountdown: handsFreeCountdown,
                         showFaceGuide: showFaceGuide,
                         saveLocation: saveLocation,
                         statusMessage: $statusMessage

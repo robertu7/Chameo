@@ -77,6 +77,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     private func configureUserDefaults() {
         UserDefaults.standard.register(defaults: [
             AppPreferenceKey.albumName: "Chameo",
+            AppPreferenceKey.handsFreeCountdown: false,
             AppPreferenceKey.hasCompletedPermissionOnboarding: false,
             AppPreferenceKey.showFaceGuide: true,
             AppPreferenceKey.saveLocation: false,

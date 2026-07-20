@@ -1,3 +1,4 @@
+import AppKit
 import CoreLocation
 import OSLog
 import SwiftUI
@@ -13,6 +14,7 @@ struct CameraView: View {
     @AppStorage(AppPreferenceKey.autoAlignPhotos) private var autoAlignPhotos = true
 
     let albumName: String
+    let handsFreeCountdown: Bool
     let showFaceGuide: Bool
     let saveLocation: Bool
     @Binding var statusMessage: String?
@@ -22,6 +24,8 @@ struct CameraView: View {
     @State private var locationService = LocationService()
     @State private var photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
     @State private var locationPermissionDenied = false
+    @State private var handsFreeCountdownMachine = HandsFreeCountdownMachine()
+    @State private var handsFreeCountdownTask: Task<Void, Never>?
 
     var body: some View {
         VStack(spacing: ChameoLayout.sectionSpacing) {
@@ -56,11 +60,15 @@ struct CameraView: View {
                     cameraOverlay
 
                     cameraSelectionOverlay
+
+                    if let count = handsFreeCountdownMachine.phase.displayedCount {
+                        HandsFreeCountdownOverlay(count: count)
+                    }
                 }
                 .frame(width: ChameoLayout.previewWidth, height: livePreviewHeight)
 
                 Button {
-                    beginCapture()
+                    beginCapture(trigger: .manual)
                 } label: {
                     Label(isSaving ? "Saving…" : "Take Photo", systemImage: "camera.circle.fill")
                         .frame(minWidth: 104)
@@ -97,11 +105,26 @@ struct CameraView: View {
         }
         .onAppear {
             cameraService.setLiveFramingGuidanceEnabled(showFaceGuide)
+            syncHandsFreeCountdown()
         }
         .onChange(of: showFaceGuide) { _, isEnabled in
             cameraService.setLiveFramingGuidanceEnabled(isEnabled)
+            syncHandsFreeCountdown()
+        }
+        .onChange(of: handsFreeCountdown) { _, _ in
+            syncHandsFreeCountdown()
+        }
+        .onChange(of: cameraService.liveFramingGuidanceState) { _, guidance in
+            handleHandsFreeCountdown(.guidanceChanged(guidance))
+        }
+        .onChange(of: cameraService.status) { _, _ in
+            syncHandsFreeCountdown()
+        }
+        .onChange(of: capturedPreview?.id) { _, _ in
+            syncHandsFreeCountdown()
         }
         .onDisappear {
+            handleHandsFreeCountdown(.setVisible(false))
             cameraService.setLiveFramingGuidanceEnabled(false)
         }
     }
@@ -240,8 +263,11 @@ struct CameraView: View {
         }
     }
 
-    private func beginCapture() {
+    private func beginCapture(trigger: CaptureTrigger) {
         guard !isSaving else { return }
+        if trigger == .manual {
+            handleHandsFreeCountdown(.manualCapture)
+        }
         isSaving = true
         Task {
             await takeChameo()
@@ -395,6 +421,115 @@ struct CameraView: View {
     private func retakeCapturedPreview() {
         self.capturedPreview = nil
         statusMessage = "Discarded preview"
+    }
+
+    private var isHandsFreeCountdownEnabled: Bool {
+        handsFreeCountdown && showFaceGuide
+    }
+
+    private var isHandsFreeCountdownVisible: Bool {
+        capturedPreview == nil && canCapture
+    }
+
+    private func syncHandsFreeCountdown() {
+        handleHandsFreeCountdown(
+            .setEnabled(isHandsFreeCountdownEnabled)
+        )
+        handleHandsFreeCountdown(
+            .setVisible(isHandsFreeCountdownVisible)
+        )
+        if isHandsFreeCountdownEnabled && isHandsFreeCountdownVisible {
+            handleHandsFreeCountdown(
+                .guidanceChanged(cameraService.liveFramingGuidanceState)
+            )
+        }
+    }
+
+    private func handleHandsFreeCountdown(
+        _ event: HandsFreeCountdownEvent
+    ) {
+        let previousCount = handsFreeCountdownMachine.phase.displayedCount
+        let effects = handsFreeCountdownMachine.handle(event)
+        let currentCount = handsFreeCountdownMachine.phase.displayedCount
+
+        if currentCount != previousCount, let currentCount {
+            announceHandsFreeCountdown(currentCount)
+        }
+
+        for effect in effects {
+            switch effect {
+            case .startTimer:
+                startHandsFreeCountdownTimer()
+            case .cancelTimer:
+                cancelHandsFreeCountdownTimer()
+            case .capture:
+                handsFreeCountdownTask = nil
+                beginCapture(trigger: .handsFree)
+            }
+        }
+    }
+
+    private func startHandsFreeCountdownTimer() {
+        handsFreeCountdownTask?.cancel()
+        handsFreeCountdownTask = Task { @MainActor in
+            do {
+                for _ in 0..<3 {
+                    try await Task.sleep(for: .seconds(1))
+                    handleHandsFreeCountdown(.tick)
+                }
+            } catch {
+                return
+            }
+        }
+    }
+
+    private func cancelHandsFreeCountdownTimer() {
+        handsFreeCountdownTask?.cancel()
+        handsFreeCountdownTask = nil
+    }
+
+    private func announceHandsFreeCountdown(_ count: Int) {
+        NSAccessibility.post(
+            element: NSApp as Any,
+            notification: .announcementRequested,
+            userInfo: [
+                .announcement: "Photo in \(count) seconds",
+                .priority: NSAccessibilityPriorityLevel.high.rawValue,
+            ]
+        )
+    }
+}
+
+private enum CaptureTrigger {
+    case manual
+    case handsFree
+}
+
+private struct HandsFreeCountdownOverlay: View {
+    let count: Int
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        Text("\(count)")
+            .font(.system(size: 64, weight: .bold, design: .rounded))
+            .monospacedDigit()
+            .foregroundStyle(.primary)
+            .frame(width: 108, height: 108)
+            .background(.regularMaterial, in: Circle())
+            .overlay {
+                Circle()
+                    .stroke(.green.opacity(0.65), lineWidth: 2)
+            }
+            .shadow(radius: 8)
+            .id(count)
+            .transition(
+                reduceMotion
+                    ? .opacity
+                    : .scale(scale: 0.8).combined(with: .opacity)
+            )
+            .accessibilityLabel("Photo in \(count) seconds")
+            .allowsHitTesting(false)
     }
 }
 
