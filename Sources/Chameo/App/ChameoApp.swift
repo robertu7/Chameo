@@ -18,10 +18,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         UNUserNotificationCenter.current().delegate = self
         installRefreshObservers()
 
+        let requiredPermissions = SystemRequiredPermissionService()
         switch AppStartupPolicy.destination(
             hasCompletedPermissionOnboarding: UserDefaults.standard.bool(
                 forKey: AppPreferenceKey.hasCompletedPermissionOnboarding
-            )
+            ),
+            cameraStatus: requiredPermissions.cameraStatus,
+            photosStatus: requiredPermissions.photosStatus
         ) {
         case .permissionOnboarding:
             presentPermissionOnboarding()

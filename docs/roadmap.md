@@ -38,7 +38,7 @@ expanding the feature set.
 Do this work only after an explicit decision to distribute Chameo beyond the
 owner's own Macs:
 
-- Replace ad-hoc development signing with Developer ID or Mac App Store signing.
+- Select and manage the intended Developer ID or Mac App Store distribution identity; local builds already prefer an installed stable development identity over ad-hoc signing.
 - Add production release packaging.
 - Add notarization.
 - Publish a privacy policy for public distribution.

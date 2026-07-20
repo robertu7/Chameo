@@ -46,7 +46,8 @@ resources. Before a release used for daily capture, smoke-test camera capture,
 each permission denial/recovery path, Photos save/delete, an iCloud-backed
 timelapse export, reminders across sleep/wake, and launch at login.
 
-Public distribution is intentionally out of scope. The current build is
-ad-hoc-signed and not notarized. Developer ID or Mac App Store signing,
-notarization, release automation, and a public privacy policy remain required
-if that product decision changes.
+Public distribution is intentionally out of scope. The build uses a stable
+local Apple Development or Developer ID Application identity when one is
+installed, otherwise it explicitly falls back to ad-hoc signing. It is not
+notarized. Distribution signing, notarization, release automation, and a public
+privacy policy remain required if that product decision changes.

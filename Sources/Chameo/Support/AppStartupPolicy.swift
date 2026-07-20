@@ -6,7 +6,19 @@ enum AppStartupDestination: Equatable {
 }
 
 enum AppStartupPolicy {
-    static func destination(hasCompletedPermissionOnboarding: Bool) -> AppStartupDestination {
-        hasCompletedPermissionOnboarding ? .mainExperience : .permissionOnboarding
+    static func destination(
+        hasCompletedPermissionOnboarding: Bool,
+        cameraStatus: RequiredPermissionStatus,
+        photosStatus: RequiredPermissionStatus
+    ) -> AppStartupDestination {
+        guard hasCompletedPermissionOnboarding else {
+            return .permissionOnboarding
+        }
+
+        if cameraStatus == .notDetermined || photosStatus == .notDetermined {
+            return .permissionOnboarding
+        }
+
+        return .mainExperience
     }
 }

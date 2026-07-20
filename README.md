@@ -52,7 +52,7 @@ Build a release app bundle:
 ./script/build_app.sh --release
 ```
 
-The script builds the SwiftPM executable, stages a local `.app` bundle in `dist/`, writes the required `Info.plist`, applies the development entitlements, ad-hoc signs the app, and prints the bundle path.
+The script builds the SwiftPM executable, stages a local `.app` bundle in `dist/`, writes the required `Info.plist`, applies the development entitlements, signs the app, and prints the bundle path. It automatically uses an installed Apple Development or Developer ID Application certificate so macOS can retain protected-resource permissions across rebuilds. Without one, it warns and falls back to ad-hoc signing.
 
 Set the app version in `VERSION`. The build script also writes a build number and build id into the bundle so Settings can display the exact build.
 

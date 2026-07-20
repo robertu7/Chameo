@@ -126,4 +126,4 @@ Camera hardware starts only when the Camera tab is visible. It stops when the us
 
 ## Bundle and Signing
 
-The project is SwiftPM-based, so `script/build_app.sh` stages the app bundle manually under `dist/Chameo.app`. The script writes bundle metadata and applies an ad-hoc signature with `Chameo.entitlements`.
+The project is SwiftPM-based, so `script/build_app.sh` stages the app bundle manually under `dist/Chameo.app`. The script writes bundle metadata, applies `Chameo.entitlements`, and prefers an installed Apple Development or Developer ID Application identity. It warns before falling back to ad-hoc signing because that identity changes with every rebuilt binary and causes macOS protected-resource grants to reset.

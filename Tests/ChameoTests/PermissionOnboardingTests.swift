@@ -97,13 +97,56 @@ final class PermissionOnboardingTests: XCTestCase {
         XCTAssertTrue(defaults.bool(forKey: AppPreferenceKey.hasCompletedPermissionOnboarding))
     }
 
-    func testStartupPolicyUsesPersistedCompletionState() {
+    func testStartupPolicyShowsOnboardingUntilInitialPermissionsAreGranted() {
         XCTAssertEqual(
-            AppStartupPolicy.destination(hasCompletedPermissionOnboarding: false),
+            AppStartupPolicy.destination(
+                hasCompletedPermissionOnboarding: false,
+                cameraStatus: .authorized,
+                photosStatus: .authorized
+            ),
             .permissionOnboarding
         )
         XCTAssertEqual(
-            AppStartupPolicy.destination(hasCompletedPermissionOnboarding: true),
+            AppStartupPolicy.destination(
+                hasCompletedPermissionOnboarding: true,
+                cameraStatus: .notDetermined,
+                photosStatus: .authorized
+            ),
+            .permissionOnboarding
+        )
+        XCTAssertEqual(
+            AppStartupPolicy.destination(
+                hasCompletedPermissionOnboarding: true,
+                cameraStatus: .authorized,
+                photosStatus: .notDetermined
+            ),
+            .permissionOnboarding
+        )
+        XCTAssertEqual(
+            AppStartupPolicy.destination(
+                hasCompletedPermissionOnboarding: true,
+                cameraStatus: .authorized,
+                photosStatus: .authorized
+            ),
+            .mainExperience
+        )
+    }
+
+    func testStartupPolicyKeepsLaterPermissionRevocationContextual() {
+        XCTAssertEqual(
+            AppStartupPolicy.destination(
+                hasCompletedPermissionOnboarding: true,
+                cameraStatus: .denied,
+                photosStatus: .authorized
+            ),
+            .mainExperience
+        )
+        XCTAssertEqual(
+            AppStartupPolicy.destination(
+                hasCompletedPermissionOnboarding: true,
+                cameraStatus: .authorized,
+                photosStatus: .restricted
+            ),
             .mainExperience
         )
     }

@@ -78,6 +78,20 @@ The script writes `Assets/AppIcon.iconset/` and packages `Assets/AppIcon.icns`. 
 - `debug`: build, stage, and sign a debug app bundle. This is the default.
 - `--release`: build, stage, and sign a release app bundle.
 
+The build automatically selects an installed Apple Development identity, then
+an installed Developer ID Application identity. Stable signing lets macOS
+retain Camera and Photos grants when the app binary is replaced. Override the
+selection when needed:
+
+```bash
+CHAMEO_CODE_SIGN_IDENTITY="Apple Development: Name (TEAMID)" ./script/build_app.sh
+```
+
+If neither identity is available, the script warns and uses ad-hoc signing.
+Because an ad-hoc app's identity changes with its code hash, a rebuilt app must
+request protected-resource permissions again. Set
+`CHAMEO_CODE_SIGN_IDENTITY=-` only when that behavior is intentional.
+
 ## Codex Run Button
 
 `.codex/environments/environment.toml` wires the Codex app Run action to:

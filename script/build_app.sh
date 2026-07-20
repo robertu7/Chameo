@@ -48,6 +48,19 @@ else
   BUILD_ID="$(date -u +%Y%m%d%H%M%S)"
 fi
 
+find_local_code_sign_identity() {
+  local identities identity
+
+  identities="$(/usr/bin/security find-identity -p codesigning -v 2>/dev/null || true)"
+  identity="$(printf '%s\n' "$identities" | /usr/bin/awk '/"Apple Development: / { print $2; exit }')"
+
+  if [[ -z "$identity" ]]; then
+    identity="$(printf '%s\n' "$identities" | /usr/bin/awk '/"Developer ID Application: / { print $2; exit }')"
+  fi
+
+  printf '%s' "$identity"
+}
+
 if [[ ! "$APP_VERSION" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]]; then
   echo "invalid app version: expected one to three dot-separated integers" >&2
   exit 2
@@ -120,6 +133,17 @@ PLIST
 
 /usr/bin/plutil -lint "$INFO_PLIST" >/dev/null
 
-/usr/bin/codesign --force --sign - --entitlements "$ENTITLEMENTS" "$APP_BUNDLE"
+CODE_SIGN_IDENTITY="${CHAMEO_CODE_SIGN_IDENTITY:-$(find_local_code_sign_identity)}"
+if [[ -z "$CODE_SIGN_IDENTITY" ]]; then
+  CODE_SIGN_IDENTITY="-"
+  echo "warning: no Apple Development or Developer ID Application identity found; using ad-hoc signing." >&2
+  echo "warning: macOS will request protected-resource permissions again when this binary changes." >&2
+elif [[ "$CODE_SIGN_IDENTITY" == "-" ]]; then
+  echo "warning: CHAMEO_CODE_SIGN_IDENTITY=- requested ad-hoc signing; rebuilt binaries do not retain protected-resource permissions." >&2
+else
+  echo "Signing with stable identity: $CODE_SIGN_IDENTITY" >&2
+fi
+
+/usr/bin/codesign --force --sign "$CODE_SIGN_IDENTITY" --entitlements "$ENTITLEMENTS" "$APP_BUNDLE"
 /usr/bin/codesign --verify --strict "$APP_BUNDLE"
 echo "$APP_BUNDLE"
