@@ -171,6 +171,7 @@ final class PermissionOnboardingTests: XCTestCase {
         )
         let controller = PermissionOnboardingWindowController(
             permissionProvider: provider,
+            localizationController: LocalizationController(),
             onCompletion: {}
         )
 

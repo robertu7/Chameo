@@ -5,6 +5,7 @@ struct ContentView: View {
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var cameraService: CameraService
     @EnvironmentObject private var libraryStore: LibraryStore
+    @EnvironmentObject private var localizationController: LocalizationController
     @Environment(\.openSettings) private var openSettings
 
     @AppStorage(AppPreferenceKey.albumName) private var albumName = "Chameo"
@@ -12,7 +13,7 @@ struct ContentView: View {
     @AppStorage(AppPreferenceKey.showFaceGuide) private var showFaceGuide = true
     @AppStorage(AppPreferenceKey.saveLocation) private var saveLocation = false
 
-    @State private var statusMessage: String?
+    @State private var statusMessage: LocalizedMessage?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -48,19 +49,19 @@ struct ContentView: View {
                     openSettings()
                     NSApplication.shared.activate(ignoringOtherApps: true)
                 } label: {
-                    Label("Settings", systemImage: "gearshape")
+                    Label(L10n.string("Settings"), systemImage: "gearshape")
                 }
                 .labelStyle(.iconOnly)
                 .frame(
                     width: ChameoLayout.compactControlSize,
                     height: ChameoLayout.compactControlSize
                 )
-                .help("Settings")
+                .help(L10n.string("Settings"))
 
                 Spacer()
 
                 if let statusMessage {
-                    Text(statusMessage)
+                    Text(statusMessage.text)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
@@ -73,18 +74,19 @@ struct ContentView: View {
                 Button(role: .destructive) {
                     NSApplication.shared.terminate(nil)
                 } label: {
-                    Label("Quit", systemImage: "power")
+                    Label(L10n.string("Quit"), systemImage: "power")
                 }
                 .labelStyle(.iconOnly)
                 .frame(
                     width: ChameoLayout.compactControlSize,
                     height: ChameoLayout.compactControlSize
                 )
-                .help("Quit Chameo")
+                .help(L10n.string("Quit Chameo"))
             }
             .padding(ChameoLayout.sectionSpacing)
         }
         .frame(width: ChameoLayout.popoverWidth)
+        .environment(\.locale, localizationController.displayLocale)
         .task {
             syncCameraLifecycle()
             await reloadLibraryIfAuthorized(albumName: albumName)

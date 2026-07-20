@@ -8,6 +8,7 @@ enum AppPreferenceKey {
     static let hasCompletedPermissionOnboarding = "hasCompletedPermissionOnboarding"
     static let lastSelfieDate = "lastSelfieDate"
     static let launchAtLogin = "launchAtLogin"
+    static let language = "language"
     static let reminderDate = "reminderDate"
     static let reminderEnabled = "reminderEnabled"
     static let reminderRepeat = "reminderRepeat"

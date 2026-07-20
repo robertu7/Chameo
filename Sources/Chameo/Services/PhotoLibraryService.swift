@@ -260,15 +260,15 @@ enum PhotoLibraryError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .notAuthorized:
-            return "Allow Photos access to save and manage Chameos."
+            return L10n.string("Allow Photos access to save and manage Chameos.")
         case .albumCreationFailed:
-            return "Could not create the album in Photos."
+            return L10n.string("Could not create the album in Photos.")
         case .assetCreationFailed:
-            return "The photo was saved but could not be found in Photos."
+            return L10n.string("The photo was saved but could not be found in Photos.")
         case .changeFailed:
-            return "Could not delete the photo from Photos."
+            return L10n.string("Could not delete the photo from Photos.")
         case .changeTimedOut:
-            return "Deleting the photo took too long. Try again."
+            return L10n.string("Deleting the photo took too long. Try again.")
         }
     }
 }

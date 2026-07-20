@@ -232,8 +232,9 @@ enum ReminderService {
     ) async throws {
         for notification in notifications {
             let content = UNMutableNotificationContent()
-            content.title = "Time for your Chameo"
-            content.body = "Take today’s photo and keep your timeline up to date."
+            let text = reminderNotificationText()
+            content.title = text.title
+            content.body = text.body
             content.sound = .default
 
             let components = Calendar.current.dateComponents(
@@ -245,6 +246,18 @@ enum ReminderService {
                 UNNotificationRequest(identifier: notification.identifier, content: content, trigger: trigger)
             )
         }
+    }
+
+    static func reminderNotificationText(
+        localization: AppLocalization = L10n.currentLocalization
+    ) -> (title: String, body: String) {
+        (
+            L10n.string("Time for your Chameo", localization: localization),
+            L10n.string(
+                "Take today’s photo and keep your timeline up to date.",
+                localization: localization
+            )
+        )
     }
 
     static func removeAllReminderNotifications(from center: any ReminderNotificationCenter) async throws {

@@ -78,11 +78,11 @@ struct CameraGuideView: View {
     private var accessibilityLabel: String {
         switch guidanceState {
         case .neutral:
-            return "Face guide"
+            return L10n.string("Face guide")
         case .adjusting(let hint):
-            return "Framing guidance: \(hint.title)"
+            return L10n.format("Framing guidance: %@", hint.title)
         case .ready:
-            return "Framing ready"
+            return L10n.string("Framing ready")
         }
     }
 }

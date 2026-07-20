@@ -1,0 +1,5 @@
+"NSCameraUsageDescription" = "Chameo 使用相機拍攝你的每日照片。";
+"NSPhotoLibraryUsageDescription" = "Chameo 會在「照片」的專用相簿中儲存和管理你拍攝的照片。";
+"NSLocationUsageDescription" = "Chameo 可將你目前的城市和國家或地區加入儲存的照片。";
+"NSLocationWhenInUseUsageDescription" = "Chameo 可將你目前的城市和國家或地區加入儲存的照片。";
+"NSUserNotificationUsageDescription" = "Chameo 會提醒你拍攝每日照片。";

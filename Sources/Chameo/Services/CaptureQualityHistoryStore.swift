@@ -7,9 +7,9 @@ enum CaptureQualitySuggestion: Equatable, Sendable {
     var message: String {
         switch self {
         case .faceNotDetected:
-            return "No face was detected. Place your face inside the guide and retake."
+            return L10n.string("No face was detected. Place your face inside the guide and retake.")
         case .retakeRecommended:
-            return "This photo may not match the quality of your recent Chameos."
+            return L10n.string("This photo may not match the quality of your recent Chameos.")
         }
     }
 }

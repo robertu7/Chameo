@@ -3,6 +3,8 @@ import Photos
 import SwiftUI
 
 struct GeneralSettingsView: View {
+    @Environment(\.scenePhase) private var scenePhase
+    @EnvironmentObject private var localizationController: LocalizationController
     @AppStorage(AppPreferenceKey.albumName) private var albumName = "Chameo"
     @AppStorage(AppPreferenceKey.handsFreeCountdown) private var handsFreeCountdown = false
     @AppStorage(AppPreferenceKey.showFaceGuide) private var showFaceGuide = true
@@ -13,7 +15,7 @@ struct GeneralSettingsView: View {
     @State private var launchAtLogin = false
     @State private var isUpdatingLaunchAtLogin = false
     @State private var isLoadingSettings = true
-    @State private var errorMessage: String?
+    @State private var errorMessage: LocalizedMessage?
     @State private var photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
     @State private var photosAlbumNames: [String] = []
     @State private var isLoadingPhotosAlbums = false
@@ -24,94 +26,131 @@ struct GeneralSettingsView: View {
 
     var body: some View {
         Form {
-            Section("Photos") {
-                Picker("Album", selection: $albumName) {
+            Section(L10n.string("Capture")) {
+                SettingsToggle(
+                    title: L10n.string("Framing Guide"),
+                    description: L10n.string("Helps position your face with live guidance."),
+                    isOn: $showFaceGuide
+                )
+
+                if showFaceGuide {
+                    SettingsToggle(
+                        title: L10n.string("Auto Capture"),
+                        description: L10n.string(
+                            "Captures after a three-second countdown when framing is ready."
+                        ),
+                        isOn: $handsFreeCountdown
+                    )
+                }
+
+                SettingsToggle(
+                    title: L10n.string("Face Alignment"),
+                    description: L10n.string(
+                        "Straightens and crops photos for consistent framing."
+                    ),
+                    isOn: $autoAlignPhotos
+                )
+
+                Button {
+                    resetCaptureSettings()
+                } label: {
+                    Label(
+                        L10n.string("Reset to Defaults"),
+                        systemImage: "arrow.counterclockwise"
+                    )
+                }
+                .disabled(isUsingDefaultCaptureSettings)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+
+            ReminderSettingsView()
+
+            Section(L10n.string("settings.photos.section")) {
+                Picker(selection: $albumName) {
                     ForEach(albumChoices, id: \.self) { albumName in
                         Text(albumName).tag(albumName)
                     }
+                } label: {
+                    SettingsLabel(
+                        title: L10n.string("Album"),
+                        description: L10n.string(
+                            "Saves new photos here and shows them in Library."
+                        )
+                    )
                 }
                 .disabled(albumChoices.isEmpty || isLoadingPhotosAlbums)
-
-                Text("Chameo saves new photos to this album and shows them in the Library.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                .accessibilityHint(
+                    L10n.string(
+                        "Saves new photos here and shows them in Library."
+                    )
+                )
 
                 HStack {
                     if isLoadingPhotosAlbums {
                         ProgressView()
                             .controlSize(.small)
-                            .accessibilityLabel("Loading Photos albums")
+                            .accessibilityLabel(L10n.string("Loading Photos albums"))
                     }
-
-                    Spacer()
-
-                    Button {
-                        Task {
-                            await refreshPhotosAlbums(requestAuthorization: true)
-                        }
-                    } label: {
-                        Label("Refresh Albums", systemImage: "arrow.clockwise")
-                    }
-                    .disabled(isLoadingPhotosAlbums || isCreatingPhotosAlbum)
 
                     Button {
                         errorMessage = nil
                         newAlbumName = defaultNewAlbumName
                         isShowingNewAlbumSheet = true
                     } label: {
-                        Label("New Album…", systemImage: "plus")
+                        Label(L10n.string("New Album…"), systemImage: "plus")
                     }
-                    .disabled(isCreatingPhotosAlbum)
+                    .disabled(isCreatingPhotosAlbum || !canReadPhotosAlbums)
                 }
+                .frame(maxWidth: .infinity, alignment: .trailing)
 
                 if isPhotosPermissionDenied {
                     PermissionStatusInline(
-                        message: "Allow Photos access to save and view Chameos.",
+                        message: L10n.string("Allow Photos access to save and view Chameos."),
                         destination: .photos
                     )
                 } else if canReadPhotosAlbums && albumChoices.count == 1 && photosAlbumNames.isEmpty {
-                    Text("No existing albums found. Chameo will create one when you save a photo.")
+                    Text(L10n.string("No existing albums found. Chameo will create one when you save a photo."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-            }
-
-            Section("Camera") {
-                Toggle("Show Face Guide", isOn: $showFaceGuide)
-                Toggle("Hands-Free Countdown", isOn: $handsFreeCountdown)
-                    .disabled(!showFaceGuide)
-
-                Text("Starts a silent three-second countdown when the face guide shows Ready.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Toggle("Automatically Align Photos", isOn: $autoAlignPhotos)
-            }
-
-            Section("Location") {
-                Toggle("Add Location to Photos", isOn: $saveLocation)
+                Toggle(L10n.string("Add Location to Photos"), isOn: $saveLocation)
 
                 if saveLocation && isLocationPermissionDenied {
                     PermissionStatusInline(
-                        message: "Location access is off. Chameo will save photos without location data.",
+                        message: L10n.string("Location access is off. Chameo will save photos without location data."),
                         destination: .location
                     )
                 }
             }
 
-            Section("Startup") {
-                Toggle("Launch at Login", isOn: $launchAtLogin)
-                    .disabled(isUpdatingLaunchAtLogin)
-            }
+            Section {
+                Picker(
+                    L10n.string("settings.language.picker"),
+                    selection: languageBinding
+                ) {
+                    ForEach(AppLanguage.allCases) { language in
+                        Text(language.pickerTitle).tag(language)
+                    }
+                }
 
-            Section("About") {
-                LabeledContent("Version", value: AppVersion.current.version)
-                LabeledContent("Build ID", value: AppVersion.current.buildID)
+                Toggle(L10n.string("Launch at Login"), isOn: $launchAtLogin)
+                    .disabled(isUpdatingLaunchAtLogin)
+            } header: {
+                Text(L10n.string("App"))
+            } footer: {
+                Text(
+                    L10n.format(
+                        "Version %@ · Build %@",
+                        AppVersion.current.version,
+                        AppVersion.current.buildID
+                    )
+                )
             }
         }
         .formStyle(.grouped)
         .safeAreaInset(edge: .bottom) {
             if let errorMessage {
-                settingsError(errorMessage)
+                settingsError(errorMessage.text)
             }
         }
         .sheet(isPresented: $isShowingNewAlbumSheet) {
@@ -125,7 +164,17 @@ struct GeneralSettingsView: View {
 
             Task {
                 refreshPermissionStatuses()
-                await refreshPhotosAlbums(requestAuthorization: false)
+                await refreshPhotosAlbums()
+            }
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            guard newPhase == .active else {
+                return
+            }
+
+            Task {
+                refreshPermissionStatuses()
+                await refreshPhotosAlbums()
             }
         }
         .onChange(of: launchAtLogin) { _, newValue in
@@ -139,12 +188,29 @@ struct GeneralSettingsView: View {
         }
     }
 
+    private var languageBinding: Binding<AppLanguage> {
+        Binding(
+            get: { localizationController.preference },
+            set: { localizationController.select($0) }
+        )
+    }
+
+    private var isUsingDefaultCaptureSettings: Bool {
+        showFaceGuide && !handsFreeCountdown && autoAlignPhotos
+    }
+
+    private func resetCaptureSettings() {
+        showFaceGuide = true
+        handsFreeCountdown = false
+        autoAlignPhotos = true
+    }
+
     private var newAlbumSheet: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("New Photos Album")
+            Text(L10n.string("New Photos Album"))
                 .font(.headline)
 
-            TextField("Album name", text: $newAlbumName)
+            TextField(L10n.string("Album name"), text: $newAlbumName)
                 .textFieldStyle(.roundedBorder)
                 .disabled(isCreatingPhotosAlbum)
                 .onSubmit {
@@ -158,11 +224,11 @@ struct GeneralSettingsView: View {
                 }
 
             if isDuplicateNewAlbumName {
-                Text("An album with this name already exists.")
+                Text(L10n.string("An album with this name already exists."))
                     .font(.caption)
                     .foregroundStyle(.red)
             } else if let errorMessage {
-                Text(errorMessage)
+                Text(errorMessage.text)
                     .font(.caption)
                     .foregroundStyle(.red)
             }
@@ -171,18 +237,18 @@ struct GeneralSettingsView: View {
                 if isCreatingPhotosAlbum {
                     ProgressView()
                         .controlSize(.small)
-                        .accessibilityLabel("Creating Photos album")
+                        .accessibilityLabel(L10n.string("Creating Photos album"))
                 }
 
                 Spacer()
 
-                Button("Cancel") {
+                Button(L10n.string("Cancel")) {
                     isShowingNewAlbumSheet = false
                     newAlbumName = ""
                 }
                 .disabled(isCreatingPhotosAlbum)
 
-                Button("Create") {
+                Button(L10n.string("Create")) {
                     Task {
                         await createPhotosAlbum()
                     }
@@ -211,14 +277,14 @@ struct GeneralSettingsView: View {
         do {
             try LaunchAtLoginService.setEnabled(isEnabled)
             if isEnabled && LaunchAtLoginService.requiresApproval {
-                errorMessage = "Open System Settings → General → Login Items, then allow Chameo."
+                errorMessage = .localized("Open System Settings → General → Login Items, then allow Chameo.")
             }
             launchAtLogin = LaunchAtLoginService.isEnabled
             storedLaunchAtLogin = launchAtLogin
         } catch {
             launchAtLogin = LaunchAtLoginService.isEnabled
             storedLaunchAtLogin = launchAtLogin
-            errorMessage = error.localizedDescription
+            errorMessage = .error(error)
         }
 
         isUpdatingLaunchAtLogin = false
@@ -289,19 +355,13 @@ struct GeneralSettingsView: View {
         locationAuthorizationStatus = CLLocationManager().authorizationStatus
     }
 
-    private func refreshPhotosAlbums(requestAuthorization: Bool) async {
+    private func refreshPhotosAlbums() async {
+        guard !isLoadingPhotosAlbums else {
+            return
+        }
+
         errorMessage = nil
         photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
-
-        if requestAuthorization {
-            do {
-                try await PhotoLibraryService.ensureAuthorized()
-            } catch {
-                photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
-                errorMessage = error.localizedDescription
-                return
-            }
-        }
 
         switch PhotoLibraryService.authorizationStatus() {
         case .authorized, .limited:
@@ -322,7 +382,7 @@ struct GeneralSettingsView: View {
             photosAlbumNames = try await PhotoLibraryService.fetchAlbumNames()
         } catch {
             photosAlbumNames = []
-            errorMessage = error.localizedDescription
+            errorMessage = .error(error)
         }
     }
 
@@ -358,7 +418,34 @@ struct GeneralSettingsView: View {
             newAlbumName = ""
             isShowingNewAlbumSheet = false
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = .error(error)
+        }
+    }
+}
+
+private struct SettingsToggle: View {
+    let title: String
+    let description: String
+    @Binding var isOn: Bool
+
+    var body: some View {
+        Toggle(isOn: $isOn) {
+            SettingsLabel(title: title, description: description)
+        }
+        .accessibilityHint(description)
+    }
+}
+
+private struct SettingsLabel: View {
+    let title: String
+    let description: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+            Text(description)
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
     }
 }

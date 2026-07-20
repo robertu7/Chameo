@@ -85,6 +85,11 @@ cp "$BUILD_BINARY" "$APP_BINARY"
 chmod +x "$APP_BINARY"
 cp "$APP_ICON" "$APP_RESOURCES/AppIcon.icns"
 cp -R "$ROOT_DIR/Sources/Chameo/Resources/MenuBarIcons" "$APP_RESOURCES/MenuBarIcons"
+for localization in en zh-Hans zh-Hant; do
+  cp -R \
+    "$ROOT_DIR/Sources/Chameo/Resources/Localization/$localization.lproj" \
+    "$APP_RESOURCES/$localization.lproj"
+done
 
 cat >"$INFO_PLIST" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -99,6 +104,14 @@ cat >"$INFO_PLIST" <<PLIST
   <string>Chameo</string>
   <key>CFBundleDisplayName</key>
   <string>Chameo</string>
+  <key>CFBundleDevelopmentRegion</key>
+  <string>en</string>
+  <key>CFBundleLocalizations</key>
+  <array>
+    <string>en</string>
+    <string>zh-Hans</string>
+    <string>zh-Hant</string>
+  </array>
   <key>CFBundleShortVersionString</key>
   <string>$APP_VERSION</string>
   <key>CFBundleVersion</key>

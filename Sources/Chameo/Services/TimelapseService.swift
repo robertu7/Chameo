@@ -13,15 +13,15 @@ enum TimelapseError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .initializationFailed:
-            return "Could not start the timelapse export."
+            return L10n.string("Could not start the timelapse export.")
         case .noAssets:
-            return "No Chameos are available for a timelapse."
+            return L10n.string("No Chameos are available for a timelapse.")
         case .imageUnavailable:
-            return "Could not load a photo for the timelapse."
+            return L10n.string("Could not load a photo for the timelapse.")
         case .frameCreationFailed:
-            return "Could not create a frame for the timelapse."
+            return L10n.string("Could not create a frame for the timelapse.")
         case .writingFailed:
-            return "Could not save the timelapse."
+            return L10n.string("Could not save the timelapse.")
         }
     }
 }

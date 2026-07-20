@@ -13,21 +13,21 @@ enum LiveFramingHint: Equatable, Sendable {
     var title: String {
         switch self {
         case .centerFace:
-            return "Center your face"
+            return L10n.string("Center your face")
         case .onePerson:
-            return "One person at a time"
+            return L10n.string("One person at a time")
         case .moveCloser:
-            return "Move closer"
+            return L10n.string("Move closer")
         case .moveBack:
-            return "Move back"
+            return L10n.string("Move back")
         case .moveTowardCenter:
-            return "Move toward center"
+            return L10n.string("Move toward center")
         case .moveHigher:
-            return "Move a little higher"
+            return L10n.string("Move a little higher")
         case .moveLower:
-            return "Move a little lower"
+            return L10n.string("Move a little lower")
         case .holdStill:
-            return "Hold still"
+            return L10n.string("Hold still")
         }
     }
 }
@@ -44,7 +44,7 @@ enum LiveFramingGuidanceState: Equatable, Sendable {
         case .adjusting(let hint):
             return hint.title
         case .ready:
-            return "Ready"
+            return L10n.string("Ready")
         }
     }
 }

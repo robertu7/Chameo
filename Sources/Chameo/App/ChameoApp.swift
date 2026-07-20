@@ -4,6 +4,7 @@ import SwiftUI
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
+    let localizationController = LocalizationController()
     private let appState = AppState()
     private let cameraService = CameraService()
     private let libraryStore = LibraryStore()
@@ -81,7 +82,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             AppPreferenceKey.hasCompletedPermissionOnboarding: false,
             AppPreferenceKey.showFaceGuide: true,
             AppPreferenceKey.saveLocation: false,
-            AppPreferenceKey.launchAtLogin: LaunchAtLoginService.isEnabled
+            AppPreferenceKey.launchAtLogin: LaunchAtLoginService.isEnabled,
+            AppPreferenceKey.language: AppLanguage.automatic.rawValue
         ])
         UserDefaults.standard.set(
             LaunchAtLoginService.isEnabled,
@@ -94,6 +96,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             self,
             selector: #selector(refreshAfterSystemEvent(_:)),
             name: NSApplication.didBecomeActiveNotification,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(languageDidChange(_:)),
+            name: .chameoLanguageDidChange,
             object: nil
         )
 
@@ -127,10 +135,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         refreshAppState()
     }
 
+    @objc private func languageDidChange(_ notification: Notification) {
+        refreshReminderNotifications()
+    }
+
     private func presentPermissionOnboarding() {
-        let controller = PermissionOnboardingWindowController(onCompletion: { [weak self] in
-            self?.finishPermissionOnboarding()
-        })
+        let controller = PermissionOnboardingWindowController(
+            localizationController: localizationController,
+            onCompletion: { [weak self] in
+                self?.finishPermissionOnboarding()
+            }
+        )
         permissionOnboardingWindowController = controller
         controller.present()
     }
@@ -145,7 +160,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             statusPopoverController = StatusPopoverController(
                 appState: appState,
                 cameraService: cameraService,
-                libraryStore: libraryStore
+                libraryStore: libraryStore,
+                localizationController: localizationController
             )
         }
 
@@ -194,6 +210,8 @@ struct ChameoApp: App {
     var body: some Scene {
         Settings {
             SettingsView()
+                .environmentObject(appDelegate.localizationController)
+                .environment(\.locale, appDelegate.localizationController.displayLocale)
         }
     }
 }

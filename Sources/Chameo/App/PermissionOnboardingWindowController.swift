@@ -26,15 +26,20 @@ final class PermissionOnboardingWindowController: NSWindowController, NSWindowDe
     private let onCompletion: () -> Void
     private var isCompletingOnboarding = false
 
-    convenience init(onCompletion: @escaping () -> Void) {
+    convenience init(
+        localizationController: LocalizationController,
+        onCompletion: @escaping () -> Void
+    ) {
         self.init(
             permissionProvider: SystemRequiredPermissionService(),
+            localizationController: localizationController,
             onCompletion: onCompletion
         )
     }
 
     init(
         permissionProvider: any RequiredPermissionProviding,
+        localizationController: LocalizationController,
         onCompletion: @escaping () -> Void
     ) {
         self.model = PermissionOnboardingModel(permissionProvider: permissionProvider)
@@ -68,6 +73,8 @@ final class PermissionOnboardingWindowController: NSWindowController, NSWindowDe
                     self?.bringToFront()
                 }
             )
+            .environmentObject(localizationController)
+            .environment(\.locale, localizationController.displayLocale)
         )
         window.setContentSize(Self.windowSize)
         window.contentView?.wantsLayer = true

@@ -7,17 +7,25 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
     private let appState: AppState
     private let cameraService: CameraService
     private let libraryStore: LibraryStore
+    private let localizationController: LocalizationController
     private let statusItem: NSStatusItem
     private let popover: NSPopover
     private var localEventMonitor: Any?
     private var globalEventMonitor: Any?
     private var libraryStatusObservation: AnyCancellable?
     private var appearanceObservation: NSKeyValueObservation?
+    private var localizationObservation: AnyCancellable?
 
-    init(appState: AppState, cameraService: CameraService, libraryStore: LibraryStore) {
+    init(
+        appState: AppState,
+        cameraService: CameraService,
+        libraryStore: LibraryStore,
+        localizationController: LocalizationController
+    ) {
         self.appState = appState
         self.cameraService = cameraService
         self.libraryStore = libraryStore
+        self.localizationController = localizationController
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         self.popover = NSPopover()
 
@@ -34,6 +42,7 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
 
         observeDailyStatus()
         observeAppearance()
+        observeLocalization()
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(calendarDayChanged(_:)),
@@ -49,6 +58,8 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
                 .environmentObject(appState)
                 .environmentObject(cameraService)
                 .environmentObject(libraryStore)
+                .environmentObject(localizationController)
+                .environment(\.locale, localizationController.displayLocale)
         )
     }
 
@@ -134,6 +145,16 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
         }
     }
 
+    private func observeLocalization() {
+        localizationObservation = localizationController.objectWillChange
+            .sink { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    self.updateStatusItem(for: self.libraryStore.dailyStatus())
+                }
+            }
+    }
+
     @objc private func calendarDayChanged(_ notification: Notification) {
         updateStatusItem(for: libraryStore.dailyStatus())
     }
@@ -149,16 +170,16 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
         switch status {
         case .captured:
             iconName = "eye-captured"
-            description = "Today’s Chameo is saved"
+            description = L10n.string("status.today.saved")
         case .pendingToday:
             iconName = "eye"
-            description = "Today’s Chameo has not been saved yet"
+            description = L10n.string("status.today.pending")
         case .unknown:
             iconName = "eye"
-            description = "Today’s Chameo status is unavailable"
+            description = L10n.string("status.today.unavailable")
         case .missed, .future, .outsideTracking:
             iconName = "eye"
-            description = "Take today’s Chameo"
+            description = L10n.string("status.today.take")
         }
 
         button.image = StatusMenuIcon.image(

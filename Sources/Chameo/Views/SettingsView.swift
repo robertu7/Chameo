@@ -1,36 +1,24 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @EnvironmentObject private var localizationController: LocalizationController
     @AppStorage(AppPreferenceKey.hasCompletedPermissionOnboarding)
     private var hasCompletedPermissionOnboarding = false
 
     var body: some View {
         Group {
             if hasCompletedPermissionOnboarding {
-                settingsTabs
+                GeneralSettingsView()
             } else {
                 ContentUnavailableView {
-                    Label("Finish Chameo Setup", systemImage: "lock.fill")
+                    Label(L10n.string("Finish Chameo Setup"), systemImage: "lock.fill")
                 } description: {
-                    Text("Allow Camera and Photos access in the Chameo welcome window before opening Settings.")
+                    Text(L10n.string("Allow Camera and Photos access in the Chameo welcome window before opening Settings."))
                 }
             }
         }
         .frame(width: 460, height: 360)
         .scenePadding()
-    }
-
-    private var settingsTabs: some View {
-        TabView {
-            GeneralSettingsView()
-                .tabItem {
-                    Label("General", systemImage: "gearshape")
-                }
-
-            ReminderSettingsView()
-                .tabItem {
-                    Label("Reminders", systemImage: "bell")
-                }
-        }
+        .environment(\.locale, localizationController.displayLocale)
     }
 }

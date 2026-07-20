@@ -18,7 +18,7 @@ struct TabPicker: NSViewRepresentable {
         )
 
         control.segmentDistribution = .fit
-        control.setAccessibilityLabel("View")
+        control.setAccessibilityLabel(L10n.string("View"))
 
         for (index, tab) in tabs.enumerated() {
             let image = NSImage(
@@ -37,6 +37,11 @@ struct TabPicker: NSViewRepresentable {
     }
 
     func updateNSView(_ control: NSSegmentedControl, context: Context) {
+        control.setAccessibilityLabel(L10n.string("View"))
+        for (index, tab) in ChameoTab.allCases.enumerated() {
+            control.setLabel(tab.title, forSegment: index)
+            control.setToolTip(tab.title, forSegment: index)
+        }
         updateSelection(in: control)
     }
 

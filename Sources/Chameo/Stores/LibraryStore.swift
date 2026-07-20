@@ -8,7 +8,7 @@ final class LibraryStore: ObservableObject {
     @Published private(set) var assets: [ChameoAsset] = []
     @Published private(set) var isLoading = false
     @Published private(set) var hasLoaded = false
-    @Published var errorMessage: String?
+    @Published var errorMessage: LocalizedMessage?
 
     private let assetLoader: AssetLoader
     private var reloadGeneration = 0
@@ -42,7 +42,7 @@ final class LibraryStore: ObservableObject {
             guard generation == reloadGeneration else {
                 return
             }
-            errorMessage = error.localizedDescription
+            errorMessage = .error(error)
         }
 
         if generation == reloadGeneration {
@@ -60,7 +60,7 @@ final class LibraryStore: ObservableObject {
             return true
         } catch {
             assets = previousAssets
-            errorMessage = error.localizedDescription
+            errorMessage = .error(error)
             await reload(albumName: albumName, preservingError: true)
             return false
         }

@@ -14,11 +14,11 @@ enum ReminderRepeat: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .none:
-            return "Once"
+            return L10n.string("Once")
         case .daily:
-            return "Daily"
+            return L10n.string("Daily")
         case .weekly:
-            return "Weekly"
+            return L10n.string("Weekly")
         }
     }
 }

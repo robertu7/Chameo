@@ -10,13 +10,13 @@ enum PermissionRecoveryDestination {
     var title: String {
         switch self {
         case .camera:
-            return "Open Camera Settings"
+            return L10n.string("Open Camera Settings")
         case .photos:
-            return "Open Photos Settings"
+            return L10n.string("Open Photos Settings")
         case .location:
-            return "Open Location Settings"
+            return L10n.string("Open Location Settings")
         case .notifications:
-            return "Open Notifications Settings"
+            return L10n.string("Open Notifications Settings")
         }
     }
 

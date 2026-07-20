@@ -6,7 +6,7 @@ import Vision
 struct FaceAlignmentResult {
     let data: Data
     let didAlign: Bool
-    let message: String?
+    let error: FaceAlignmentError?
 }
 
 enum FaceAlignmentService {
@@ -16,9 +16,9 @@ enum FaceAlignmentService {
                 try align(data)
             }.value
         } catch let error as FaceAlignmentError {
-            return FaceAlignmentResult(data: data, didAlign: false, message: error.localizedDescription)
+            return FaceAlignmentResult(data: data, didAlign: false, error: error)
         } catch {
-            return FaceAlignmentResult(data: data, didAlign: false, message: FaceAlignmentError.processingFailed.localizedDescription)
+            return FaceAlignmentResult(data: data, didAlign: false, error: .processingFailed)
         }
     }
 
@@ -66,7 +66,7 @@ enum FaceAlignmentService {
             throw FaceAlignmentError.processingFailed
         }
 
-        return FaceAlignmentResult(data: outputData, didAlign: true, message: nil)
+        return FaceAlignmentResult(data: outputData, didAlign: true, error: nil)
     }
 
     private static func largestFace(in image: CGImage) throws -> VNFaceObservation {
@@ -117,13 +117,13 @@ enum FaceAlignmentService {
     }
 }
 
-enum FaceAlignmentError: LocalizedError {
+enum FaceAlignmentError: LocalizedError, Sendable {
     case invalidImage
     case noFace
     case missingLandmarks
     case processingFailed
 
-    var errorDescription: String? {
+    var localizationKey: String {
         switch self {
         case .invalidImage:
             return "Could not read the photo for alignment. You can save the original."
@@ -134,6 +134,10 @@ enum FaceAlignmentError: LocalizedError {
         case .processingFailed:
             return "Could not align the photo. You can save the original."
         }
+    }
+
+    var errorDescription: String? {
+        L10n.string(localizationKey)
     }
 }
 

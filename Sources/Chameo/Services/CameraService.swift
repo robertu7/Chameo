@@ -14,13 +14,28 @@ final class CameraService: NSObject, ObservableObject {
         case requestingPermission
         case unauthorized
         case ready
-        case unavailable(String)
+        case unavailable(LocalizedMessage)
         case capturing
         case switchingCamera
+
+        static func == (lhs: Status, rhs: Status) -> Bool {
+            switch (lhs, rhs) {
+            case (.idle, .idle),
+                 (.requestingPermission, .requestingPermission),
+                 (.unauthorized, .unauthorized),
+                 (.ready, .ready),
+                 (.unavailable, .unavailable),
+                 (.capturing, .capturing),
+                 (.switchingCamera, .switchingCamera):
+                return true
+            default:
+                return false
+            }
+        }
     }
 
     @Published private(set) var status: Status = .idle
-    @Published private(set) var lastError: String?
+    @Published private(set) var lastError: LocalizedMessage?
     @Published private(set) var activeCameraID: String?
     @Published private(set) var activeCameraName: String?
     @Published private(set) var availableCameras: [CameraOption] = []
@@ -91,7 +106,7 @@ final class CameraService: NSObject, ObservableObject {
         case .denied, .restricted:
             status = .unauthorized
         @unknown default:
-            status = .unavailable("Camera access status is unavailable.")
+            status = .unavailable(.localized("Camera access status is unavailable."))
         }
     }
 
@@ -131,7 +146,7 @@ final class CameraService: NSObject, ObservableObject {
                     case .success(let data):
                         continuation.resume(returning: data)
                     case .failure(let error):
-                        self?.lastError = error.localizedDescription
+                        self?.lastError = .error(error)
                         continuation.resume(throwing: error)
                     }
                 }
@@ -163,7 +178,7 @@ final class CameraService: NSObject, ObservableObject {
             status = shouldRunSession ? .ready : .idle
             updateLiveFramingAnalysis()
         } catch {
-            lastError = error.localizedDescription
+            lastError = .error(error)
             Self.logger.error(
                 "Camera selection failed: \(error.localizedDescription, privacy: .public)"
             )
@@ -204,8 +219,8 @@ final class CameraService: NSObject, ObservableObject {
                     self.status = .ready
                     self.updateLiveFramingAnalysis()
                 case .failure(let error):
-                    self.lastError = error.localizedDescription
-                    self.status = .unavailable(error.localizedDescription)
+                    self.lastError = .error(error)
+                    self.status = .unavailable(.error(error))
                 }
             }
         }
@@ -274,19 +289,19 @@ enum CameraError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .noCamera:
-            return "No camera is available."
+            return L10n.string("No camera is available.")
         case .cannotAddInput:
-            return "Could not connect to the selected camera."
+            return L10n.string("Could not connect to the selected camera.")
         case .cannotAddOutput:
-            return "Could not prepare the camera for photos."
+            return L10n.string("Could not prepare the camera for photos.")
         case .cannotAddVideoOutput:
-            return "Could not start live framing."
+            return L10n.string("Could not start live framing.")
         case .cameraUnavailable:
-            return "The selected camera is no longer available."
+            return L10n.string("The selected camera is no longer available.")
         case .missingPhotoData:
-            return "The camera did not return a photo. Try again."
+            return L10n.string("The camera did not return a photo. Try again.")
         case .notReady:
-            return "The camera is not ready yet. Try again."
+            return L10n.string("The camera is not ready yet. Try again.")
         }
     }
 }

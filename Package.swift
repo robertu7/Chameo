@@ -4,6 +4,7 @@ import PackageDescription
 
 let package = Package(
     name: "Chameo",
+    defaultLocalization: "en",
     platforms: [
         .macOS(.v14)
     ],
@@ -15,7 +16,8 @@ let package = Package(
             name: "Chameo",
             path: "Sources/Chameo",
             resources: [
-                .copy("Resources/MenuBarIcons")
+                .copy("Resources/MenuBarIcons"),
+                .process("Resources/Localization")
             ]
         ),
         .testTarget(

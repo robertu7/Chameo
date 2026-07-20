@@ -11,7 +11,10 @@ final class UserFacingCopyTests: XCTestCase {
         ]
 
         for error in errors {
-            let message = try XCTUnwrap(error.errorDescription)
+            let message = L10n.string(
+                error.localizationKey,
+                localization: .english
+            )
             XCTAssertFalse(message.localizedCaseInsensitiveContains("saved"))
             XCTAssertTrue(message.localizedCaseInsensitiveContains("save the original"))
         }

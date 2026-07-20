@@ -15,6 +15,7 @@ struct CalendarLibraryView: View {
 
     private var calendar: Calendar {
         var calendar = Calendar.current
+        calendar.locale = L10n.currentLocalization.displayLocale
         calendar.firstWeekday = 2
         return calendar
     }
@@ -122,7 +123,7 @@ struct CalendarLibraryView: View {
                 Button {
                     changeMonth(by: -1)
                 } label: {
-                    Label("Previous Month", systemImage: "chevron.left")
+                    Label(L10n.string("Previous Month"), systemImage: "chevron.left")
                 }
                 .labelStyle(.iconOnly)
                 .buttonStyle(.borderless)
@@ -131,12 +132,12 @@ struct CalendarLibraryView: View {
                     height: ChameoLayout.compactControlSize
                 )
                 .contentShape(Rectangle())
-                .help("Previous Month")
+                .help(L10n.string("Previous Month"))
 
                 Button {
                     changeMonth(by: 1)
                 } label: {
-                    Label("Next Month", systemImage: "chevron.right")
+                    Label(L10n.string("Next Month"), systemImage: "chevron.right")
                 }
                 .labelStyle(.iconOnly)
                 .buttonStyle(.borderless)
@@ -145,22 +146,22 @@ struct CalendarLibraryView: View {
                     height: ChameoLayout.compactControlSize
                 )
                 .contentShape(Rectangle())
-                .help("Next Month")
+                .help(L10n.string("Next Month"))
             }
 
             HStack(spacing: ChameoLayout.compactSpacing) {
-                Text(displayedMonth.formatted(.dateTime.month(.wide).year()))
+                Text(DateFormatters.monthAndYear.string(from: displayedMonth))
                     .font(.headline)
 
                 if isRefreshing {
                     ProgressView()
                         .controlSize(.small)
-                        .accessibilityLabel("Refreshing Library")
+                        .accessibilityLabel(L10n.string("Refreshing Library"))
                 }
             }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            Button("Today") {
+            Button(L10n.string("Today")) {
                 select(Date())
             }
             .buttonStyle(.bordered)
@@ -169,14 +170,14 @@ struct CalendarLibraryView: View {
                 if isExportingTimelapse {
                     ProgressView()
                         .controlSize(.small)
-                        .accessibilityLabel("Creating timelapse")
+                        .accessibilityLabel(L10n.string("Creating timelapse"))
                 } else {
-                    Label("Timelapse", systemImage: "film")
+                    Label(L10n.string("Timelapse"), systemImage: "film")
                 }
             }
             .buttonStyle(.bordered)
             .disabled(isExportingTimelapse || assets.isEmpty)
-            .help("Create Timelapse")
+            .help(L10n.string("Create Timelapse"))
         }
     }
 
@@ -195,7 +196,11 @@ struct CalendarLibraryView: View {
         }
     }
 
-    private let weekdaySymbols = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
+    private var weekdaySymbols: [String] {
+        let symbols = calendar.shortStandaloneWeekdaySymbols
+        guard symbols.count == 7 else { return symbols }
+        return Array(symbols[1...]) + [symbols[0]]
+    }
 
     private func select(_ date: Date) {
         let day = calendar.startOfDay(for: date)
@@ -265,7 +270,7 @@ private struct CalendarDayCell: View {
         }
         .opacity(isInDisplayedMonth ? 1 : 0.35)
         .help(status.accessibilityDescription)
-        .accessibilityLabel(date.formatted(date: .complete, time: .omitted))
+        .accessibilityLabel(DateFormatters.completeDate.string(from: date))
         .accessibilityValue(status.accessibilityDescription)
     }
 
@@ -366,7 +371,7 @@ private struct CalendarDayPreview: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 8) {
-                    Text(date.formatted(date: .long, time: .omitted))
+                    Text(DateFormatters.longDate.string(from: date))
                         .font(.callout)
                         .fontWeight(.semibold)
                         .lineLimit(1)
@@ -374,8 +379,8 @@ private struct CalendarDayPreview: View {
                     Spacer(minLength: 4)
 
                     Text(
-                        selectedAsset.createdAt?.formatted(date: .omitted, time: .shortened)
-                            ?? "Unknown time")
+                        selectedAsset.createdAt.map(DateFormatters.shortTime.string(from:))
+                            ?? L10n.string("Unknown time"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
@@ -420,7 +425,7 @@ private struct CalendarDayPreview: View {
                 .background(.background, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(date.formatted(date: .long, time: .omitted))
+                Text(DateFormatters.longDate.string(from: date))
                     .font(.callout)
                     .fontWeight(.medium)
 
@@ -432,7 +437,7 @@ private struct CalendarDayPreview: View {
             Spacer()
 
             if status == .pendingToday {
-                Button("Take Chameo", action: onTakeChameo)
+                Button(L10n.string("Take Chameo"), action: onTakeChameo)
                     .buttonStyle(.borderedProminent)
             }
         }
@@ -461,7 +466,7 @@ private struct CalendarDayPreview: View {
     private var deleteControls: some View {
         if isConfirmingDeletion {
             HStack(spacing: 6) {
-                Button("Delete", role: .destructive) {
+                Button(L10n.string("Delete"), role: .destructive) {
                     guard let selectedAsset else { return }
                     isConfirmingDeletion = false
                     Task {
@@ -470,7 +475,7 @@ private struct CalendarDayPreview: View {
                 }
                 .buttonStyle(.borderless)
 
-                Button("Cancel") {
+                Button(L10n.string("Cancel")) {
                     isConfirmingDeletion = false
                 }
                 .buttonStyle(.borderless)
@@ -480,7 +485,7 @@ private struct CalendarDayPreview: View {
             Button {
                 isConfirmingDeletion = true
             } label: {
-                Label("Delete Photo", systemImage: "trash")
+                Label(L10n.string("Delete Photo"), systemImage: "trash")
             }
             .labelStyle(.iconOnly)
             .buttonStyle(.borderless)
@@ -489,21 +494,21 @@ private struct CalendarDayPreview: View {
                 height: ChameoLayout.compactControlSize
             )
             .contentShape(Rectangle())
-            .help("Delete Photo")
+            .help(L10n.string("Delete Photo"))
         }
     }
 
     private var locationText: String {
         if isLoadingLocationName {
-            return "Loading location…"
+            return L10n.string("Loading location…")
         }
         if !locationName.isEmpty {
             return locationName
         }
         if assets.count > 1 {
-            return "\(assets.count) Chameos"
+            return L10n.format("%lld Chameos", Int64(assets.count))
         }
-        return "No location"
+        return L10n.string("No location")
     }
 
     private var emptyStateSymbol: String {

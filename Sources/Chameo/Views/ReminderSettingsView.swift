@@ -14,84 +14,81 @@ struct ReminderSettingsView: View {
     @State private var reminderWeekday = Calendar.current.component(.weekday, from: Date())
     @State private var isUpdatingReminder = false
     @State private var showsReminderProgress = false
+    @State private var reminderUpdateTask: Task<Void, Never>?
     @State private var reminderProgressTask: Task<Void, Never>?
-    @State private var errorMessage: String?
+    @State private var errorMessage: LocalizedMessage?
     @State private var notificationAuthorizationStatus = UNAuthorizationStatus.notDetermined
     @State private var hasLoadedSettings = false
 
     var body: some View {
-        Form {
-            Section("Reminders") {
-                Toggle("Enable Reminders", isOn: $reminderEnabled)
-                    .disabled(isUpdatingReminder)
+        Section {
+            Toggle(L10n.string("Enable Reminders"), isOn: $reminderEnabled)
+                .disabled(isUpdatingReminder)
 
-                Picker("Repeats", selection: $reminderRepeat) {
+            if reminderEnabled {
+                Picker(L10n.string("Frequency"), selection: $reminderRepeat) {
                     ForEach(ReminderRepeat.allCases) { repeatMode in
                         Text(repeatMode.title).tag(repeatMode)
                     }
                 }
                 .pickerStyle(.segmented)
-                .disabled(!reminderEnabled || isUpdatingReminder)
+                .disabled(isUpdatingReminder)
 
-                if reminderEnabled {
-                    if reminderRepeat == .weekly {
-                        Picker("Day", selection: $reminderWeekday) {
-                            ForEach(1...7, id: \.self) { weekday in
-                                Text(weekdayName(for: weekday)).tag(weekday)
+                if reminderRepeat == .weekly {
+                    Picker(L10n.string("Day"), selection: $reminderWeekday) {
+                        ForEach(1...7, id: \.self) { weekday in
+                            Text(weekdayName(for: weekday)).tag(weekday)
+                        }
+                    }
+                    .disabled(isUpdatingReminder)
+                }
+
+                if reminderRepeat == .none {
+                    DatePicker(L10n.string("Date"), selection: $reminderDate, displayedComponents: .date)
+                        .disabled(isUpdatingReminder)
+                }
+
+                DatePicker(
+                    selection: $reminderDate,
+                    displayedComponents: .hourAndMinute
+                ) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(L10n.string("Time"))
+
+                        HStack(spacing: 6) {
+                            Text(reminderPreviewText)
+                                .font(.caption)
+                                .foregroundStyle(canSaveReminder ? Color.secondary : Color.red)
+
+                            if showsReminderProgress {
+                                ProgressView()
+                                    .controlSize(.small)
+                                    .accessibilityLabel(L10n.string("Updating reminder"))
                             }
                         }
-                        .disabled(isUpdatingReminder)
-                    }
-
-                    if reminderRepeat == .none {
-                        DatePicker("Date", selection: $reminderDate, displayedComponents: .date)
-                            .disabled(isUpdatingReminder)
-                    }
-
-                    DatePicker("Time", selection: $reminderDate, displayedComponents: .hourAndMinute)
-                        .disabled(isUpdatingReminder)
-                }
-            }
-
-            Section {
-                Text(reminderPreviewText)
-                    .font(.caption)
-                    .foregroundStyle(canSaveReminder ? Color.secondary : Color.red)
-
-                HStack {
-                    Button("Save Changes") {
-                        Task {
-                            await saveReminderSettings()
-                        }
-                    }
-                    .disabled(!hasReminderChanges || !canSaveReminder || isUpdatingReminder)
-
-                    Spacer()
-
-                    if showsReminderProgress {
-                        ProgressView()
-                            .controlSize(.small)
-                            .accessibilityLabel("Updating reminder")
                     }
                 }
+                .disabled(isUpdatingReminder)
+                .accessibilityHint(reminderPreviewText)
             }
 
             if isNotificationPermissionDenied {
                 PermissionStatusInline(
-                    message: "Allow Notifications in System Settings to schedule reminders.",
+                    message: L10n.string("Allow Notifications in System Settings to schedule reminders."),
                     destination: .notifications
                 )
             }
-        }
-        .formStyle(.grouped)
-        .safeAreaInset(edge: .bottom) {
+
             if let errorMessage {
-                Text(errorMessage)
+                Text(errorMessage.text)
                     .font(.caption)
                     .foregroundStyle(.red)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal)
-                    .padding(.bottom, 8)
+            }
+        } header: {
+            Text(L10n.string("Reminders"))
+        } footer: {
+            if !reminderEnabled {
+                Text(reminderPreviewText)
             }
         }
         .onAppear {
@@ -108,11 +105,20 @@ struct ReminderSettingsView: View {
             reminderProgressTask?.cancel()
         }
         .onChange(of: reminderEnabled) { _, newValue in
-            guard newValue, reminderRepeat == .none, nextReminderDate == nil else {
-                return
+            if newValue, reminderRepeat == .none, nextReminderDate == nil {
+                reminderDate = defaultOneTimeReminderDate
             }
 
-            reminderDate = defaultOneTimeReminderDate
+            scheduleReminderUpdate()
+        }
+        .onChange(of: reminderDate) {
+            scheduleReminderUpdate()
+        }
+        .onChange(of: reminderRepeat) {
+            scheduleReminderUpdate()
+        }
+        .onChange(of: reminderWeekday) {
+            scheduleReminderUpdate()
         }
     }
 
@@ -124,6 +130,10 @@ struct ReminderSettingsView: View {
     }
 
     private func saveReminderSettings() async {
+        guard hasReminderChanges, canSaveReminder, !isUpdatingReminder else {
+            return
+        }
+
         errorMessage = nil
         isUpdatingReminder = true
         showReminderProgressAfterDelay()
@@ -131,6 +141,7 @@ struct ReminderSettingsView: View {
         defer {
             reminderProgressTask?.cancel()
             reminderProgressTask = nil
+            reminderUpdateTask = nil
             showsReminderProgress = false
             isUpdatingReminder = false
         }
@@ -153,7 +164,33 @@ struct ReminderSettingsView: View {
             notificationAuthorizationStatus = await ReminderService.authorizationStatus()
         } catch {
             notificationAuthorizationStatus = await ReminderService.authorizationStatus()
-            errorMessage = error.localizedDescription
+            errorMessage = .error(error)
+        }
+    }
+
+    private func scheduleReminderUpdate() {
+        reminderUpdateTask?.cancel()
+        reminderUpdateTask = nil
+
+        guard hasLoadedSettings else {
+            return
+        }
+
+        errorMessage = nil
+        guard hasReminderChanges else {
+            return
+        }
+
+        guard canSaveReminder else {
+            return
+        }
+
+        reminderUpdateTask = Task {
+            try? await Task.sleep(for: .milliseconds(300))
+            guard !Task.isCancelled else {
+                return
+            }
+            await saveReminderSettings()
         }
     }
 
@@ -186,14 +223,17 @@ struct ReminderSettingsView: View {
 
     private var reminderPreviewText: String {
         guard reminderEnabled else {
-            return "Reminders are off."
+            return L10n.string("Reminders are off.")
         }
 
         guard let nextReminderDate else {
-            return "Choose a future time."
+            return L10n.string("Choose a future time.")
         }
 
-        return "Next reminder: \(DateFormatters.reminderPreview.string(from: nextReminderDate))"
+        return L10n.format(
+            "Next reminder: %@",
+            DateFormatters.reminderPreview.string(from: nextReminderDate)
+        )
     }
 
     private var nextReminderDate: Date? {
@@ -205,7 +245,7 @@ struct ReminderSettingsView: View {
     }
 
     private func weekdayName(for weekday: Int) -> String {
-        let symbols = Calendar.current.weekdaySymbols
+        let symbols = localizedCalendar.weekdaySymbols
         guard symbols.indices.contains(weekday - 1) else {
             return ""
         }
@@ -214,7 +254,7 @@ struct ReminderSettingsView: View {
     }
 
     private func validWeekday(_ weekday: Int) -> Int {
-        let symbols = Calendar.current.weekdaySymbols
+        let symbols = localizedCalendar.weekdaySymbols
         guard symbols.indices.contains(weekday - 1) else {
             return Calendar.current.component(.weekday, from: reminderDate)
         }
@@ -223,6 +263,12 @@ struct ReminderSettingsView: View {
 
     private var isNotificationPermissionDenied: Bool {
         notificationAuthorizationStatus == .denied
+    }
+
+    private var localizedCalendar: Calendar {
+        var calendar = Calendar.current
+        calendar.locale = L10n.currentLocalization.displayLocale
+        return calendar
     }
 
     private func migrateReminderSettingsIfNeeded() async {

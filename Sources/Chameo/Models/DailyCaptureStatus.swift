@@ -11,17 +11,17 @@ enum DailyCaptureStatus: Equatable {
     var accessibilityDescription: String {
         switch self {
         case .captured:
-            return "Captured"
+            return L10n.string("Captured")
         case .pendingToday:
-            return "Not captured yet"
+            return L10n.string("Not captured yet")
         case .missed:
-            return "Missed"
+            return L10n.string("Missed")
         case .future:
-            return "Future"
+            return L10n.string("Future")
         case .outsideTracking:
-            return "Before tracking began"
+            return L10n.string("Before tracking began")
         case .unknown:
-            return "Status unavailable"
+            return L10n.string("Status unavailable")
         }
     }
 }

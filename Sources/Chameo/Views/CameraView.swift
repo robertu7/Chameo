@@ -17,7 +17,7 @@ struct CameraView: View {
     let handsFreeCountdown: Bool
     let showFaceGuide: Bool
     let saveLocation: Bool
-    @Binding var statusMessage: String?
+    @Binding var statusMessage: LocalizedMessage?
 
     @State private var isSaving = false
     @State private var capturedPreview: CapturedPreview?
@@ -70,7 +70,12 @@ struct CameraView: View {
                 Button {
                     beginCapture(trigger: .manual)
                 } label: {
-                    Label(isSaving ? "Taking photo…" : "Take Chameo", systemImage: "camera.circle.fill")
+                    Label(
+                        isSaving
+                            ? L10n.string("Taking photo…")
+                            : L10n.string("Take Chameo"),
+                        systemImage: "camera.circle.fill"
+                    )
                         .frame(minWidth: 104)
                 }
                 .buttonStyle(.borderedProminent)
@@ -80,7 +85,7 @@ struct CameraView: View {
 
                 if case .unauthorized = cameraService.status {
                     PermissionStatusInline(
-                        message: "Allow Camera access to take a Chameo.",
+                        message: L10n.string("Allow Camera access to take a Chameo."),
                         destination: .camera
                     )
                     .padding(.horizontal, 18)
@@ -88,7 +93,7 @@ struct CameraView: View {
 
                 if saveLocation && locationPermissionDenied {
                     PermissionStatusInline(
-                        message: "Location access is off. Chameo will save without location data.",
+                        message: L10n.string("Location access is off. Chameo will save without location data."),
                         destination: .location
                     )
                     .padding(.horizontal, 18)
@@ -146,23 +151,23 @@ struct CameraView: View {
     private var cameraOverlay: some View {
         switch cameraService.status {
         case .requestingPermission:
-            StatusOverlay(title: "Requesting camera access", systemImage: "camera")
+            StatusOverlay(title: L10n.string("Requesting camera access"), systemImage: "camera")
         case .unauthorized:
             StatusOverlay(
-                title: "Camera access is off",
+                title: L10n.string("Camera access is off"),
                 systemImage: "camera.fill",
                 recoveryDestination: .camera
             )
         case .unavailable(let message):
-            StatusOverlay(title: message, systemImage: "exclamationmark.triangle")
+            StatusOverlay(title: message.text, systemImage: "exclamationmark.triangle")
         case .idle:
-            StatusOverlay(title: "Starting camera", systemImage: "camera")
+            StatusOverlay(title: L10n.string("Starting camera"), systemImage: "camera")
         case .capturing:
-            ProgressView("Taking photo…")
+            ProgressView(L10n.string("Taking photo…"))
                 .padding(12)
                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
         case .switchingCamera:
-            ProgressView("Switching camera")
+            ProgressView(L10n.string("Switching camera"))
                 .padding(12)
                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
         case .ready:
@@ -200,7 +205,7 @@ struct CameraView: View {
             }
             .menuStyle(.borderlessButton)
             .menuIndicator(.hidden)
-            .accessibilityLabel("Camera")
+            .accessibilityLabel(L10n.string("Camera"))
             .disabled(!canCapture || isSaving)
             .padding(8)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -284,10 +289,10 @@ struct CameraView: View {
                 try await cameraService.selectCamera(uniqueID: uniqueID)
                 let cameraName = cameraService.availableCameras.first(
                     where: { $0.id == uniqueID }
-                )?.name ?? "selected camera"
-                statusMessage = "Switched to \(cameraName)"
+                )?.name ?? L10n.string("selected camera")
+                statusMessage = .formatted("Switched to %@", cameraName)
             } catch {
-                statusMessage = error.localizedDescription
+                statusMessage = .error(error)
             }
         }
     }
@@ -297,7 +302,7 @@ struct CameraView: View {
 
         do {
             let data = try await cameraService.capturePhoto(mirrored: false)
-            statusMessage = "Preparing photo…"
+            statusMessage = .localized("Preparing photo…")
             let qualityEvaluation = await FaceCaptureQualityService.evaluation(from: data)
             logCaptureQuality(qualityEvaluation)
             let qualitySuggestion = CaptureQualityPolicy.suggestion(
@@ -306,7 +311,7 @@ struct CameraView: View {
             )
 
             if autoAlignPhotos {
-                statusMessage = "Aligning photo…"
+                statusMessage = .localized("Aligning photo…")
                 let result = await FaceAlignmentService.alignmentResult(from: data)
                 capturedPreview = CapturedPreview(
                     data: result.data,
@@ -314,7 +319,7 @@ struct CameraView: View {
                     qualitySuggestion: qualitySuggestion
                 )
                 statusMessage = previewStatusMessage(
-                    alignmentMessage: result.message,
+                    alignmentError: result.error,
                     qualitySuggestion: qualitySuggestion
                 )
             } else {
@@ -324,28 +329,28 @@ struct CameraView: View {
                     qualitySuggestion: qualitySuggestion
                 )
                 statusMessage = previewStatusMessage(
-                    alignmentMessage: nil,
+                    alignmentError: nil,
                     qualitySuggestion: qualitySuggestion
                 )
             }
         } catch {
-            statusMessage = error.localizedDescription
+            statusMessage = .error(error)
         }
 
         isSaving = false
     }
 
     private func previewStatusMessage(
-        alignmentMessage: String?,
+        alignmentError: FaceAlignmentError?,
         qualitySuggestion: CaptureQualitySuggestion?
-    ) -> String {
-        if let alignmentMessage {
-            return alignmentMessage
+    ) -> LocalizedMessage {
+        if let alignmentError {
+            return .error(alignmentError)
         }
         if qualitySuggestion != nil {
-            return "Preview ready. Retake recommended, or save anyway."
+            return .localized("Preview ready. Retake recommended, or save anyway.")
         }
-        return "Preview ready. Save to Photos or retake."
+        return .localized("Preview ready. Save to Photos or retake.")
     }
 
     private func logCaptureQuality(_ evaluation: FaceCaptureQualityEvaluation) {
@@ -381,16 +386,16 @@ struct CameraView: View {
         do {
             var location = Optional.none as CLLocation?
             if saveLocation {
-                statusMessage = "Getting location…"
+                statusMessage = .localized("Getting location…")
                 location = await locationService.requestCurrentLocation()
                 locationPermissionDenied = locationService.isPermissionDenied
                 if location == nil {
-                    statusMessage = "Location unavailable. Saving without location…"
+                    statusMessage = .localized("Location unavailable. Saving without location…")
                 }
             }
 
-            if statusMessage != "Location unavailable. Saving without location…" {
-                statusMessage = "Saving to Photos…"
+            if location != nil || !saveLocation {
+                statusMessage = .localized("Saving to Photos…")
             }
 
             _ = try await PhotoLibraryService.savePhoto(
@@ -406,13 +411,16 @@ struct CameraView: View {
             await libraryStore.reload(albumName: albumName)
             self.capturedPreview = nil
             if saveLocation && location == nil {
-                statusMessage = "Saved to Photos without location"
+                statusMessage = .localized("Saved to Photos without location")
             } else {
-                statusMessage = "Saved to \(PhotoLibraryService.normalizedAlbumName(albumName)) in Photos"
+                statusMessage = .formatted(
+                    "Saved to %@ in Photos",
+                    PhotoLibraryService.normalizedAlbumName(albumName)
+                )
             }
         } catch {
             photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
-            statusMessage = error.localizedDescription
+            statusMessage = .error(error)
         }
 
         isSaving = false
@@ -420,7 +428,7 @@ struct CameraView: View {
 
     private func retakeCapturedPreview() {
         self.capturedPreview = nil
-        statusMessage = "Discarded preview"
+        statusMessage = .localized("Discarded preview")
     }
 
     private var isHandsFreeCountdownEnabled: Bool {
@@ -493,7 +501,7 @@ struct CameraView: View {
             element: NSApp as Any,
             notification: .announcementRequested,
             userInfo: [
-                .announcement: "Photo in \(count) seconds",
+                .announcement: L10n.format("Photo in %lld seconds", Int64(count)),
                 .priority: NSAccessibilityPriorityLevel.high.rawValue,
             ]
         )
@@ -528,7 +536,7 @@ private struct HandsFreeCountdownOverlay: View {
                     ? .opacity
                     : .scale(scale: 0.8).combined(with: .opacity)
             )
-            .accessibilityLabel("Photo in \(count) seconds")
+            .accessibilityLabel(L10n.format("Photo in %lld seconds", Int64(count)))
             .allowsHitTesting(false)
     }
 }
@@ -594,7 +602,7 @@ private struct CapturedPreviewView: View {
 
             if photosPermissionDenied {
                 PermissionStatusInline(
-                    message: "Allow Photos access to save this Chameo.",
+                    message: L10n.string("Allow Photos access to save this Chameo."),
                     destination: .photos
                 )
                 .frame(width: 392)
@@ -602,7 +610,7 @@ private struct CapturedPreviewView: View {
 
             if locationPermissionDenied {
                 PermissionStatusInline(
-                    message: "Location access is off. This Chameo will be saved without location data.",
+                    message: L10n.string("Location access is off. This Chameo will be saved without location data."),
                     destination: .location
                 )
                 .frame(width: 392)
@@ -634,21 +642,23 @@ private struct CapturedPreviewView: View {
                 .padding(.vertical, 8)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(.regularMaterial)
-                .accessibilityLabel("Retake suggested. \(suggestion.message)")
+                .accessibilityLabel(L10n.format("Retake suggested. %@", suggestion.message))
         }
     }
 
     private var keepButtonTitle: String {
         if isSaving {
-            return "Saving…"
+            return L10n.string("Saving…")
         }
-        return preview.qualitySuggestion == nil ? "Save to Photos" : "Save Anyway"
+        return preview.qualitySuggestion == nil
+            ? L10n.string("Save to Photos")
+            : L10n.string("Save Anyway")
     }
 
     @ViewBuilder
     private var actionButtons: some View {
         if preview.qualitySuggestion != nil {
-            Button("Retake", role: .destructive, action: onRetake)
+            Button(L10n.string("Retake"), role: .destructive, action: onRetake)
                 .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.cancelAction)
                 .disabled(isSaving)
@@ -660,7 +670,7 @@ private struct CapturedPreviewView: View {
                 .keyboardShortcut("s", modifiers: .command)
                 .disabled(isSaving)
         } else {
-            Button("Retake", role: .destructive, action: onRetake)
+            Button(L10n.string("Retake"), role: .destructive, action: onRetake)
                 .keyboardShortcut(.cancelAction)
                 .disabled(isSaving)
 

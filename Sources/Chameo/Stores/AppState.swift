@@ -15,9 +15,9 @@ enum ChameoTab: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .camera:
-            return "Camera"
+            return L10n.string("Camera")
         case .library:
-            return "Library"
+            return L10n.string("Library")
         }
     }
 

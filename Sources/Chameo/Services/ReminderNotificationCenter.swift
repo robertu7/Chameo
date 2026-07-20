@@ -73,9 +73,9 @@ enum ReminderError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .notAuthorized:
-            return "Allow Notifications in System Settings to schedule reminders."
+            return L10n.string("Allow Notifications in System Settings to schedule reminders.")
         case .updateTimedOut:
-            return "Could not update reminders. Try again."
+            return L10n.string("Could not update reminders. Try again.")
         }
     }
 }

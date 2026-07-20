@@ -9,7 +9,7 @@ struct LibraryView: View {
 
     @State private var didDeletePhoto = false
     @State private var isExportingTimelapse = false
-    @State private var timelapseErrorMessage: String?
+    @State private var timelapseErrorMessage: LocalizedMessage?
 
     private var isPhotosPermissionError: Bool {
         switch PhotoLibraryService.authorizationStatus() {
@@ -27,9 +27,9 @@ struct LibraryView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if isPhotosPermissionError {
                 ContentUnavailableView {
-                    Label("Photos access is off", systemImage: "photo.on.rectangle.angled")
+                    Label(L10n.string("Photos access is off"), systemImage: "photo.on.rectangle.angled")
                 } description: {
-                    Text("Allow Photos access to view and save Chameos.")
+                    Text(L10n.string("Allow Photos access to view and save Chameos."))
                 } actions: {
                     Button(PermissionRecoveryDestination.photos.title) {
                         PermissionRecoveryService.open(.photos)
@@ -52,7 +52,7 @@ struct LibraryView: View {
 
             if let error = libraryStore.errorMessage ?? timelapseErrorMessage {
                 PermissionStatusInline(
-                    message: error,
+                    message: error.text,
                     destination: isPhotosPermissionError ? .photos : nil
                 )
                 .padding(.horizontal, 14)
@@ -82,8 +82,8 @@ struct LibraryView: View {
 
         let savePanel = NSSavePanel()
         savePanel.allowedContentTypes = [.mpeg4Movie]
-        savePanel.nameFieldStringValue = "Chameo Timelapse.mp4"
-        savePanel.prompt = "Save"
+        savePanel.nameFieldStringValue = L10n.string("Chameo Timelapse.mp4")
+        savePanel.prompt = L10n.string("Save")
 
         savePanel.begin { response in
             guard response == .OK, let url = savePanel.url else {
@@ -105,7 +105,7 @@ struct LibraryView: View {
                     try await TimelapseService.generate(assets: assets, to: url)
                     NSWorkspace.shared.activateFileViewerSelecting([url])
                 } catch {
-                    timelapseErrorMessage = error.localizedDescription
+                    timelapseErrorMessage = .error(error)
                 }
             }
         }

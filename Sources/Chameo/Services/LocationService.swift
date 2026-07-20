@@ -126,7 +126,7 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
 enum LocationNameService {
     static func name(for location: CLLocation?) async -> String {
         guard let location else {
-            return "No location"
+            return L10n.string("No location")
         }
 
         do {

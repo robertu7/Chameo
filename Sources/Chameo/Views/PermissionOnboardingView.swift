@@ -17,11 +17,11 @@ struct PermissionOnboardingView: View {
                     .frame(width: 96, height: 96)
                     .accessibilityHidden(true)
 
-                Text("Welcome to Chameo")
+                Text(L10n.string("Welcome to Chameo"))
                     .font(.title2.bold())
                     .padding(.top, 14)
 
-                Text("To take and save Chameos, allow access to Camera and Photos.")
+                Text(L10n.string("To take and save Chameos, allow access to Camera and Photos."))
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .padding(.top, 6)
@@ -30,8 +30,8 @@ struct PermissionOnboardingView: View {
             VStack(spacing: 10) {
                 permissionRow(
                     kind: .camera,
-                    title: "Camera",
-                    explanation: "Take your daily Chameo.",
+                    title: L10n.string("Camera"),
+                    explanation: L10n.string("Take your daily Chameo."),
                     systemImage: "camera.fill",
                     status: model.cameraStatus,
                     recoveryDestination: .camera
@@ -41,8 +41,8 @@ struct PermissionOnboardingView: View {
 
                 permissionRow(
                     kind: .photos,
-                    title: "Photos",
-                    explanation: "Save Chameos in a dedicated album.",
+                    title: L10n.string("Photos"),
+                    explanation: L10n.string("Save Chameos in a dedicated album."),
                     systemImage: "photo.on.rectangle.angled",
                     status: model.photosStatus,
                     recoveryDestination: .photos
@@ -55,11 +55,11 @@ struct PermissionOnboardingView: View {
                 .multilineTextAlignment(.center)
 
             HStack {
-                Button("Quit", role: .cancel, action: onQuit)
+                Button(L10n.string("Quit"), role: .cancel, action: onQuit)
 
                 Spacer()
 
-                Button("Continue", action: onContinue)
+                Button(L10n.string("Continue"), action: onContinue)
                     .buttonStyle(.borderedProminent)
                     .keyboardShortcut(.defaultAction)
                     .disabled(!model.canContinue || model.permissionBeingRequested != nil)
@@ -119,11 +119,11 @@ struct PermissionOnboardingView: View {
             ProgressView()
                 .controlSize(.small)
                 .frame(width: 84)
-                .accessibilityLabel("Requesting permission")
+                .accessibilityLabel(L10n.string("Requesting permission"))
         } else {
             switch status {
             case .notDetermined:
-                Button("Allow") {
+                Button(L10n.string("Allow")) {
                     Task {
                         await model.request(kind)
                         onPermissionRequestFinished()
@@ -133,19 +133,19 @@ struct PermissionOnboardingView: View {
                 .disabled(model.permissionBeingRequested != nil)
 
             case .authorized:
-                Label("Allowed", systemImage: "checkmark.circle.fill")
+                Label(L10n.string("Allowed"), systemImage: "checkmark.circle.fill")
                     .font(.callout.weight(.medium))
                     .foregroundStyle(.green)
                     .frame(minWidth: 84)
 
             case .denied:
-                Button("Open System Settings") {
+                Button(L10n.string("Open System Settings")) {
                     PermissionRecoveryService.open(recoveryDestination)
                 }
                 .frame(minWidth: 84)
 
             case .restricted:
-                Label("Restricted", systemImage: "lock.fill")
+                Label(L10n.string("Restricted"), systemImage: "lock.fill")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .frame(minWidth: 84)
@@ -155,9 +155,9 @@ struct PermissionOnboardingView: View {
 
     private var permissionFooterText: String {
         if model.cameraStatus == .restricted || model.photosStatus == .restricted {
-            return "Access is restricted by macOS or device management. Remove the restriction or contact your administrator to continue."
+            return L10n.string("Access is restricted by macOS or device management. Remove the restriction or contact your administrator to continue.")
         }
 
-        return "Location and notifications are optional and requested only when needed."
+        return L10n.string("Location and notifications are optional and requested only when needed.")
     }
 }
