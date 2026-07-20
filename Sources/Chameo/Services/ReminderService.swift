@@ -232,8 +232,8 @@ enum ReminderService {
     ) async throws {
         for notification in notifications {
             let content = UNMutableNotificationContent()
-            content.title = "Take your Chameo"
-            content.body = "Capture today's photo for your timeline."
+            content.title = "Time for your Chameo"
+            content.body = "Take today’s photo and keep your timeline up to date."
             content.sound = .default
 
             let components = Calendar.current.dateComponents(

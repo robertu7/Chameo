@@ -149,16 +149,16 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
         switch status {
         case .captured:
             iconName = "eye-captured"
-            description = "Today's Chameo is captured"
+            description = "Today’s Chameo is saved"
         case .pendingToday:
             iconName = "eye"
-            description = "Today's Chameo is not captured yet"
+            description = "Today’s Chameo has not been saved yet"
         case .unknown:
             iconName = "eye"
-            description = "Today's Chameo status is unavailable"
+            description = "Today’s Chameo status is unavailable"
         case .missed, .future, .outsideTracking:
             iconName = "eye"
-            description = "Take today's Chameo"
+            description = "Take today’s Chameo"
         }
 
         button.image = StatusMenuIcon.image(

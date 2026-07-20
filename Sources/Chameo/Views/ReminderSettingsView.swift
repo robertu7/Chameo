@@ -21,8 +21,8 @@ struct ReminderSettingsView: View {
 
     var body: some View {
         Form {
-            Section("Reminder") {
-                Toggle("Enable Reminder", isOn: $reminderEnabled)
+            Section("Reminders") {
+                Toggle("Enable Reminders", isOn: $reminderEnabled)
                     .disabled(isUpdatingReminder)
 
                 Picker("Repeats", selection: $reminderRepeat) {
@@ -59,7 +59,7 @@ struct ReminderSettingsView: View {
                     .foregroundStyle(canSaveReminder ? Color.secondary : Color.red)
 
                 HStack {
-                    Button("Save Reminder") {
+                    Button("Save Changes") {
                         Task {
                             await saveReminderSettings()
                         }
@@ -78,7 +78,7 @@ struct ReminderSettingsView: View {
 
             if isNotificationPermissionDenied {
                 PermissionStatusInline(
-                    message: "Notification permission is required to schedule reminders.",
+                    message: "Allow Notifications in System Settings to schedule reminders.",
                     destination: .notifications
                 )
             }
@@ -186,11 +186,11 @@ struct ReminderSettingsView: View {
 
     private var reminderPreviewText: String {
         guard reminderEnabled else {
-            return "Reminder is off."
+            return "Reminders are off."
         }
 
         guard let nextReminderDate else {
-            return "Selected time has passed."
+            return "Choose a future time."
         }
 
         return "Next reminder: \(DateFormatters.reminderPreview.string(from: nextReminderDate))"

@@ -21,7 +21,7 @@ Behavior:
   on-device with Vision to derive advisory face position, size, eye-line, and
   stability guidance.
 - The optional hands-free setting uses only the derived Ready state to run a
-  silent 3-second countdown and follows the normal in-memory preview flow.
+  silent three-second countdown and follows the normal in-memory preview flow.
 - Live frames and derived face geometry are not stored or logged.
 - Disabling the guide or leaving Camera stops live analysis.
 
@@ -59,14 +59,14 @@ Entitlement:
 
 Behavior:
 
-- The app asks for location only when `Save photo location` is enabled and the user saves a photo.
+- The app asks for location only when `Add Location to Photos` is enabled and the user saves a photo.
 - If location is unavailable, the app saves without location and shows a status message.
 - Authorization and one-shot location requests time out instead of blocking a save indefinitely.
 - Library location names are reverse-geocoded from `PHAsset.location`.
 
 ## Notifications
 
-Purpose: remind the user to take a selfie.
+Purpose: remind the user to take a Chameo.
 
 Bundle key:
 
@@ -75,7 +75,7 @@ Bundle key:
 Behavior:
 
 - The app schedules dated primary notifications for upcoming reminder days.
-- Updating reminder settings reconciles pending requests, and saving a selfie cancels remaining reminders and clears delivered reminder banners for that completed day.
+- Updating reminder settings reconciles pending requests, and saving a Chameo cancels remaining reminders and clears delivered reminder banners for that completed day.
 - Clicking a reminder notification opens the app to the Camera tab.
 
 ## User-Selected Files

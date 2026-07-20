@@ -127,7 +127,7 @@ plutil -p dist/Chameo.app/Contents/Info.plist
 - Keep hands-free capture dependent on the visible face guide, cancel its timer
   on Camera lifecycle changes, and route automatic capture through the same
   preview flow as the manual button.
-- Do not write to Photos on `Take`; write only on `Save to Photos`.
+- Do not write to Photos on `Take Chameo`; write only on `Save to Photos`.
 - Keep destructive Photos deletion behind inline confirmation.
 - If reminder settings do not change, saving Settings should not request notification permission.
 - Add durable preference keys through `AppPreferenceKey`; background code should read reminder preferences through `StoredReminderSettings`.

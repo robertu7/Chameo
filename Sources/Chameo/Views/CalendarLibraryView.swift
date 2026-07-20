@@ -375,7 +375,7 @@ private struct CalendarDayPreview: View {
 
                     Text(
                         selectedAsset.createdAt?.formatted(date: .omitted, time: .shortened)
-                            ?? "Unknown Time")
+                            ?? "Unknown time")
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
@@ -495,7 +495,7 @@ private struct CalendarDayPreview: View {
 
     private var locationText: String {
         if isLoadingLocationName {
-            return "Loading location..."
+            return "Loading location…"
         }
         if !locationName.isEmpty {
             return locationName

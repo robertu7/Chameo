@@ -91,7 +91,7 @@ final class CameraService: NSObject, ObservableObject {
         case .denied, .restricted:
             status = .unauthorized
         @unknown default:
-            status = .unavailable("Unknown camera authorization state.")
+            status = .unavailable("Camera access status is unavailable.")
         }
     }
 
@@ -276,17 +276,17 @@ enum CameraError: LocalizedError {
         case .noCamera:
             return "No camera is available."
         case .cannotAddInput:
-            return "The camera could not be added to the capture session."
+            return "Could not connect to the selected camera."
         case .cannotAddOutput:
-            return "The photo output could not be added to the capture session."
+            return "Could not prepare the camera for photos."
         case .cannotAddVideoOutput:
-            return "Live framing could not be added to the camera session."
+            return "Could not start live framing."
         case .cameraUnavailable:
             return "The selected camera is no longer available."
         case .missingPhotoData:
-            return "The captured photo did not contain image data."
+            return "The camera did not return a photo. Try again."
         case .notReady:
-            return "The camera is not ready."
+            return "The camera is not ready yet. Try again."
         }
     }
 }

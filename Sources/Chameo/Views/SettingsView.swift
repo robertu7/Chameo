@@ -12,7 +12,7 @@ struct SettingsView: View {
                 ContentUnavailableView {
                     Label("Finish Chameo Setup", systemImage: "lock.fill")
                 } description: {
-                    Text("Allow Camera and Photos access in the Welcome window before using Settings.")
+                    Text("Allow Camera and Photos access in the Chameo welcome window before opening Settings.")
                 }
             }
         }
@@ -29,7 +29,7 @@ struct SettingsView: View {
 
             ReminderSettingsView()
                 .tabItem {
-                    Label("Reminder", systemImage: "bell")
+                    Label("Reminders", systemImage: "bell")
                 }
         }
     }

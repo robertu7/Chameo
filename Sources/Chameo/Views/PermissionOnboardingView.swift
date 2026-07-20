@@ -21,7 +21,7 @@ struct PermissionOnboardingView: View {
                     .font(.title2.bold())
                     .padding(.top, 14)
 
-                Text("Camera and Photos access are required.")
+                Text("To take and save Chameos, allow access to Camera and Photos.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .padding(.top, 6)
@@ -31,7 +31,7 @@ struct PermissionOnboardingView: View {
                 permissionRow(
                     kind: .camera,
                     title: "Camera",
-                    explanation: "Take photos.",
+                    explanation: "Take your daily Chameo.",
                     systemImage: "camera.fill",
                     status: model.cameraStatus,
                     recoveryDestination: .camera
@@ -42,16 +42,17 @@ struct PermissionOnboardingView: View {
                 permissionRow(
                     kind: .photos,
                     title: "Photos",
-                    explanation: "Save your Chameos.",
+                    explanation: "Save Chameos in a dedicated album.",
                     systemImage: "photo.on.rectangle.angled",
                     status: model.photosStatus,
                     recoveryDestination: .photos
                 )
             }
 
-            Text("Location and reminders are optional.")
+            Text(permissionFooterText)
                 .font(.caption)
                 .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
 
             HStack {
                 Button("Quit", role: .cancel, action: onQuit)
@@ -138,7 +139,7 @@ struct PermissionOnboardingView: View {
                     .frame(minWidth: 84)
 
             case .denied:
-                Button("Open Settings") {
+                Button("Open System Settings") {
                     PermissionRecoveryService.open(recoveryDestination)
                 }
                 .frame(minWidth: 84)
@@ -150,5 +151,13 @@ struct PermissionOnboardingView: View {
                     .frame(minWidth: 84)
             }
         }
+    }
+
+    private var permissionFooterText: String {
+        if model.cameraStatus == .restricted || model.photosStatus == .restricted {
+            return "Access is restricted by macOS or device management. Remove the restriction or contact your administrator to continue."
+        }
+
+        return "Location and notifications are optional and requested only when needed."
     }
 }

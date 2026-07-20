@@ -70,7 +70,7 @@ struct CameraView: View {
                 Button {
                     beginCapture(trigger: .manual)
                 } label: {
-                    Label(isSaving ? "Saving…" : "Take Photo", systemImage: "camera.circle.fill")
+                    Label(isSaving ? "Taking photo…" : "Take Chameo", systemImage: "camera.circle.fill")
                         .frame(minWidth: 104)
                 }
                 .buttonStyle(.borderedProminent)
@@ -80,7 +80,7 @@ struct CameraView: View {
 
                 if case .unauthorized = cameraService.status {
                     PermissionStatusInline(
-                        message: "Camera permission is required to take a Chameo.",
+                        message: "Allow Camera access to take a Chameo.",
                         destination: .camera
                     )
                     .padding(.horizontal, 18)
@@ -88,7 +88,7 @@ struct CameraView: View {
 
                 if saveLocation && locationPermissionDenied {
                     PermissionStatusInline(
-                        message: "Location permission is off. Chameo will save without location.",
+                        message: "Location access is off. Chameo will save without location data.",
                         destination: .location
                     )
                     .padding(.horizontal, 18)
@@ -158,7 +158,7 @@ struct CameraView: View {
         case .idle:
             StatusOverlay(title: "Starting camera", systemImage: "camera")
         case .capturing:
-            ProgressView("Capturing")
+            ProgressView("Taking photo…")
                 .padding(12)
                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
         case .switchingCamera:
@@ -285,7 +285,7 @@ struct CameraView: View {
                 let cameraName = cameraService.availableCameras.first(
                     where: { $0.id == uniqueID }
                 )?.name ?? "selected camera"
-                statusMessage = "Using \(cameraName)"
+                statusMessage = "Switched to \(cameraName)"
             } catch {
                 statusMessage = error.localizedDescription
             }
@@ -297,7 +297,7 @@ struct CameraView: View {
 
         do {
             let data = try await cameraService.capturePhoto(mirrored: false)
-            statusMessage = "Checking photo…"
+            statusMessage = "Preparing photo…"
             let qualityEvaluation = await FaceCaptureQualityService.evaluation(from: data)
             logCaptureQuality(qualityEvaluation)
             let qualitySuggestion = CaptureQualityPolicy.suggestion(
@@ -343,9 +343,9 @@ struct CameraView: View {
             return alignmentMessage
         }
         if qualitySuggestion != nil {
-            return "Preview ready. Retake recommended or keep anyway."
+            return "Preview ready. Retake recommended, or save anyway."
         }
-        return "Preview ready. Keep or Retake."
+        return "Preview ready. Save to Photos or retake."
     }
 
     private func logCaptureQuality(_ evaluation: FaceCaptureQualityEvaluation) {
@@ -406,9 +406,9 @@ struct CameraView: View {
             await libraryStore.reload(albumName: albumName)
             self.capturedPreview = nil
             if saveLocation && location == nil {
-                statusMessage = "Saved without location"
+                statusMessage = "Saved to Photos without location"
             } else {
-                statusMessage = "Saved to \(PhotoLibraryService.normalizedAlbumName(albumName))"
+                statusMessage = "Saved to \(PhotoLibraryService.normalizedAlbumName(albumName)) in Photos"
             }
         } catch {
             photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
@@ -594,7 +594,7 @@ private struct CapturedPreviewView: View {
 
             if photosPermissionDenied {
                 PermissionStatusInline(
-                    message: "Photos permission is required to save this Chameo.",
+                    message: "Allow Photos access to save this Chameo.",
                     destination: .photos
                 )
                 .frame(width: 392)
@@ -602,7 +602,7 @@ private struct CapturedPreviewView: View {
 
             if locationPermissionDenied {
                 PermissionStatusInline(
-                    message: "Location permission is off. Save will continue without location.",
+                    message: "Location access is off. This Chameo will be saved without location data.",
                     destination: .location
                 )
                 .frame(width: 392)
@@ -642,7 +642,7 @@ private struct CapturedPreviewView: View {
         if isSaving {
             return "Saving…"
         }
-        return preview.qualitySuggestion == nil ? "Save to Photos" : "Keep Anyway"
+        return preview.qualitySuggestion == nil ? "Save to Photos" : "Save Anyway"
     }
 
     @ViewBuilder

@@ -15,7 +15,7 @@ The app is intentionally small: click the camera icon in the menu bar, take a ph
 - Camera tab with mirrored live preview, optional live framing guidance, and an
   opt-in silent hands-free countdown.
 - Capture preview flow:
-  - `Take Photo` captures into memory only.
+  - `Take Chameo` captures into memory only.
   - `Save to Photos` writes the image to Photos.app.
   - `Retake` discards the in-memory preview without touching Photos.
   - Return performs the primary action; Escape retakes from preview.

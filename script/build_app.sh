@@ -114,17 +114,17 @@ cat >"$INFO_PLIST" <<PLIST
   <key>LSUIElement</key>
   <true/>
   <key>NSCameraUsageDescription</key>
-  <string>Chameo uses the camera to capture photos for your daily selfie album.</string>
+  <string>Chameo uses the camera to take your daily photo.</string>
   <key>NSCameraUseContinuityCameraDeviceType</key>
   <true/>
   <key>NSPhotoLibraryUsageDescription</key>
-  <string>Chameo stores and manages photos in a dedicated Photos album so they can sync with iCloud Photos.</string>
+  <string>Chameo saves and manages the photos you take in a dedicated album in Photos.</string>
   <key>NSLocationUsageDescription</key>
-  <string>Chameo can optionally add your current city and country to photos you choose to keep.</string>
+  <string>Chameo can add your current city and country to photos you save.</string>
   <key>NSLocationWhenInUseUsageDescription</key>
-  <string>Chameo can optionally add your current city and country to photos you choose to keep.</string>
+  <string>Chameo can add your current city and country to photos you save.</string>
   <key>NSUserNotificationUsageDescription</key>
-  <string>Chameo sends reminders when it is time to take a selfie.</string>
+  <string>Chameo sends reminders to take your daily photo.</string>
   <key>NSPrincipalClass</key>
   <string>NSApplication</string>
 </dict>

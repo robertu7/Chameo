@@ -260,15 +260,15 @@ enum PhotoLibraryError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .notAuthorized:
-            return "Photos access is required to save and manage selfies."
+            return "Allow Photos access to save and manage Chameos."
         case .albumCreationFailed:
-            return "The Photos album could not be created."
+            return "Could not create the album in Photos."
         case .assetCreationFailed:
-            return "The captured photo could not be found after saving."
+            return "The photo was saved but could not be found in Photos."
         case .changeFailed:
-            return "Photos could not delete the photo."
+            return "Could not delete the photo from Photos."
         case .changeTimedOut:
-            return "Photos did not finish deleting the photo."
+            return "Deleting the photo took too long. Try again."
         }
     }
 }

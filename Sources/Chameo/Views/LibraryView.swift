@@ -27,9 +27,9 @@ struct LibraryView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if isPhotosPermissionError {
                 ContentUnavailableView {
-                    Label("Photos Access Is Off", systemImage: "photo.on.rectangle.angled")
+                    Label("Photos access is off", systemImage: "photo.on.rectangle.angled")
                 } description: {
-                    Text("Allow Photos access to show and save Chameos.")
+                    Text("Allow Photos access to view and save Chameos.")
                 } actions: {
                     Button(PermissionRecoveryDestination.photos.title) {
                         PermissionRecoveryService.open(.photos)
@@ -83,7 +83,7 @@ struct LibraryView: View {
         let savePanel = NSSavePanel()
         savePanel.allowedContentTypes = [.mpeg4Movie]
         savePanel.nameFieldStringValue = "Chameo Timelapse.mp4"
-        savePanel.prompt = "Create"
+        savePanel.prompt = "Save"
 
         savePanel.begin { response in
             guard response == .OK, let url = savePanel.url else {

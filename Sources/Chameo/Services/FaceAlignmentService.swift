@@ -126,13 +126,13 @@ enum FaceAlignmentError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidImage:
-            return "Could not read the captured photo. Saved original."
+            return "Could not read the photo for alignment. You can save the original."
         case .noFace:
-            return "Could not detect a face. Saved original."
+            return "Could not detect a face for alignment. You can save the original."
         case .missingLandmarks:
-            return "Could not find facial landmarks. Saved original."
+            return "Could not find facial landmarks. You can save the original."
         case .processingFailed:
-            return "Could not align the photo. Saved original."
+            return "Could not align the photo. You can save the original."
         }
     }
 }

@@ -24,7 +24,7 @@ struct GeneralSettingsView: View {
 
     var body: some View {
         Form {
-            Section("Photos Album") {
+            Section("Photos") {
                 Picker("Album", selection: $albumName) {
                     ForEach(albumChoices, id: \.self) { albumName in
                         Text(albumName).tag(albumName)
@@ -32,7 +32,7 @@ struct GeneralSettingsView: View {
                 }
                 .disabled(albumChoices.isEmpty || isLoadingPhotosAlbums)
 
-                Text("Saves and shows Chameos from this Photos album.")
+                Text("Chameo saves new photos to this album and shows them in the Library.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
@@ -59,18 +59,18 @@ struct GeneralSettingsView: View {
                         newAlbumName = defaultNewAlbumName
                         isShowingNewAlbumSheet = true
                     } label: {
-                        Label("New Album...", systemImage: "plus")
+                        Label("New Album…", systemImage: "plus")
                     }
                     .disabled(isCreatingPhotosAlbum)
                 }
 
                 if isPhotosPermissionDenied {
                     PermissionStatusInline(
-                        message: "Photos permission is required to save and show Chameos.",
+                        message: "Allow Photos access to save and view Chameos.",
                         destination: .photos
                     )
                 } else if canReadPhotosAlbums && albumChoices.count == 1 && photosAlbumNames.isEmpty {
-                    Text("No Photos albums found.")
+                    Text("No existing albums found. Chameo will create one when you save a photo.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -81,18 +81,18 @@ struct GeneralSettingsView: View {
                 Toggle("Hands-Free Countdown", isOn: $handsFreeCountdown)
                     .disabled(!showFaceGuide)
 
-                Text("Starts a silent 3-second countdown when framing is Ready.")
+                Text("Starts a silent three-second countdown when the face guide shows Ready.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Toggle("Auto Align Photos", isOn: $autoAlignPhotos)
+                Toggle("Automatically Align Photos", isOn: $autoAlignPhotos)
             }
 
             Section("Location") {
-                Toggle("Save Location with Photo", isOn: $saveLocation)
+                Toggle("Add Location to Photos", isOn: $saveLocation)
 
                 if saveLocation && isLocationPermissionDenied {
                     PermissionStatusInline(
-                        message: "Location permission is off. Photos will save without location.",
+                        message: "Location access is off. Chameo will save photos without location data.",
                         destination: .location
                     )
                 }
@@ -211,7 +211,7 @@ struct GeneralSettingsView: View {
         do {
             try LaunchAtLoginService.setEnabled(isEnabled)
             if isEnabled && LaunchAtLoginService.requiresApproval {
-                errorMessage = "Allow Chameo in System Settings > General > Login Items."
+                errorMessage = "Open System Settings → General → Login Items, then allow Chameo."
             }
             launchAtLogin = LaunchAtLoginService.isEnabled
             storedLaunchAtLogin = launchAtLogin
