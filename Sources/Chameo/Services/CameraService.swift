@@ -25,6 +25,7 @@ final class CameraService: NSObject, ObservableObject {
     @Published private(set) var activeCameraName: String?
     @Published private(set) var availableCameras: [CameraOption] = []
     @Published private(set) var isPreviewMirrored = true
+    @Published private(set) var liveFramingGuidanceState: LiveFramingGuidanceState = .neutral
 
     var session: AVCaptureSession {
         sessionController.session
@@ -33,6 +34,8 @@ final class CameraService: NSObject, ObservableObject {
     private let sessionController = CameraSessionController()
     private var captureDelegate: PhotoCaptureDelegate?
     private var shouldRunSession = false
+    private var isLiveFramingGuidanceEnabled = false
+    private var liveFramingGuidanceEvaluator = LiveFramingGuidanceEvaluator()
 
     override init() {
         super.init()
@@ -44,6 +47,7 @@ final class CameraService: NSObject, ObservableObject {
                 self?.activeCameraID = info.uniqueID
                 self?.activeCameraName = info.name
                 self?.isPreviewMirrored = info.shouldMirrorPreview
+                self?.resetLiveFramingGuidance()
             }
         }
         sessionController.onAvailableCamerasChanged = { [weak self] cameras in
@@ -55,10 +59,16 @@ final class CameraService: NSObject, ObservableObject {
                 self?.availableCameras = cameras
             }
         }
+        sessionController.onLiveFramingFrame = { [weak self] frame in
+            Task { @MainActor in
+                self?.consumeLiveFramingFrame(frame)
+            }
+        }
     }
 
     func start() {
         shouldRunSession = true
+        updateLiveFramingAnalysis()
 
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
@@ -87,6 +97,8 @@ final class CameraService: NSObject, ObservableObject {
 
     func stop() {
         shouldRunSession = false
+        updateLiveFramingAnalysis()
+        resetLiveFramingGuidance()
         if status != .unauthorized {
             status = .idle
         }
@@ -96,6 +108,8 @@ final class CameraService: NSObject, ObservableObject {
     func capturePhoto(mirrored: Bool) async throws -> Data {
         if case .ready = status {
             status = .capturing
+            updateLiveFramingAnalysis()
+            resetLiveFramingGuidance()
         } else {
             throw CameraError.notReady
         }
@@ -110,6 +124,7 @@ final class CameraService: NSObject, ObservableObject {
                     self?.captureDelegate = nil
                     if let self {
                         self.status = self.shouldRunSession ? .ready : .idle
+                        self.updateLiveFramingAnalysis()
                     }
 
                     switch result {
@@ -136,6 +151,8 @@ final class CameraService: NSObject, ObservableObject {
             throw CameraError.notReady
         }
         status = .switchingCamera
+        updateLiveFramingAnalysis()
+        resetLiveFramingGuidance()
 
         do {
             try await withCheckedThrowingContinuation { continuation in
@@ -144,13 +161,26 @@ final class CameraService: NSObject, ObservableObject {
                 }
             }
             status = shouldRunSession ? .ready : .idle
+            updateLiveFramingAnalysis()
         } catch {
             lastError = error.localizedDescription
             Self.logger.error(
                 "Camera selection failed: \(error.localizedDescription, privacy: .public)"
             )
             status = shouldRunSession ? .ready : .idle
+            updateLiveFramingAnalysis()
             throw error
+        }
+    }
+
+    func setLiveFramingGuidanceEnabled(_ enabled: Bool) {
+        guard isLiveFramingGuidanceEnabled != enabled else {
+            return
+        }
+        isLiveFramingGuidanceEnabled = enabled
+        updateLiveFramingAnalysis()
+        if !enabled {
+            resetLiveFramingGuidance()
         }
     }
 
@@ -172,12 +202,41 @@ final class CameraService: NSObject, ObservableObject {
                 switch result {
                 case .success:
                     self.status = .ready
+                    self.updateLiveFramingAnalysis()
                 case .failure(let error):
                     self.lastError = error.localizedDescription
                     self.status = .unavailable(error.localizedDescription)
                 }
             }
         }
+    }
+
+    private func updateLiveFramingAnalysis() {
+        let shouldAnalyze = isLiveFramingGuidanceEnabled
+            && shouldRunSession
+            && status == .ready
+        sessionController.setLiveFramingEnabled(shouldAnalyze)
+    }
+
+    private func consumeLiveFramingFrame(_ frame: LiveFramingFrame) {
+        guard isLiveFramingGuidanceEnabled,
+              shouldRunSession,
+              status == .ready else {
+            return
+        }
+
+        liveFramingGuidanceState = liveFramingGuidanceEvaluator.evaluate(
+            frame: frame,
+            previewSize: CGSize(
+                width: ChameoLayout.previewWidth,
+                height: ChameoLayout.livePreviewHeight
+            ),
+            mirrored: isPreviewMirrored
+        )
+    }
+
+    private func resetLiveFramingGuidance() {
+        liveFramingGuidanceState = liveFramingGuidanceEvaluator.reset()
     }
 }
 
@@ -207,6 +266,7 @@ enum CameraError: LocalizedError {
     case noCamera
     case cannotAddInput
     case cannotAddOutput
+    case cannotAddVideoOutput
     case cameraUnavailable
     case missingPhotoData
     case notReady
@@ -219,6 +279,8 @@ enum CameraError: LocalizedError {
             return "The camera could not be added to the capture session."
         case .cannotAddOutput:
             return "The photo output could not be added to the capture session."
+        case .cannotAddVideoOutput:
+            return "Live framing could not be added to the camera session."
         case .cameraUnavailable:
             return "The selected camera is no longer available."
         case .missingPhotoData:

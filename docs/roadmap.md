@@ -14,9 +14,8 @@ expanding the feature set.
 
 ### Capture Experience
 
-- Explore subtle live framing guidance based on face position, size, eye-line,
-  and stability. Consider an optional hands-free countdown after the face
-  remains well framed and stable.
+- Consider an optional hands-free countdown after live framing guidance has
+  proven stable in daily use.
 - Reconsider a previous-selfie ghost overlay if the current face guide and
   automatic alignment still produce inconsistent timelapses.
 - If an iPhone capture companion is pursued, evaluate AVFoundation smart
@@ -75,5 +74,7 @@ owner's own Macs:
   built-in-camera fallback.
 - Added on-device Vision face-capture quality scoring with advisory retake
   guidance calibrated from the user's accepted photos.
+- Added advisory on-device live framing guidance for face position, size,
+  eye-line, and stability, with a green Ready state and no capture gating.
 - Automatically recreate the configured Photos album on the next save if it was
   deleted externally.

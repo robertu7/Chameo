@@ -5,6 +5,7 @@ enum ChameoLayout {
     static let contentWidth: CGFloat = 420
     static let contentHeight: CGFloat = 380
     static let previewWidth: CGFloat = 392
+    static let livePreviewHeight: CGFloat = 322
 
     static let outerInset: CGFloat = 14
     static let sectionSpacing: CGFloat = 12

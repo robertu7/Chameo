@@ -8,8 +8,15 @@ final class CameraSessionController: @unchecked Sendable {
     let photoOutput = AVCapturePhotoOutput()
     var onActiveCameraChanged: ((ActiveCameraInfo) -> Void)?
     var onAvailableCamerasChanged: (([CameraOption]) -> Void)?
+    var onLiveFramingFrame: (@Sendable (LiveFramingFrame) -> Void)?
 
     private let sessionQueue = DispatchQueue(label: "com.robertu.Chameo.camera.session")
+    private let liveFramingQueue = DispatchQueue(
+        label: "com.robertu.Chameo.camera.live-framing",
+        qos: .userInitiated
+    )
+    private let liveFramingOutput = AVCaptureVideoDataOutput()
+    private let liveFramingAnalyzer = LiveFramingAnalyzer()
     private let discoverySession = AVCaptureDevice.DiscoverySession(
         deviceTypes: [.builtInWideAngleCamera, .continuityCamera, .external],
         mediaType: .video,
@@ -28,6 +35,9 @@ final class CameraSessionController: @unchecked Sendable {
 
     init() {
         _ = preferredCameraObserver
+        liveFramingAnalyzer.onFrame = { [weak self] frame in
+            self?.onLiveFramingFrame?(frame)
+        }
         deviceDiscoveryObservation = discoverySession.observe(
             \.devices,
             options: [.initial, .new]
@@ -56,10 +66,17 @@ final class CameraSessionController: @unchecked Sendable {
     }
 
     func stop() {
+        setLiveFramingEnabled(false)
         sessionQueue.async { [session] in
             if session.isRunning {
                 session.stopRunning()
             }
+        }
+    }
+
+    func setLiveFramingEnabled(_ enabled: Bool) {
+        liveFramingQueue.async { [liveFramingAnalyzer] in
+            liveFramingAnalyzer.setEnabled(enabled)
         }
     }
 
@@ -142,6 +159,16 @@ final class CameraSessionController: @unchecked Sendable {
             throw CameraError.cannotAddOutput
         }
         session.addOutput(photoOutput)
+
+        liveFramingOutput.alwaysDiscardsLateVideoFrames = true
+        liveFramingOutput.setSampleBufferDelegate(
+            liveFramingAnalyzer,
+            queue: liveFramingQueue
+        )
+        guard session.canAddOutput(liveFramingOutput) else {
+            throw CameraError.cannotAddVideoOutput
+        }
+        session.addOutput(liveFramingOutput)
 
         publishActiveCamera(device)
     }

@@ -46,7 +46,9 @@ struct CameraView: View {
                     )
                         .overlay {
                             if shouldShowFaceGuide {
-                                CameraGuideView()
+                                CameraGuideView(
+                                    guidanceState: cameraService.liveFramingGuidanceState
+                                )
                             }
                         }
                         .clipShape(RoundedRectangle(cornerRadius: ChameoLayout.cornerRadius))
@@ -93,10 +95,19 @@ struct CameraView: View {
         .task {
             photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
         }
+        .onAppear {
+            cameraService.setLiveFramingGuidanceEnabled(showFaceGuide)
+        }
+        .onChange(of: showFaceGuide) { _, isEnabled in
+            cameraService.setLiveFramingGuidanceEnabled(isEnabled)
+        }
+        .onDisappear {
+            cameraService.setLiveFramingGuidanceEnabled(false)
+        }
     }
 
     private var livePreviewHeight: CGFloat {
-        var height: CGFloat = 322
+        var height = ChameoLayout.livePreviewHeight
 
         if case .unauthorized = cameraService.status {
             height -= 28

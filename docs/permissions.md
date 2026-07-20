@@ -4,7 +4,8 @@ Chameo uses system permissions for camera, Photos, optional location metadata, a
 
 ## Camera
 
-Purpose: live preview and still photo capture.
+Purpose: live preview, transient on-device framing guidance, and still photo
+capture.
 
 Bundle key:
 
@@ -13,6 +14,14 @@ Bundle key:
 Entitlement:
 
 - `com.apple.security.device.camera`
+
+Behavior:
+
+- When `Show Face Guide` is enabled, Chameo analyzes throttled live frames
+  on-device with Vision to derive advisory face position, size, eye-line, and
+  stability guidance.
+- Live frames and derived face geometry are not stored or logged.
+- Disabling the guide or leaving Camera stops live analysis.
 
 ## Photos
 

@@ -31,7 +31,8 @@ The app uses `NSStatusItem` plus `NSPopover` instead of SwiftUI `MenuBarExtra` b
 - `StoredReminderSettings` is the typed read boundary used by background reminder reconciliation.
 - `LibraryStore` owns the currently fetched Photos assets, snapshot validity,
   library errors, and the Photos-backed daily completion status.
-- `CameraService` owns main-actor camera UI state and still photo capture.
+- `CameraService` owns main-actor camera UI state, transient live-framing
+  guidance, and still photo capture.
 - `CameraSessionController` serializes blocking `AVCaptureSession` configuration and lifecycle work.
 - `LocationService` coalesces overlapping authorization/location requests and bounds both with a timeout.
 
@@ -49,6 +50,10 @@ Camera hardware starts only when the Camera tab is visible. It stops when the us
   - Logs available cameras, active-camera changes, and selection failures.
   - Mirrors built-in and external camera previews while leaving Continuity
     Camera previews unmirrored.
+  - Throttles transient video frames to approximately five on-device Vision
+    analyses per second for advisory framing guidance.
+  - Publishes only derived guidance state; camera frames and face geometry are
+    not persisted or logged.
   - Captures still photos without preview mirroring.
 
 - `FaceAlignmentService`
@@ -98,6 +103,8 @@ Camera hardware starts only when the Camera tab is visible. It stops when the us
 
 - `CameraView`
   - Live camera preview.
+  - Advisory live framing based on face size, position, eye-line, and stability,
+    with one short hint and a green Ready state.
   - Compact active-camera badge and a camera menu when multiple devices exist.
   - On-device single-photo quality evaluation with advisory retake guidance.
   - Capture-to-memory preview.
