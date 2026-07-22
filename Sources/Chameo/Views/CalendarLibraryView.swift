@@ -388,23 +388,9 @@ private struct CalendarDayPreview: View {
                 }
                 .frame(height: ChameoLayout.compactControlSize)
 
-                HStack(spacing: 5) {
-                    if isLoadingLocationName {
-                        ProgressView()
-                            .controlSize(.small)
-                            .scaleEffect(0.65)
-                            .frame(width: 12, height: 12)
-                    } else {
-                        Image(systemName: "location")
-                            .accessibilityHidden(true)
-                    }
-
-                    Text(locationText)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                locationRow(for: selectedAsset)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
 
                 if assets.count > 1 {
                     Spacer(minLength: 0)
@@ -414,6 +400,38 @@ private struct CalendarDayPreview: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
         .frame(maxHeight: .infinity, alignment: .top)
+    }
+
+    @ViewBuilder
+    private func locationRow(for asset: ChameoAsset) -> some View {
+        let content = HStack(spacing: 5) {
+            if isLoadingLocationName {
+                ProgressView()
+                    .controlSize(.small)
+                    .scaleEffect(0.65)
+                    .frame(width: 12, height: 12)
+            } else {
+                Image(systemName: "location")
+                    .accessibilityHidden(true)
+            }
+
+            Text(locationText)
+                .lineLimit(1)
+                .truncationMode(.middle)
+        }
+
+        if let location = asset.asset.location,
+            let url = GoogleMapsLink.url(for: location)
+        {
+            Link(destination: url) {
+                content
+            }
+            .buttonStyle(.plain)
+            .help(L10n.string("Open in Google Maps"))
+            .accessibilityLabel(L10n.string("Open in Google Maps"))
+        } else {
+            content
+        }
     }
 
     private var emptyPreview: some View {

@@ -148,3 +148,17 @@ enum LocationNameService {
         String(format: "%.4f, %.4f", location.coordinate.latitude, location.coordinate.longitude)
     }
 }
+
+enum GoogleMapsLink {
+    static func url(for location: CLLocation) -> URL? {
+        var components = URLComponents(string: "https://www.google.com/maps/search/")
+        components?.queryItems = [
+            URLQueryItem(name: "api", value: "1"),
+            URLQueryItem(
+                name: "query",
+                value: "\(location.coordinate.latitude),\(location.coordinate.longitude)"
+            ),
+        ]
+        return components?.url
+    }
+}
