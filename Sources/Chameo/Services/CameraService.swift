@@ -75,8 +75,12 @@ final class CameraService: NSObject, ObservableObject {
             }
         }
         sessionController.onLiveFramingFrame = { [weak self] frame in
-            Task { @MainActor in
-                self?.consumeLiveFramingFrame(frame)
+            guard let self else {
+                return
+            }
+
+            Task { @MainActor [self] in
+                self.consumeLiveFramingFrame(frame)
             }
         }
     }
@@ -203,11 +207,11 @@ final class CameraService: NSObject, ObservableObject {
         status = .idle
 
         sessionController.start { [weak self] result in
-            Task { @MainActor in
-                guard let self else {
-                    return
-                }
+            guard let self else {
+                return
+            }
 
+            Task { @MainActor [self] in
                 guard self.shouldRunSession else {
                     self.sessionController.stop()
                     self.status = .idle
