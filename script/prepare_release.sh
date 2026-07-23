@@ -49,16 +49,30 @@ for required_entry in \
   fi
 done
 
-GENERATE_APPCAST="$(
-  /usr/bin/find "$ROOT_DIR/.build/artifacts" /tmp/chameo-swiftpm-scratch/artifacts \
-    -path '*/Sparkle/bin/generate_appcast' -type f -print 2>/dev/null |
-    /usr/bin/head -n 1
-)"
-SIGN_UPDATE="$(
-  /usr/bin/find "$ROOT_DIR/.build/artifacts" /tmp/chameo-swiftpm-scratch/artifacts \
-    -path '*/Sparkle/bin/sign_update' -type f -print 2>/dev/null |
-    /usr/bin/head -n 1
-)"
+find_sparkle_tool() {
+  local tool_name="$1"
+  local search_root
+  local tool_path
+
+  for search_root in \
+    "$ROOT_DIR/.build/artifacts" \
+    /tmp/chameo-swiftpm-scratch/artifacts; do
+    [[ -d "$search_root" ]] || continue
+    tool_path="$(
+      /usr/bin/find "$search_root" \
+        -path "*/Sparkle/bin/$tool_name" -type f -print -quit 2>/dev/null
+    )"
+    if [[ -n "$tool_path" ]]; then
+      printf '%s\n' "$tool_path"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+GENERATE_APPCAST="$(find_sparkle_tool generate_appcast || true)"
+SIGN_UPDATE="$(find_sparkle_tool sign_update || true)"
 
 if [[ ! -x "$GENERATE_APPCAST" || ! -x "$SIGN_UPDATE" ]]; then
   echo "Sparkle release tools are unavailable; resolve and build the package first" >&2
