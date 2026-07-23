@@ -233,18 +233,25 @@ else
   echo "Signing with stable identity: $CODE_SIGN_IDENTITY" >&2
 fi
 
+if [[ "$CODE_SIGN_IDENTITY" == "-" ]]; then
+  echo "warning: hardened runtime is disabled for this ad-hoc private-testing build." >&2
+fi
+
+sign_code() {
+  if [[ "$CODE_SIGN_IDENTITY" == "-" ]]; then
+    /usr/bin/codesign --force --sign "$CODE_SIGN_IDENTITY" "$@"
+  else
+    /usr/bin/codesign --force --sign "$CODE_SIGN_IDENTITY" --options runtime "$@"
+  fi
+}
+
 SPARKLE_VERSION="$SPARKLE_FRAMEWORK/Versions/B"
-/usr/bin/codesign --force --sign "$CODE_SIGN_IDENTITY" --options runtime \
-  "$SPARKLE_VERSION/XPCServices/Installer.xpc"
-/usr/bin/codesign --force --sign "$CODE_SIGN_IDENTITY" --options runtime \
+sign_code "$SPARKLE_VERSION/XPCServices/Installer.xpc"
+sign_code \
   --preserve-metadata=entitlements "$SPARKLE_VERSION/XPCServices/Downloader.xpc"
-/usr/bin/codesign --force --sign "$CODE_SIGN_IDENTITY" --options runtime \
-  "$SPARKLE_VERSION/Autoupdate"
-/usr/bin/codesign --force --sign "$CODE_SIGN_IDENTITY" --options runtime \
-  "$SPARKLE_VERSION/Updater.app"
-/usr/bin/codesign --force --sign "$CODE_SIGN_IDENTITY" --options runtime \
-  "$SPARKLE_FRAMEWORK"
-/usr/bin/codesign --force --sign "$CODE_SIGN_IDENTITY" --options runtime \
-  --entitlements "$ENTITLEMENTS" "$APP_BUNDLE"
+sign_code "$SPARKLE_VERSION/Autoupdate"
+sign_code "$SPARKLE_VERSION/Updater.app"
+sign_code "$SPARKLE_FRAMEWORK"
+sign_code --entitlements "$ENTITLEMENTS" "$APP_BUNDLE"
 /usr/bin/codesign --verify --deep --strict "$APP_BUNDLE"
 echo "$APP_BUNDLE"
