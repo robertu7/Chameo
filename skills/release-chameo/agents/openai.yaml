@@ -1,0 +1,4 @@
+interface:
+  display_name: "Release Chameo"
+  short_description: "Safely prepare and publish a Chameo release"
+  default_prompt: "Use $release-chameo to prepare and publish the next Chameo version."
