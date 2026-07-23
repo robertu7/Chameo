@@ -5,6 +5,7 @@ import SwiftUI
 struct GeneralSettingsView: View {
     @Environment(\.scenePhase) private var scenePhase
     @EnvironmentObject private var localizationController: LocalizationController
+    @EnvironmentObject private var updateController: UpdateController
     @AppStorage(AppPreferenceKey.albumName) private var albumName = "Chameo"
     @AppStorage(AppPreferenceKey.handsFreeCountdown) private var handsFreeCountdown = false
     @AppStorage(AppPreferenceKey.showFaceGuide) private var showFaceGuide = true
@@ -135,6 +136,17 @@ struct GeneralSettingsView: View {
 
                 Toggle(L10n.string("Launch at Login"), isOn: $launchAtLogin)
                     .disabled(isUpdatingLaunchAtLogin)
+
+                Toggle(
+                    L10n.string("Automatically Check for Updates"),
+                    isOn: automaticUpdateChecksBinding
+                )
+
+                Button(L10n.string("Check for Updates…")) {
+                    updateController.checkForUpdates()
+                }
+                .disabled(!updateController.canCheckForUpdates)
+                .frame(maxWidth: .infinity, alignment: .trailing)
             } header: {
                 Text(L10n.string("App"))
             } footer: {
@@ -192,6 +204,13 @@ struct GeneralSettingsView: View {
         Binding(
             get: { localizationController.preference },
             set: { localizationController.select($0) }
+        )
+    }
+
+    private var automaticUpdateChecksBinding: Binding<Bool> {
+        Binding(
+            get: { updateController.automaticallyChecksForUpdates },
+            set: { updateController.setAutomaticallyChecksForUpdates($0) }
         )
     }
 

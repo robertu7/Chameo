@@ -4,8 +4,10 @@
 
 ```text
 Package.swift
+Package.resolved
 Chameo.entitlements
 script/build_app.sh
+script/prepare_release.sh
 VERSION
 Sources/Chameo/
   App/
@@ -92,6 +94,68 @@ Because an ad-hoc app's identity changes with its code hash, a rebuilt app must
 request protected-resource permissions again. Set
 `CHAMEO_CODE_SIGN_IDENTITY=-` only when that behavior is intentional.
 
+The staged bundle embeds the pinned Sparkle framework under
+`Contents/Frameworks`, signs its installer/downloader helpers inside-out, and
+then signs the containing app. Do not replace this sequence with
+`codesign --deep`; `--deep` is used only for verification.
+
+## Updates and Test Releases
+
+Sparkle 2.9.4 is pinned in `Package.swift` and `Package.resolved`. Chameo uses:
+
+- `https://robertu7.github.io/Chameo/appcast.xml` as its update feed.
+- EdDSA-signed archives, release notes, and appcast XML.
+- Pre-extraction archive verification and fail-closed signed-feed validation.
+- Sparkle's sandboxed installer and downloader XPC services.
+- A 24-hour scheduled check after the user grants permission.
+- Standard user-confirmed download, installation, and relaunch UI.
+
+`CHANGELOG.md` is the release-notes source of truth. A release section must
+match the three-component version in `VERSION`.
+
+The CI workflow runs on pull requests and pushes to `main`. Push a matching tag
+to start a prerelease:
+
+```bash
+git tag v0.3.6
+git push origin v0.3.6
+```
+
+The tag commit must be reachable from `origin/main`. The release workflow:
+
+1. Repeats tests and bundle validation on an Apple Silicon `macos-14` runner.
+2. Builds an ad-hoc-signed ZIP.
+3. Signs and verifies the ZIP, release notes, and appcast.
+4. Creates a public GitHub prerelease.
+5. Publishes the signed appcast through GitHub Pages.
+6. Verifies the published release and feed URLs.
+
+Before the first release:
+
+1. In the repository's **Settings → Pages**, select **GitHub Actions** as the
+   deployment source.
+2. Create a GitHub environment named `release`.
+3. Export the Chameo Sparkle private key and store it as the
+   `SPARKLE_PRIVATE_KEY` secret in that environment.
+4. Keep a separate offline backup of the private key.
+
+The private key is stored in the login Keychain under the Sparkle account
+`com.robertu.Chameo`. Export it without printing it:
+
+```bash
+SPARKLE_TOOLS=".build/artifacts/sparkle/Sparkle/bin"
+"$SPARKLE_TOOLS/generate_keys" \
+  --account com.robertu.Chameo \
+  -x /path/outside/the/repository/chameo-sparkle-private-key
+gh secret set SPARKLE_PRIVATE_KEY \
+  --env release \
+  --repo robertu7/Chameo \
+  < /path/outside/the/repository/chameo-sparkle-private-key
+```
+
+Treat the exported file like a password. Never commit it or attach it to a
+release.
+
 ## Codex Run Button
 
 `.codex/environments/environment.toml` wires the Codex app Run action to:
@@ -112,6 +176,12 @@ ls -lt ~/Library/Logs/DiagnosticReports/Chameo-*.ips
 
 ```bash
 codesign -d --entitlements :- dist/Chameo.app
+```
+
+- Validate the complete staged bundle:
+
+```bash
+./script/verify_app_bundle.sh dist/Chameo.app
 ```
 
 - Inspect generated bundle metadata:

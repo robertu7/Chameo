@@ -16,6 +16,7 @@
 "Allowed" = "已允許";
 "An album with this name already exists." = "已有同名相簿。";
 "App" = "應用程式";
+"Automatically Check for Updates" = "自動檢查更新";
 "Auto Capture" = "自動拍攝";
 "Automatically Align Photos" = "自動對齊照片";
 "Before tracking began" = "開始記錄之前";
@@ -73,6 +74,7 @@
 "Helps position your face with live guidance." = "透過即時引導協助調整臉部位置。";
 "Hold still" = "請保持不動";
 "Launch at Login" = "登入時啟動";
+"Check for Updates…" = "檢查更新…";
 "Library" = "圖庫";
 "Loading Photos albums" = "正在載入照片相簿";
 "Loading location…" = "正在載入位置…";

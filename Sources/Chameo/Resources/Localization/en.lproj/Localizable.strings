@@ -16,6 +16,7 @@
 "Allowed" = "Allowed";
 "An album with this name already exists." = "An album with this name already exists.";
 "App" = "App";
+"Automatically Check for Updates" = "Automatically Check for Updates";
 "Auto Capture" = "Auto Capture";
 "Automatically Align Photos" = "Automatically Align Photos";
 "Before tracking began" = "Before tracking began";
@@ -73,6 +74,7 @@
 "Helps position your face with live guidance." = "Helps position your face with live guidance.";
 "Hold still" = "Hold still";
 "Launch at Login" = "Launch at Login";
+"Check for Updates…" = "Check for Updates…";
 "Library" = "Library";
 "Loading Photos albums" = "Loading Photos albums";
 "Loading location…" = "Loading location…";

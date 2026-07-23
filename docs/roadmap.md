@@ -33,16 +33,23 @@ expanding the feature set.
 
 ## Conditional Distribution
 
-Do this work only after an explicit decision to distribute Chameo beyond the
-owner's own Macs:
+Complete these requirements before moving beyond Stage 1 test distribution:
 
 - Select and manage the intended Developer ID or Mac App Store distribution identity; local builds already prefer an installed stable development identity over ad-hoc signing.
-- Add production release packaging.
 - Add notarization.
 - Publish a privacy policy for public distribution.
+- Manually validate installation, update, relaunch, Gatekeeper, and permission
+  persistence on a clean Mac.
 
 ## Completed
 
+- Added Apple Silicon CI for pull requests and `main`, plus tag-triggered public
+  GitHub prereleases.
+- Added pinned Sparkle updates with daily opt-in checks, manual checking,
+  user-confirmed installation, signed archives, signed release notes, and a
+  signed GitHub Pages appcast.
+- Added automated release validation for versions, changelog notes, bundle
+  contents, signatures, architecture, appcast XML, and published URLs.
 - Replaced the scrolling Library list with a month calendar showing captured,
   pending, missed, future, and pre-tracking days.
 - Added hover and keyboard-focus day previews with thumbnails, capture time,

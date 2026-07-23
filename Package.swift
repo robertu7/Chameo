@@ -11,13 +11,30 @@ let package = Package(
     products: [
         .executable(name: "Chameo", targets: ["Chameo"])
     ],
+    dependencies: [
+        .package(
+            url: "https://github.com/sparkle-project/Sparkle",
+            exact: "2.9.4"
+        )
+    ],
     targets: [
         .executableTarget(
             name: "Chameo",
+            dependencies: [
+                .product(name: "Sparkle", package: "Sparkle")
+            ],
             path: "Sources/Chameo",
             resources: [
                 .copy("Resources/MenuBarIcons"),
                 .process("Resources/Localization")
+            ],
+            linkerSettings: [
+                .unsafeFlags([
+                    "-Xlinker",
+                    "-rpath",
+                    "-Xlinker",
+                    "@executable_path/../Frameworks"
+                ])
             ]
         ),
         .testTarget(

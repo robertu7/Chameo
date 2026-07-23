@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Test and validate release bundle
+    runs-on: macos-14
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Resolve pinned dependencies
+        run: swift package resolve
+
+      - name: Run tests
+        run: swift test
+
+      - name: Run strict concurrency build
+        run: swift build -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency
+
+      - name: Build ad-hoc release bundle
+        env:
+          CHAMEO_CODE_SIGN_IDENTITY: "-"
+        run: ./script/build_app.sh --release
+
+      - name: Validate release bundle
+        run: ./script/verify_app_bundle.sh dist/Chameo.app

@@ -11,9 +11,16 @@ menu-bar app for personal use on macOS 14 or newer.
 - A complete strict-concurrency compiler audit passes while the package remains
   in Swift 5 language mode.
 - `script/build_app.sh --release` builds the release executable, stages the app
-  bundle, validates its property list, applies the declared sandbox
-  entitlements, and verifies the resulting signature.
+  bundle, embeds and signs Sparkle's nested updater components, validates its
+  property list, applies the declared sandbox entitlements, and verifies the
+  resulting signature.
 - Build metadata is validated before it is embedded in XML.
+- GitHub Actions validates the arm64 release bundle on pull requests and
+  `main`, and tagged release jobs fail unless versions and changelog notes
+  match.
+- Tagged prereleases use signed ZIP archives, signed release notes, and a
+  signed GitHub Pages appcast. Chameo verifies archives before extraction and
+  does not expire signed-feed validation failures.
 
 ## Reliability and Data Safety
 
@@ -36,8 +43,10 @@ menu-bar app for personal use on macOS 14 or newer.
   when enabled.
 - Timelapse export uses a standard save panel and holds security-scoped access
   only for the export.
-- Chameo has no network client, credential store, analytics SDK, or remote code
-  execution path. Photos and geocoding frameworks may use Apple services.
+- Chameo has no analytics SDK or credential store. Its only direct distribution
+  network path is the sandboxed Sparkle updater, which checks the configured
+  GitHub Pages feed and downloads user-approved releases. Photos and geocoding
+  frameworks may also use Apple services.
 
 ## Remaining Validation Boundaries
 
@@ -46,8 +55,12 @@ resources. Before a release used for daily capture, smoke-test camera capture,
 each permission denial/recovery path, Photos save/delete, an iCloud-backed
 timelapse export, reminders across sleep/wake, and launch at login.
 
-Public distribution is intentionally out of scope. The build uses a stable
-local Apple Development or Developer ID Application identity when one is
-installed, otherwise it explicitly falls back to ad-hoc signing. It is not
-notarized. Distribution signing, notarization, release automation, and a public
-privacy policy remain required if that product decision changes.
+Stage 1 distribution is limited to public GitHub prereleases for the owner and
+selected testers. These builds are ad-hoc signed and not notarized, so
+Gatekeeper intervention and protected-resource permission prompts may recur
+after updates. Automated gates validate release artifacts and URLs but do not
+perform an installed-app update/relaunch test.
+
+Developer ID signing, notarization, a public privacy policy, and manual
+installed-update validation remain required before presenting Chameo as a
+polished public distribution.

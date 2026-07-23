@@ -12,5 +12,10 @@
   <true/>
   <key>com.apple.security.personal-information.location</key>
   <true/>
+  <key>com.apple.security.temporary-exception.mach-lookup.global-name</key>
+  <array>
+    <string>com.robertu.Chameo-spks</string>
+    <string>com.robertu.Chameo-spki</string>
+  </array>
 </dict>
 </plist>

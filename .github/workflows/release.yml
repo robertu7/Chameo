@@ -1,0 +1,145 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and publish prerelease
+    runs-on: macos-14
+    environment: release
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    steps:
+      - name: Check out tagged commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Verify release version and source branch
+        run: |
+          git fetch origin main
+          ./script/verify_release_version.sh "${GITHUB_REF_NAME}"
+
+      - name: Resolve pinned dependencies
+        run: swift package resolve
+
+      - name: Run tests
+        run: swift test
+
+      - name: Run strict concurrency build
+        run: swift build -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency
+
+      - name: Build ad-hoc release bundle
+        env:
+          CHAMEO_CODE_SIGN_IDENTITY: "-"
+        run: |
+          export CHAMEO_BUILD_ID CHAMEO_BUILD_NUMBER
+          CHAMEO_BUILD_ID="$(git rev-parse --short=12 HEAD)"
+          CHAMEO_BUILD_NUMBER="$(git rev-list --count HEAD)"
+          ./script/build_app.sh --release
+
+      - name: Prepare Sparkle private key
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          if [[ -z "$SPARKLE_PRIVATE_KEY" ]]; then
+            echo "The release environment is missing SPARKLE_PRIVATE_KEY." >&2
+            exit 1
+          fi
+          umask 077
+          printf '%s' "$SPARKLE_PRIVATE_KEY" >"$RUNNER_TEMP/sparkle-private-key"
+
+      - name: Fetch existing appcast
+        run: |
+          mkdir -p dist/updates
+          status="$(
+            curl -sS -L \
+              -o dist/updates/appcast.xml \
+              -w '%{http_code}' \
+              https://robertu7.github.io/Chameo/appcast.xml
+          )"
+          if [[ "$status" != "200" && "$status" != "404" ]]; then
+            echo "Unable to fetch existing appcast: HTTP $status" >&2
+            exit 1
+          fi
+          if [[ "$status" == "404" ]]; then
+            rm -f dist/updates/appcast.xml
+          fi
+
+      - name: Sign and validate release artifacts
+        env:
+          SPARKLE_PRIVATE_KEY_FILE: ${{ runner.temp }}/sparkle-private-key
+        run: ./script/prepare_release.sh "${GITHUB_REF_NAME#v}"
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
+
+      - name: Stage Pages content
+        run: |
+          mkdir -p dist/pages
+          cp dist/updates/appcast.xml dist/pages/appcast.xml
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
+        with:
+          path: dist/pages
+
+      - name: Publish GitHub prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          archive="dist/updates/Chameo-$version-arm64.zip"
+          notes_asset="dist/updates/Chameo-$version-arm64.md"
+          gh release create "$GITHUB_REF_NAME" \
+            "$archive" \
+            "$notes_asset" \
+            --prerelease \
+            --title "Chameo $version" \
+            --notes-file "$notes_asset" \
+            --verify-tag
+
+      - name: Validate published release URLs
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          base="https://github.com/robertu7/Chameo/releases/download/$GITHUB_REF_NAME"
+          curl --fail --silent --show-error --location \
+            --retry 5 --retry-delay 2 \
+            --output /dev/null "$base/Chameo-$version-arm64.zip"
+          curl --fail --silent --show-error --location \
+            --retry 5 --retry-delay 2 \
+            --output /dev/null "$base/Chameo-$version-arm64.md"
+
+  deploy-feed:
+    name: Publish signed appcast
+    needs: release
+    runs-on: macos-14
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
+
+      - name: Validate published appcast URL
+        run: |
+          curl --fail --silent --show-error --location \
+            --retry 10 --retry-delay 3 \
+            --output /dev/null \
+            "${{ steps.deployment.outputs.page_url }}appcast.xml"

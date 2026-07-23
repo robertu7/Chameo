@@ -32,6 +32,8 @@ The app is intentionally small: click the camera icon in the menu bar, take a ph
 - Permission-denied states include direct System Settings recovery actions.
 - Library deletion removes the original photo from Photos.
 - Optional launch-at-login support.
+- Daily user-approved update checks through Sparkle, with a manual check in
+  General Settings.
 - Menu-bar-only app with no Dock icon.
 
 ## Quick Start
@@ -39,6 +41,7 @@ The app is intentionally small: click the camera icon in the menu bar, take a ph
 Requirements:
 
 - macOS 14 or newer.
+- Apple Silicon Mac.
 - Xcode command line tools or Xcode with SwiftPM support.
 
 Build app bundle:
@@ -56,6 +59,33 @@ Build a release app bundle:
 The script builds the SwiftPM executable, stages a local `.app` bundle in `dist/`, writes the required `Info.plist`, applies the development entitlements, signs the app, and prints the bundle path. It automatically uses an installed Apple Development or Developer ID Application certificate so macOS can retain protected-resource permissions across rebuilds. Without one, it warns and falls back to ad-hoc signing.
 
 Set the app version in `VERSION`. The build script also writes a build number and build id into the bundle so Settings can display the exact build.
+
+## Test Releases
+
+GitHub prereleases are built for Apple Silicon, ad-hoc signed, and not
+notarized by Apple.
+
+Install a test release:
+
+1. Download `Chameo-X.Y.Z-arm64.zip` from
+   [GitHub Releases](https://github.com/robertu7/Chameo/releases).
+2. Unzip it and move `Chameo.app` to `/Applications`.
+3. Control-click Chameo and choose **Open** for the first launch.
+4. Approve the Camera and Photos permissions used by the app.
+
+Because these test builds do not have a stable Developer ID signature, macOS
+may request Camera, Photos, Location, or Notification permission again after an
+update. Existing photos remain in Photos.app and are not part of the replaced
+app bundle.
+
+Chameo asks once before enabling daily update checks. The preference can be
+changed in General Settings. When an update is found, Sparkle shows its standard
+release-notes window; Chameo downloads, installs, and relaunches only after the
+user chooses **Install Update**.
+
+The release automation validates bundle metadata, architecture, signatures,
+archive contents, appcast XML, and published URLs. It does not perform an
+installed-app end-to-end update or Gatekeeper test.
 
 ## Permissions
 
@@ -76,3 +106,4 @@ Library deletion removes the original photo from Photos. Photos may move deleted
 - [Permissions & Privacy](docs/permissions.md)
 - [Production Readiness](docs/production-readiness.md)
 - [Roadmap](docs/roadmap.md)
+- [Changelog](CHANGELOG.md)

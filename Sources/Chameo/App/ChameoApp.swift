@@ -5,6 +5,7 @@ import SwiftUI
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
     let localizationController = LocalizationController()
+    let updateController = UpdateController()
     private let appState = AppState()
     private let cameraService = CameraService()
     private let libraryStore = LibraryStore()
@@ -156,6 +157,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     }
 
     private func startMainExperience(showCamera: Bool) {
+        updateController.start()
+
         if statusPopoverController == nil {
             statusPopoverController = StatusPopoverController(
                 appState: appState,
@@ -211,6 +214,7 @@ struct ChameoApp: App {
         Settings {
             SettingsView()
                 .environmentObject(appDelegate.localizationController)
+                .environmentObject(appDelegate.updateController)
                 .environment(\.locale, appDelegate.localizationController.displayLocale)
         }
     }

@@ -11,8 +11,10 @@ DIST_DIR="$ROOT_DIR/dist"
 APP_BUNDLE="$DIST_DIR/$APP_NAME.app"
 APP_CONTENTS="$APP_BUNDLE/Contents"
 APP_MACOS="$APP_CONTENTS/MacOS"
+APP_FRAMEWORKS="$APP_CONTENTS/Frameworks"
 APP_RESOURCES="$APP_CONTENTS/Resources"
 APP_BINARY="$APP_MACOS/$APP_NAME"
+SPARKLE_FRAMEWORK="$APP_FRAMEWORKS/Sparkle.framework"
 INFO_PLIST="$APP_CONTENTS/Info.plist"
 ENTITLEMENTS="$ROOT_DIR/Chameo.entitlements"
 APP_ICON="$ROOT_DIR/Assets/AppIcon.icns"
@@ -77,12 +79,25 @@ if [[ ! "$BUILD_ID" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$ ]]; then
 fi
 
 swift build -c "$BUILD_CONFIGURATION"
-BUILD_BINARY="$(swift build -c "$BUILD_CONFIGURATION" --show-bin-path)/$APP_NAME"
+BUILD_BIN_PATH="$(swift build -c "$BUILD_CONFIGURATION" --show-bin-path)"
+BUILD_BINARY="$BUILD_BIN_PATH/$APP_NAME"
+BUILD_SPARKLE_FRAMEWORK="$BUILD_BIN_PATH/Sparkle.framework"
+
+if [[ ! -x "$BUILD_BINARY" ]]; then
+  echo "missing built executable: $BUILD_BINARY" >&2
+  exit 1
+fi
+
+if [[ ! -d "$BUILD_SPARKLE_FRAMEWORK" ]]; then
+  echo "missing Sparkle framework: $BUILD_SPARKLE_FRAMEWORK" >&2
+  exit 1
+fi
 
 rm -rf "$APP_BUNDLE"
-mkdir -p "$APP_MACOS" "$APP_RESOURCES"
+mkdir -p "$APP_MACOS" "$APP_FRAMEWORKS" "$APP_RESOURCES"
 cp "$BUILD_BINARY" "$APP_BINARY"
 chmod +x "$APP_BINARY"
+cp -R "$BUILD_SPARKLE_FRAMEWORK" "$SPARKLE_FRAMEWORK"
 cp "$APP_ICON" "$APP_RESOURCES/AppIcon.icns"
 cp -R "$ROOT_DIR/Sources/Chameo/Resources/MenuBarIcons" "$APP_RESOURCES/MenuBarIcons"
 for localization in en zh-Hans zh-Hant; do
@@ -126,6 +141,22 @@ cat >"$INFO_PLIST" <<PLIST
   <string>$MIN_SYSTEM_VERSION</string>
   <key>LSUIElement</key>
   <true/>
+  <key>SUFeedURL</key>
+  <string>https://robertu7.github.io/Chameo/appcast.xml</string>
+  <key>SUPublicEDKey</key>
+  <string>/DO+T5vBJ5T0Z1DGBe97MTDbOqGNGpzS8vXuLIFNHEU=</string>
+  <key>SURequireSignedFeed</key>
+  <true/>
+  <key>SUVerifyUpdateBeforeExtraction</key>
+  <true/>
+  <key>SUSignedFeedFailureExpirationInterval</key>
+  <integer>0</integer>
+  <key>SUEnableInstallerLauncherService</key>
+  <true/>
+  <key>SUEnableDownloaderService</key>
+  <true/>
+  <key>SUScheduledCheckInterval</key>
+  <integer>86400</integer>
   <key>NSCameraUsageDescription</key>
   <string>Chameo uses the camera to take your daily photo.</string>
   <key>NSCameraUseContinuityCameraDeviceType</key>
@@ -157,6 +188,18 @@ else
   echo "Signing with stable identity: $CODE_SIGN_IDENTITY" >&2
 fi
 
-/usr/bin/codesign --force --sign "$CODE_SIGN_IDENTITY" --entitlements "$ENTITLEMENTS" "$APP_BUNDLE"
-/usr/bin/codesign --verify --strict "$APP_BUNDLE"
+SPARKLE_VERSION="$SPARKLE_FRAMEWORK/Versions/B"
+/usr/bin/codesign --force --sign "$CODE_SIGN_IDENTITY" --options runtime \
+  "$SPARKLE_VERSION/XPCServices/Installer.xpc"
+/usr/bin/codesign --force --sign "$CODE_SIGN_IDENTITY" --options runtime \
+  --preserve-metadata=entitlements "$SPARKLE_VERSION/XPCServices/Downloader.xpc"
+/usr/bin/codesign --force --sign "$CODE_SIGN_IDENTITY" --options runtime \
+  "$SPARKLE_VERSION/Autoupdate"
+/usr/bin/codesign --force --sign "$CODE_SIGN_IDENTITY" --options runtime \
+  "$SPARKLE_VERSION/Updater.app"
+/usr/bin/codesign --force --sign "$CODE_SIGN_IDENTITY" --options runtime \
+  "$SPARKLE_FRAMEWORK"
+/usr/bin/codesign --force --sign "$CODE_SIGN_IDENTITY" --options runtime \
+  --entitlements "$ENTITLEMENTS" "$APP_BUNDLE"
+/usr/bin/codesign --verify --deep --strict "$APP_BUNDLE"
 echo "$APP_BUNDLE"
