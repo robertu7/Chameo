@@ -46,6 +46,11 @@ assert_plist_value() {
 }
 
 assert_plist_value CFBundleIdentifier "com.robertu.Chameo"
+assert_plist_value CFBundleDisplayName "Chameo"
+assert_plist_value ChameoBuildVariant "release"
+assert_plist_value ChameoDefaultAlbumName "Chameo"
+assert_plist_value ChameoUpdatesEnabled "true"
+assert_plist_value ChameoLaunchAtLoginEnabled "true"
 assert_plist_value LSMinimumSystemVersion "14.0"
 assert_plist_value SUFeedURL "https://robertu7.github.io/Chameo/appcast.xml"
 assert_plist_value SUPublicEDKey "/DO+T5vBJ5T0Z1DGBe97MTDbOqGNGpzS8vXuLIFNHEU="

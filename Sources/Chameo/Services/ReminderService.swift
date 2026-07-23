@@ -10,7 +10,10 @@ enum ReminderService {
     private static let wakeDeliveredCleanupAttempts = 4
     private static let wakeDeliveredCleanupDelay = Duration.milliseconds(500)
     private static let operationQueue = ReminderOperationQueue()
-    private static let logger = Logger(subsystem: "com.robertu.Chameo", category: "reminders")
+    private static let logger = Logger(
+        subsystem: AppDistribution.current.bundleIdentifier,
+        category: "reminders"
+    )
 
     static func authorizationStatus() async -> UNAuthorizationStatus {
         await UNUserNotificationCenter.current().notificationSettings().authorizationStatus

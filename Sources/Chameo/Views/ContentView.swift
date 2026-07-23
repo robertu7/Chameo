@@ -8,7 +8,8 @@ struct ContentView: View {
     @EnvironmentObject private var localizationController: LocalizationController
     @Environment(\.openSettings) private var openSettings
 
-    @AppStorage(AppPreferenceKey.albumName) private var albumName = "Chameo"
+    @AppStorage(AppPreferenceKey.albumName)
+    private var albumName = AppDistribution.current.defaultAlbumName
     @AppStorage(AppPreferenceKey.handsFreeCountdown) private var handsFreeCountdown = false
     @AppStorage(AppPreferenceKey.showFaceGuide) private var showFaceGuide = true
     @AppStorage(AppPreferenceKey.saveLocation) private var saveLocation = false

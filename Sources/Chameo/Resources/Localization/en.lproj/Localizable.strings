@@ -167,6 +167,7 @@
 "Updating reminder" = "Updating reminder";
 "Version" = "Version";
 "Version %@ · Build %@" = "Version %@ · Build %@";
+"Version %@ · Build %@ · Test build" = "Version %@ · Build %@ · Test build";
 "View" = "View";
 "Weekly" = "Weekly";
 "Welcome to Chameo" = "Welcome to Chameo";

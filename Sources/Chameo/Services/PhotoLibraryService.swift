@@ -160,7 +160,7 @@ enum PhotoLibraryService {
 
     static func normalizedAlbumName(_ albumName: String) -> String {
         let trimmed = albumName.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? "Chameo" : trimmed
+        return trimmed.isEmpty ? AppDistribution.current.defaultAlbumName : trimmed
     }
 
     private static func writeTemporaryJPEG(_ data: Data) throws -> URL {

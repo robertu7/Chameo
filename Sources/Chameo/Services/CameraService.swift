@@ -5,7 +5,7 @@ import OSLog
 @MainActor
 final class CameraService: NSObject, ObservableObject {
     private static let logger = Logger(
-        subsystem: "com.robertu.Chameo",
+        subsystem: AppDistribution.current.bundleIdentifier,
         category: "camera"
     )
 

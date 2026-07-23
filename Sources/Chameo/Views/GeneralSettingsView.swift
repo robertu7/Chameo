@@ -6,7 +6,8 @@ struct GeneralSettingsView: View {
     @Environment(\.scenePhase) private var scenePhase
     @EnvironmentObject private var localizationController: LocalizationController
     @EnvironmentObject private var updateController: UpdateController
-    @AppStorage(AppPreferenceKey.albumName) private var albumName = "Chameo"
+    @AppStorage(AppPreferenceKey.albumName)
+    private var albumName = AppDistribution.current.defaultAlbumName
     @AppStorage(AppPreferenceKey.handsFreeCountdown) private var handsFreeCountdown = false
     @AppStorage(AppPreferenceKey.showFaceGuide) private var showFaceGuide = true
     @AppStorage(AppPreferenceKey.autoAlignPhotos) private var autoAlignPhotos = true
@@ -134,29 +135,27 @@ struct GeneralSettingsView: View {
                     }
                 }
 
-                Toggle(L10n.string("Launch at Login"), isOn: $launchAtLogin)
-                    .disabled(isUpdatingLaunchAtLogin)
-
-                Toggle(
-                    L10n.string("Automatically Check for Updates"),
-                    isOn: automaticUpdateChecksBinding
-                )
-
-                Button(L10n.string("Check for Updates…")) {
-                    updateController.checkForUpdates()
+                if AppDistribution.current.launchAtLoginEnabled {
+                    Toggle(L10n.string("Launch at Login"), isOn: $launchAtLogin)
+                        .disabled(isUpdatingLaunchAtLogin)
                 }
-                .disabled(!updateController.canCheckForUpdates)
-                .frame(maxWidth: .infinity, alignment: .trailing)
+
+                if updateController.isEnabled {
+                    Toggle(
+                        L10n.string("Automatically Check for Updates"),
+                        isOn: automaticUpdateChecksBinding
+                    )
+
+                    Button(L10n.string("Check for Updates…")) {
+                        updateController.checkForUpdates()
+                    }
+                    .disabled(!updateController.canCheckForUpdates)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                }
             } header: {
                 Text(L10n.string("App"))
             } footer: {
-                Text(
-                    L10n.format(
-                        "Version %@ · Build %@",
-                        AppVersion.current.version,
-                        AppVersion.current.buildID
-                    )
-                )
+                Text(buildInformation)
             }
         }
         .formStyle(.grouped)
@@ -170,7 +169,8 @@ struct GeneralSettingsView: View {
         }
         .onAppear {
             isLoadingSettings = true
-            launchAtLogin = LaunchAtLoginService.isEnabled
+            launchAtLogin = AppDistribution.current.launchAtLoginEnabled
+                && LaunchAtLoginService.isEnabled
             storedLaunchAtLogin = launchAtLogin
             isLoadingSettings = false
 
@@ -190,7 +190,9 @@ struct GeneralSettingsView: View {
             }
         }
         .onChange(of: launchAtLogin) { _, newValue in
-            guard !isLoadingSettings, newValue != LaunchAtLoginService.isEnabled else {
+            guard AppDistribution.current.launchAtLoginEnabled,
+                  !isLoadingSettings,
+                  newValue != LaunchAtLoginService.isEnabled else {
                 return
             }
 
@@ -211,6 +213,22 @@ struct GeneralSettingsView: View {
         Binding(
             get: { updateController.automaticallyChecksForUpdates },
             set: { updateController.setAutomaticallyChecksForUpdates($0) }
+        )
+    }
+
+    private var buildInformation: String {
+        if AppDistribution.current.isTestBuild {
+            return L10n.format(
+                "Version %@ · Build %@ · Test build",
+                AppVersion.current.version,
+                AppVersion.current.buildID
+            )
+        }
+
+        return L10n.format(
+            "Version %@ · Build %@",
+            AppVersion.current.version,
+            AppVersion.current.buildID
         )
     }
 
@@ -324,7 +342,8 @@ struct GeneralSettingsView: View {
     }
 
     private var defaultNewAlbumName: String {
-        albumNameExists("Chameo") ? "" : "Chameo"
+        let defaultAlbumName = AppDistribution.current.defaultAlbumName
+        return albumNameExists(defaultAlbumName) ? "" : defaultAlbumName
     }
 
     private var isDuplicateNewAlbumName: Bool {

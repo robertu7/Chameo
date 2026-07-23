@@ -77,17 +77,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     }
 
     private func configureUserDefaults() {
+        let launchAtLogin = AppDistribution.current.launchAtLoginEnabled
+            && LaunchAtLoginService.isEnabled
+
         UserDefaults.standard.register(defaults: [
-            AppPreferenceKey.albumName: "Chameo",
+            AppPreferenceKey.albumName: AppDistribution.current.defaultAlbumName,
             AppPreferenceKey.handsFreeCountdown: false,
             AppPreferenceKey.hasCompletedPermissionOnboarding: false,
             AppPreferenceKey.showFaceGuide: true,
             AppPreferenceKey.saveLocation: false,
-            AppPreferenceKey.launchAtLogin: LaunchAtLoginService.isEnabled,
+            AppPreferenceKey.launchAtLogin: launchAtLogin,
             AppPreferenceKey.language: AppLanguage.automatic.rawValue
         ])
         UserDefaults.standard.set(
-            LaunchAtLoginService.isEnabled,
+            launchAtLogin,
             forKey: AppPreferenceKey.launchAtLogin
         )
     }
@@ -199,7 +202,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             return
         }
 
-        let albumName = UserDefaults.standard.string(forKey: AppPreferenceKey.albumName) ?? "Chameo"
+        let albumName = UserDefaults.standard.string(forKey: AppPreferenceKey.albumName)
+            ?? AppDistribution.current.defaultAlbumName
         libraryRefreshTask = Task {
             await libraryStore.reload(albumName: albumName)
         }

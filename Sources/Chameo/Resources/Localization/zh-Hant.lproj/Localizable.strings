@@ -167,6 +167,7 @@
 "Updating reminder" = "正在更新提醒";
 "Version" = "版本";
 "Version %@ · Build %@" = "版本 %@ · 組建編號 %@";
+"Version %@ · Build %@ · Test build" = "版本 %@ · 組建編號 %@ · 測試版本";
 "View" = "顯示方式";
 "Weekly" = "每週";
 "Welcome to Chameo" = "歡迎使用 Chameo";

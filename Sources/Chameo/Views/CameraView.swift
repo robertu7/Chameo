@@ -5,7 +5,7 @@ import SwiftUI
 
 struct CameraView: View {
     private static let captureQualityLogger = Logger(
-        subsystem: "com.robertu.Chameo",
+        subsystem: AppDistribution.current.bundleIdentifier,
         category: "capture-quality"
     )
 

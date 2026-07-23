@@ -6,15 +6,25 @@ final class UpdateController: ObservableObject {
     @Published private(set) var canCheckForUpdates = false
     @Published private(set) var automaticallyChecksForUpdates = false
 
-    private let controller: SPUStandardUpdaterController
+    let isEnabled: Bool
+
+    private let controller: SPUStandardUpdaterController?
     private var hasStarted = false
 
-    init() {
-        controller = SPUStandardUpdaterController(
+    init(isEnabled: Bool = AppDistribution.current.updatesEnabled) {
+        self.isEnabled = isEnabled
+
+        guard isEnabled else {
+            controller = nil
+            return
+        }
+
+        let controller = SPUStandardUpdaterController(
             startingUpdater: false,
             updaterDelegate: nil,
             userDriverDelegate: nil
         )
+        self.controller = controller
 
         let updater = controller.updater
         updater.publisher(for: \.canCheckForUpdates)
@@ -26,16 +36,16 @@ final class UpdateController: ObservableObject {
     }
 
     func start() {
-        guard !hasStarted else { return }
+        guard let controller, !hasStarted else { return }
         hasStarted = true
         controller.startUpdater()
     }
 
     func checkForUpdates() {
-        controller.checkForUpdates(nil)
+        controller?.checkForUpdates(nil)
     }
 
     func setAutomaticallyChecksForUpdates(_ isEnabled: Bool) {
-        controller.updater.automaticallyChecksForUpdates = isEnabled
+        controller?.updater.automaticallyChecksForUpdates = isEnabled
     }
 }
