@@ -6,7 +6,6 @@ struct ContentView: View {
     @EnvironmentObject private var cameraService: CameraService
     @EnvironmentObject private var libraryStore: LibraryStore
     @EnvironmentObject private var localizationController: LocalizationController
-    @Environment(\.openSettings) private var openSettings
 
     @AppStorage(AppPreferenceKey.albumName)
     private var albumName = AppDistribution.current.defaultAlbumName
@@ -47,10 +46,7 @@ struct ContentView: View {
             Divider()
 
             HStack {
-                Button {
-                    openSettings()
-                    NSApplication.shared.activate(ignoringOtherApps: true)
-                } label: {
+                SettingsLink {
                     Label(L10n.string("Settings"), systemImage: "gearshape")
                 }
                 .labelStyle(.iconOnly)
