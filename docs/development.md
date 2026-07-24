@@ -124,11 +124,12 @@ git push origin v0.3.6
 The tag commit must be reachable from `origin/main`. The release workflow:
 
 1. Repeats tests and bundle validation on an Apple Silicon `macos-14` runner.
-2. Builds an ad-hoc-signed ZIP.
+2. Builds an ad-hoc-signed app bundle and packages it as a ZIP and DMG.
 3. Signs and verifies the ZIP, release notes, and appcast.
-4. Creates a public GitHub prerelease.
-5. Publishes the signed appcast through GitHub Pages.
-6. Verifies the published release and feed URLs.
+4. Validates that the DMG contains Chameo and an `/Applications` shortcut.
+5. Creates a public GitHub prerelease with both installation formats.
+6. Publishes the signed ZIP appcast through GitHub Pages.
+7. Verifies the published release and feed URLs.
 
 Before the first release:
 

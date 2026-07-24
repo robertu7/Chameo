@@ -11,8 +11,10 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="$ROOT_DIR/dist"
 APP_BUNDLE="$DIST_DIR/Chameo.app"
 UPDATES_DIR="$DIST_DIR/updates"
+RELEASES_DIR="$DIST_DIR/releases"
 ARCHIVE_BASENAME="Chameo-$VERSION-arm64"
 ARCHIVE_PATH="$UPDATES_DIR/$ARCHIVE_BASENAME.zip"
+DMG_PATH="$RELEASES_DIR/$ARCHIVE_BASENAME.dmg"
 NOTES_PATH="$UPDATES_DIR/$ARCHIVE_BASENAME.md"
 APPCAST_PATH="$UPDATES_DIR/appcast.xml"
 SPARKLE_ACCOUNT="${SPARKLE_KEY_ACCOUNT:-com.robertu.Chameo}"
@@ -30,7 +32,10 @@ fi
 
 "$ROOT_DIR/script/verify_app_bundle.sh" "$APP_BUNDLE"
 
-mkdir -p "$UPDATES_DIR"
+mkdir -p "$UPDATES_DIR" "$RELEASES_DIR"
+/usr/bin/find "$UPDATES_DIR" -maxdepth 1 -type f \
+  \( -name 'Chameo-*-arm64.zip' -o -name 'Chameo-*-arm64.md' -o -name 'Chameo-*-arm64.dmg' \) \
+  -delete
 "$ROOT_DIR/script/extract_release_notes.sh" "$VERSION" "$NOTES_PATH"
 /usr/bin/ditto -c -k --sequesterRsrc --keepParent "$APP_BUNDLE" "$ARCHIVE_PATH"
 
@@ -143,6 +148,45 @@ fi
 "$SIGN_UPDATE" --verify "${KEY_ARGUMENTS[@]}" "$ARCHIVE_PATH" "$ARCHIVE_SIGNATURE"
 "$SIGN_UPDATE" --verify "${KEY_ARGUMENTS[@]}" "$NOTES_PATH" "$NOTES_SIGNATURE"
 
+DMG_SOURCE_DIR="$(/usr/bin/mktemp -d "${TMPDIR:-/tmp}/chameo-dmg-source.XXXXXX")"
+DMG_MOUNT_DIR="$(/usr/bin/mktemp -d "${TMPDIR:-/tmp}/chameo-dmg-mount.XXXXXX")"
+DMG_MOUNTED=false
+
+cleanup_dmg() {
+  if [[ "$DMG_MOUNTED" == true ]]; then
+    /usr/bin/hdiutil detach "$DMG_MOUNT_DIR" -quiet || true
+  fi
+  /bin/rm -rf "$DMG_SOURCE_DIR" "$DMG_MOUNT_DIR"
+}
+trap cleanup_dmg EXIT
+
+/usr/bin/ditto "$APP_BUNDLE" "$DMG_SOURCE_DIR/Chameo.app"
+/bin/ln -s /Applications "$DMG_SOURCE_DIR/Applications"
+/bin/rm -f "$DMG_PATH"
+/usr/bin/hdiutil create \
+  -volname "Chameo" \
+  -srcfolder "$DMG_SOURCE_DIR" \
+  -fs HFS+ \
+  -format UDZO \
+  "$DMG_PATH" >/dev/null
+/usr/bin/hdiutil verify "$DMG_PATH" >/dev/null
+/usr/bin/hdiutil attach \
+  -readonly \
+  -nobrowse \
+  -mountpoint "$DMG_MOUNT_DIR" \
+  "$DMG_PATH" >/dev/null
+DMG_MOUNTED=true
+
+if [[ "$(/usr/bin/readlink "$DMG_MOUNT_DIR/Applications")" != "/Applications" ]]; then
+  echo "release disk image is missing the Applications shortcut" >&2
+  exit 1
+fi
+"$ROOT_DIR/script/verify_app_bundle.sh" "$DMG_MOUNT_DIR/Chameo.app"
+
+/usr/bin/hdiutil detach "$DMG_MOUNT_DIR" -quiet
+DMG_MOUNTED=false
+
 echo "$ARCHIVE_PATH"
+echo "$DMG_PATH"
 echo "$NOTES_PATH"
 echo "$APPCAST_PATH"

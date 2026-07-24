@@ -18,9 +18,10 @@ menu-bar app for personal use on macOS 14 or newer.
 - GitHub Actions validates the arm64 release bundle on pull requests and
   `main`, and tagged release jobs fail unless versions and changelog notes
   match.
-- Tagged prereleases use signed ZIP archives, signed release notes, and a
-  signed GitHub Pages appcast. Chameo verifies archives before extraction and
-  does not expire signed-feed validation failures.
+- Tagged prereleases provide a DMG with an Applications shortcut for first
+  installation. Sparkle updates use signed ZIP archives, signed release notes,
+  and a signed GitHub Pages appcast. Chameo verifies archives before extraction
+  and does not expire signed-feed validation failures.
 
 ## Reliability and Data Safety
 

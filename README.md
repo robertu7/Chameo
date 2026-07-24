@@ -84,9 +84,9 @@ notarized by Apple.
 
 Install a test release:
 
-1. Download `Chameo-X.Y.Z-arm64.zip` from
+1. Download `Chameo-X.Y.Z-arm64.dmg` from
    [GitHub Releases](https://github.com/robertu7/Chameo/releases).
-2. Unzip it and move `Chameo.app` to `/Applications`.
+2. Open the disk image and drag `Chameo.app` onto the **Applications** shortcut.
 3. Control-click Chameo and choose **Open** for the first launch.
 4. Approve the Camera and Photos permissions used by the app.
 
@@ -101,8 +101,10 @@ release-notes window; Chameo downloads, installs, and relaunches only after the
 user chooses **Install Update**.
 
 The release automation validates bundle metadata, architecture, signatures,
-archive contents, appcast XML, and published URLs. It does not perform an
-installed-app end-to-end update or Gatekeeper test.
+ZIP and disk-image contents, appcast XML, and published URLs. Sparkle continues
+to use the signed ZIP for updates; the disk image is the first-install option.
+The automation does not perform an installed-app end-to-end update or
+Gatekeeper test.
 
 ## Permissions
 

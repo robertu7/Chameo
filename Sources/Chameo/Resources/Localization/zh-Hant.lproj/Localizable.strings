@@ -171,7 +171,7 @@
 "View" = "顯示方式";
 "Weekly" = "每週";
 "Welcome to Chameo" = "歡迎使用 Chameo";
-"language.automatic" = "自動";
+"language.automatic" = "跟隨系統";
 "settings.language.picker" = "語言";
 "settings.language.section" = "語言";
 "settings.photos.section" = "照片";

@@ -102,9 +102,11 @@ jobs:
         run: |
           version="${GITHUB_REF_NAME#v}"
           archive="dist/updates/Chameo-$version-arm64.zip"
+          disk_image="dist/releases/Chameo-$version-arm64.dmg"
           notes_asset="dist/updates/Chameo-$version-arm64.md"
           gh release create "$GITHUB_REF_NAME" \
             "$archive" \
+            "$disk_image" \
             "$notes_asset" \
             --prerelease \
             --title "Chameo $version" \
@@ -118,6 +120,9 @@ jobs:
           curl --fail --silent --show-error --location \
             --retry 5 --retry-delay 2 \
             --output /dev/null "$base/Chameo-$version-arm64.zip"
+          curl --fail --silent --show-error --location \
+            --retry 5 --retry-delay 2 \
+            --output /dev/null "$base/Chameo-$version-arm64.dmg"
           curl --fail --silent --show-error --location \
             --retry 5 --retry-delay 2 \
             --output /dev/null "$base/Chameo-$version-arm64.md"
