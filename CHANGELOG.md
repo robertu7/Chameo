@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.3.8
+
+### What’s new
+
+- Timelapse exports now include every saved Chameo photo in chronological order,
+  including multiple photos captured on the same day.
+
+### Fixes
+
+- None.
+
+### Known testing limitations
+
+- Full-history selection is covered by automated tests, but export with a large
+  or iCloud-backed photo library has not been manually validated.
+- Stage 1 builds are ad-hoc signed and are not notarized by Apple.
+- macOS may request Camera, Photos, Location, or Notification permission again
+  after an update.
+- Installation, relaunch, Gatekeeper behavior, and permission persistence are
+  covered by tester feedback rather than automated end-to-end UI validation.
+
 ## 0.3.7
 
 ### What’s new
