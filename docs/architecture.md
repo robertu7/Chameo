@@ -85,7 +85,7 @@ Camera hardware starts only when the Camera tab is visible. It stops when the us
   - Fetches one current location for saved photo metadata.
   - Reverse-geocodes asset locations into `City, Country` for Library rows.
 
-- `TimelapseSelection` chooses the latest photo from each of the most recent 30 captured days.
+- `TimelapseSelection` orders every dated photo in the Chameo album chronologically.
 - `TimelapseService`
   - Loads the selected Photos assets without blocking the main actor.
   - Writes frames to a staged square H.264 MP4 and replaces the selected destination only after a successful export.

@@ -61,8 +61,8 @@ Complete these requirements before moving beyond Stage 1 test distribution:
 - Refreshed the daily completion state after saves, deletion, album changes,
   Library reloads, app activation, wake, and calendar-day changes.
 - Completed the 30-day personal validation trial.
-- Added timelapse generation using the latest saved Chameo from each of the most
-  recent 30 captured days, exported chronologically as a square 1080 x 1080
+- Added timelapse generation using every saved Chameo across the complete
+  history, exported chronologically as a square 1080 x 1080
   H.264 MP4 at 10 photos per second through the standard Save dialog.
 - Removed the rolling 30-day Library summary after the validation trial.
 - Added Camera, Photos, Location, and Notifications permission recovery actions.

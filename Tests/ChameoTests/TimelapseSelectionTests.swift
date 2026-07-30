@@ -13,7 +13,7 @@ final class TimelapseSelectionTests: XCTestCase {
         return calendar
     }
 
-    func testSelectsLatestItemPerDayInChronologicalOrder() throws {
+    func testIncludesEveryDatedItemInChronologicalOrder() throws {
         let items = [
             Item(id: "older-second-day", date: try date(2026, 6, 18, 8)),
             Item(id: "latest-first-day", date: try date(2026, 6, 17, 18)),
@@ -21,32 +21,43 @@ final class TimelapseSelectionTests: XCTestCase {
             Item(id: "older-first-day", date: try date(2026, 6, 17, 7))
         ]
 
-        let selected = TimelapseSelection.mostRecentDailyItems(
+        let selected = TimelapseSelection.allItemsChronologically(
             from: items,
-            limit: 30,
-            calendar: calendar,
             date: \.date
         )
 
-        XCTAssertEqual(selected.map(\.id), ["latest-first-day", "latest-second-day"])
+        XCTAssertEqual(selected.map(\.id), [
+            "older-first-day",
+            "latest-first-day",
+            "older-second-day",
+            "latest-second-day"
+        ])
     }
 
-    func testKeepsOnlyMostRecentDaysAndSkipsMissingDates() throws {
+    func testIncludesMissingDatesAndPreservesInputOrderForTies() throws {
+        let sharedDate = try date(2026, 6, 17, 8)
         let items = [
-            Item(id: "oldest", date: try date(2026, 6, 16, 8)),
-            Item(id: "middle", date: try date(2026, 6, 17, 8)),
             Item(id: "newest", date: try date(2026, 6, 18, 8)),
-            Item(id: "missing", date: nil)
+            Item(id: "first-at-shared-date", date: sharedDate),
+            Item(id: "first-missing", date: nil),
+            Item(id: "second-at-shared-date", date: sharedDate),
+            Item(id: "oldest", date: try date(2026, 6, 16, 8)),
+            Item(id: "second-missing", date: nil)
         ]
 
-        let selected = TimelapseSelection.mostRecentDailyItems(
+        let selected = TimelapseSelection.allItemsChronologically(
             from: items,
-            limit: 2,
-            calendar: calendar,
             date: \.date
         )
 
-        XCTAssertEqual(selected.map(\.id), ["middle", "newest"])
+        XCTAssertEqual(selected.map(\.id), [
+            "oldest",
+            "first-at-shared-date",
+            "second-at-shared-date",
+            "newest",
+            "first-missing",
+            "second-missing"
+        ])
     }
 
     private func date(_ year: Int, _ month: Int, _ day: Int, _ hour: Int) throws -> Date {

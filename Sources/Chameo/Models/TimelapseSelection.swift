@@ -1,39 +1,25 @@
 import Foundation
 
 enum TimelapseSelection {
-    static func mostRecentDailyItems<Item>(
+    static func allItemsChronologically<Item>(
         from items: [Item],
-        limit: Int,
-        calendar: Calendar = .current,
         date: (Item) -> Date?
     ) -> [Item] {
-        guard limit > 0 else {
-            return []
+        items.enumerated().map { index, item in
+            (index: index, item: item, date: date(item))
         }
-
-        let datedItems = items.compactMap { item -> (item: Item, date: Date)? in
-            guard let itemDate = date(item) else {
-                return nil
-            }
-            return (item, itemDate)
-        }
-        .sorted { $0.date > $1.date }
-
-        var selectedDays = Set<Date>()
-        var selectedItems: [(item: Item, date: Date)] = []
-
-        for datedItem in datedItems {
-            let day = calendar.startOfDay(for: datedItem.date)
-            guard selectedDays.insert(day).inserted else {
-                continue
-            }
-
-            selectedItems.append(datedItem)
-            if selectedItems.count == limit {
-                break
+        .sorted { lhs, rhs in
+            switch (lhs.date, rhs.date) {
+            case let (lhsDate?, rhsDate?) where lhsDate != rhsDate:
+                return lhsDate < rhsDate
+            case (_?, nil):
+                return true
+            case (nil, _?):
+                return false
+            default:
+                return lhs.index < rhs.index
             }
         }
-
-        return selectedItems.reversed().map(\.item)
+        .map(\.item)
     }
 }

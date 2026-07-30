@@ -24,7 +24,7 @@ The app is intentionally small: click the camera icon in the menu bar, take a ph
   pre-tracking days.
 - Hover, keyboard focus, and selection preview a day's thumbnails, local
   date/time, and location name when available.
-- Library exports the latest photo from each of the most recent 30 captured days as a square H.264 MP4.
+- Library exports every saved Chameo photo in chronological order as a square H.264 MP4.
 - Dedicated Photos.app album name configurable in Settings. If Photos already has an album with the same name, Chameo uses that album instead of creating another one. If the album is deleted externally, the next save recreates it.
 - Optional location metadata on saved photos, off by default.
 - Reminder scheduling with none, daily, and weekly repeat modes.
