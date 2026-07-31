@@ -53,6 +53,7 @@ final class PermissionOnboardingWindowController: NSWindowController, NSWindowDe
         )
         window.isReleasedWhenClosed = false
         window.isMovableByWindowBackground = true
+        window.level = .floating
         window.isOpaque = false
         window.backgroundColor = .clear
         window.hasShadow = true

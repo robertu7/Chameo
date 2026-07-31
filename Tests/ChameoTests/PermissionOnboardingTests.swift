@@ -181,6 +181,20 @@ final class PermissionOnboardingTests: XCTestCase {
         )
     }
 
+    func testOnboardingWindowFloatsAboveNormalWindowsDuringPermissionRequests() {
+        let provider = StubRequiredPermissionProvider(
+            cameraStatus: .authorized,
+            photosStatus: .authorized
+        )
+        let controller = PermissionOnboardingWindowController(
+            permissionProvider: provider,
+            localizationController: LocalizationController(),
+            onCompletion: {}
+        )
+
+        XCTAssertEqual(controller.window?.level, .floating)
+    }
+
 }
 
 @MainActor
