@@ -1,101 +1,76 @@
 ---
 name: release-chameo
-description: Suggest, prepare, and publish a new Chameo macOS app version from the main branch, with user confirmation before release edits. Use when asked to choose or bump Chameo's semantic version, update its changelog, create a release commit and tag, push the release to GitHub, or verify the tagged GitHub prerelease and Sparkle appcast.
+description: Suggest, prepare, publish, and verify a Chameo macOS release from main. Use when choosing or bumping a semantic version, updating VERSION or CHANGELOG.md, creating a release commit or tag, pushing a release, or verifying the GitHub prerelease and Sparkle appcast.
 ---
 
 # Release Chameo
 
-Publish releases through the repository's existing tag-triggered GitHub Actions
-workflow. Treat `VERSION`, `CHANGELOG.md`, and `.github/workflows/release.yml` as
-the sources of truth.
+Use the tag-triggered GitHub Actions workflow. Treat `VERSION`, `CHANGELOG.md`,
+`script/{extract_release_notes.sh,verify_release_version.sh}`, and
+`.github/workflows/release.yml` as release truth.
+
+Run bundled commands from the repository root:
+
+```bash
+skills/release-chameo/scripts/release.sh <command> [arguments]
+```
 
 ## Guardrails
 
-- Work only from `main`, with `HEAD` synchronized to `origin/main`.
-- Stop if unrelated tracked or untracked changes are present. Do not include,
-  stash, discard, or overwrite them without the user's direction.
-- Always propose an `X.Y.Z` semantic version and obtain the user's explicit
-  confirmation before mutating files, even when the user supplied a version.
-- Never create or move a release tag before its release commit is on
-  `origin/main` and the corresponding CI run succeeds.
-- Never reuse, force-push, delete, or retarget a tag that exists locally or on
-  GitHub. Investigate a failed release workflow in place.
-- Do not claim the release is published until the GitHub prerelease, its two
-  assets, and the public Sparkle appcast are verified.
+- Release only from a clean `main` synchronized with `origin/main`.
+- Stop for unrelated changes; never stash, discard, or include them.
+- Always propose `X.Y.Z` and receive explicit confirmation before editing,
+  including when the user supplied a version.
+- Never reuse, move, delete, retarget, or force-push a release tag.
+- Push the release commit and require CI success for its exact full SHA before
+  creating the annotated tag.
+- Call a release published only after verifying the prerelease, ZIP, DMG,
+  Markdown notes, public appcast, branch, and tag targets.
 
-## Prepare the release
+## Prepare
 
-1. Read `VERSION`, the first section of `CHANGELOG.md`, recent commits since the
-   latest `vX.Y.Z` tag, and `.github/workflows/{ci,release}.yml`.
-2. Fetch `origin` and inspect the commits and user-visible changes since the
-   latest release. Suggest the next version using Semantic Versioning:
-   - increment patch for backward-compatible fixes or small refinements;
-   - increment minor for backward-compatible user-visible functionality;
-   - increment major for an intentional incompatible change.
-3. Present the suggested version, the current version, the bump type, a concise
-   rationale grounded in the actual changes, and a draft changelog summary. Ask
-   the user to confirm or choose another version. Stop and wait for an explicit
-   answer; do not edit `VERSION` or `CHANGELOG.md`, commit, tag, or push yet.
-4. After confirmation, confirm:
-   - the current branch is `main`;
-   - `HEAD` equals `origin/main`;
-   - the worktree is clean;
-   - neither local nor remote tag for the confirmed version exists.
-5. Update `VERSION` to the confirmed version.
-6. Add the newest `CHANGELOG.md` section for the confirmed version, following the existing
-   headings and describing user-visible changes accurately. Do not invent
-   changes or remove prior releases.
-7. Validate the release inputs:
-
-   ```bash
-   ./script/extract_release_notes.sh X.Y.Z /tmp/chameo-X.Y.Z-release-notes.md
-   git diff --check
-   swift test
-   swift build -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency
-   ```
-
-8. Show the version, changelog, validation results, and intended release commit
-   and tag. Obtain confirmation before the externally visible commit, push, and
-   tag operations unless the user's invocation already explicitly authorized
-   all of them after confirming the version.
+1. Run `release.sh inspect`. Read only the first current changelog section and
+   relevant release workflow fragments if its concise output is insufficient.
+2. Inspect the user-visible commits since the latest tag. Suggest patch for
+   compatible fixes/refinements, minor for compatible features, or major for an
+   intentional incompatibility.
+3. Present the current and suggested versions, bump type, rationale, and draft
+   changelog. Stop for explicit version confirmation without editing files.
+4. Run `release.sh preflight X.Y.Z` after confirmation.
+5. Edit only `VERSION` and `CHANGELOG.md`. Preserve prior releases and follow
+   the existing headings without inventing changes.
+6. Run `release.sh validate X.Y.Z`. It keeps successful test/build output terse
+   and prints diagnostic log tails on failure.
+7. Show the prepared version, changelog, validation summary, intended commit,
+   and tag. Stop for publication confirmation. A reply such as `go ahead` to
+   this prepared-release summary authorizes commit, main push, CI wait, tag
+   creation/push, workflow wait, and publication verification.
 
 ## Publish
 
-1. Commit only `VERSION` and `CHANGELOG.md` with:
-
-   ```text
-   chore(release): prepare vX.Y.Z
-   ```
-
-2. Push `main` to `origin`.
-3. Wait for the GitHub Actions `CI` run for that exact commit to succeed. Stop
-   before tagging if it fails or cannot be matched to the commit.
-4. Run `./script/verify_release_version.sh vX.Y.Z`.
-5. Create an annotated tag:
+1. Commit only `VERSION` and `CHANGELOG.md` as
+   `chore(release): prepare vX.Y.Z`, then push `main`.
+2. Capture the full release commit SHA and run:
 
    ```bash
-   git tag -a vX.Y.Z -m "Chameo X.Y.Z"
+   skills/release-chameo/scripts/release.sh wait-run CI FULL_COMMIT_SHA
    ```
 
-6. Confirm the tag targets the release commit, then push only that tag:
+3. After success, run `./script/verify_release_version.sh vX.Y.Z`.
+4. Create `git tag -a vX.Y.Z -m "Chameo X.Y.Z"`, prove its peeled target is
+   the release commit, and push only `vX.Y.Z`.
+5. Run `release.sh wait-run Release vX.Y.Z`. Investigate failures in place;
+   never replace the tag.
 
-   ```bash
-   git push origin vX.Y.Z
-   ```
+## Verify
 
-The tag push triggers `.github/workflows/release.yml`. That workflow builds the
-app, publishes a GitHub prerelease with the archive and Markdown release notes,
-and deploys the signed Sparkle appcast to GitHub Pages.
+Run:
 
-## Verify publication
+```bash
+skills/release-chameo/scripts/release.sh verify-publication X.Y.Z FULL_COMMIT_SHA
+```
 
-Wait for the `Release` workflow for `vX.Y.Z` to succeed, then verify:
-
-- the GitHub release is a prerelease titled `Chameo X.Y.Z`;
-- `Chameo-X.Y.Z-arm64.zip` and `Chameo-X.Y.Z-arm64.md` both exist;
-- `https://robertu7.github.io/Chameo/appcast.xml` contains `X.Y.Z`;
-- the local branch is clean and matches `origin/main`;
-- local and remote `vX.Y.Z` resolve to the release commit.
-
-Report the commit SHA, tag, workflow result, release URL, and appcast result.
-State any verification boundary or failure precisely.
+Report the commit, tag, CI and Release workflow results, release URL, appcast
+result/build, and manual validation boundaries. Automated checks do not prove
+installed-app update/relaunch, Gatekeeper behavior, protected-resource
+permission persistence, or feature-specific device/library behavior.
