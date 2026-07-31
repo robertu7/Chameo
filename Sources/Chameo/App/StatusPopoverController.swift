@@ -10,6 +10,7 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
     private let localizationController: LocalizationController
     private let statusItem: NSStatusItem
     private let popover: NSPopover
+    private var standaloneWindowController: StandaloneChameoWindowController?
     private var localEventMonitor: Any?
     private var globalEventMonitor: Any?
     private var libraryStatusObservation: AnyCancellable?
@@ -30,6 +31,8 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
         self.popover = NSPopover()
 
         super.init()
+
+        statusItem.autosaveName = "ChameoStatusItem"
 
         if let button = statusItem.button {
             button.image = StatusMenuIcon.image(
@@ -56,14 +59,7 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
             width: ChameoLayout.popoverWidth,
             height: ChameoLayout.popoverHeight
         )
-        popover.contentViewController = NSHostingController(
-            rootView: ContentView()
-                .environmentObject(appState)
-                .environmentObject(cameraService)
-                .environmentObject(libraryStore)
-                .environmentObject(localizationController)
-                .environment(\.locale, localizationController.displayLocale)
-        )
+        popover.contentViewController = NSHostingController(rootView: makeContentView())
     }
 
     @objc private func togglePopover(_ sender: AnyObject?) {
@@ -72,31 +68,60 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
         } else {
             switch libraryStore.dailyStatus() {
             case .captured:
-                showLibraryToday()
+                appState.selectedLibraryDay = Calendar.current.startOfDay(for: Date())
+                appState.selectedTab = .library
             default:
-                showCamera()
+                appState.selectedTab = .camera
             }
+            showPopover()
         }
     }
 
     func showCamera() {
         appState.selectedTab = .camera
-        show()
+        showStandaloneWindow()
     }
 
     func showLibraryToday() {
         appState.selectedLibraryDay = Calendar.current.startOfDay(for: Date())
         appState.selectedTab = .library
-        show()
+        showStandaloneWindow()
     }
 
-    func show() {
+    private func showPopover() {
         guard let button = statusItem.button else { return }
+        standaloneWindowController?.close()
         NSApp.activate(ignoringOtherApps: true)
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         popover.contentViewController?.view.window?.makeKey()
         startOutsideClickMonitoring()
         syncCameraLifecycle()
+    }
+
+    private func showStandaloneWindow() {
+        if popover.isShown {
+            close()
+        }
+
+        if standaloneWindowController == nil {
+            standaloneWindowController = StandaloneChameoWindowController(
+                rootView: makeContentView(),
+                onClose: { [weak self] in
+                    self?.cameraService.stop()
+                }
+            )
+        }
+        standaloneWindowController?.present()
+        syncCameraLifecycle()
+    }
+
+    private func makeContentView() -> some View {
+        ContentView()
+            .environmentObject(appState)
+            .environmentObject(cameraService)
+            .environmentObject(libraryStore)
+            .environmentObject(localizationController)
+            .environment(\.locale, localizationController.displayLocale)
     }
 
     func close() {
@@ -239,7 +264,59 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
     }
 }
 
-private enum StatusMenuIcon {
+@MainActor
+private final class StandaloneChameoWindowController: NSWindowController, NSWindowDelegate {
+    private let onClose: () -> Void
+
+    init<Content: View>(
+        rootView: Content,
+        onClose: @escaping () -> Void
+    ) {
+        self.onClose = onClose
+
+        let window = NSWindow(
+            contentRect: NSRect(
+                origin: .zero,
+                size: NSSize(
+                    width: ChameoLayout.popoverWidth,
+                    height: ChameoLayout.popoverHeight
+                )
+            ),
+            styleMask: [.titled, .closable, .miniaturizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Chameo"
+        window.isReleasedWhenClosed = false
+        window.contentViewController = NSHostingController(rootView: rootView)
+        window.setContentSize(
+            NSSize(
+                width: ChameoLayout.popoverWidth,
+                height: ChameoLayout.popoverHeight
+            )
+        )
+        window.center()
+
+        super.init(window: window)
+        window.delegate = self
+    }
+
+    required init?(coder: NSCoder) {
+        nil
+    }
+
+    func present() {
+        NSApp.activate(ignoringOtherApps: true)
+        showWindow(nil)
+        window?.makeKey()
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        onClose()
+    }
+}
+
+enum StatusMenuIcon {
     static func image(named name: String, appearance: NSAppearance) -> NSImage {
         let resourceName = appearance.isDark ? "\(name)-dark" : name
         let resourceURL = Bundle.main.url(

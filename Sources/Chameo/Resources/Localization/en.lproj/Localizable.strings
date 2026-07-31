@@ -24,12 +24,15 @@
 "Camera" = "Camera";
 "Camera access is off" = "Camera access is off";
 "Camera access status is unavailable." = "Camera access status is unavailable.";
+"Can’t see the eye? Hold Command and drag it closer to the right. You can always reopen Chameo from Spotlight or Applications." = "Can’t see the eye? Hold Command and drag it closer to the right. You can always reopen Chameo from Spotlight or Applications.";
 "Cancel" = "Cancel";
 "Captures after a three-second countdown when framing is ready." = "Captures after a three-second countdown when framing is ready.";
 "Capture" = "Capture";
 "Captured" = "Captured";
 "Center your face" = "Center your face";
 "Chameo Timelapse.mp4" = "Chameo Timelapse.mp4";
+"Chameo is ready" = "Chameo is ready";
+"Chameo lives in your menu bar." = "Chameo lives in your menu bar.";
 "Chameo saves new photos to this album and shows them in the Library." = "Chameo saves new photos to this album and shows them in the Library.";
 "Saves new photos here and shows them in Library." = "Saves new photos here and shows them in Library.";
 "Choose a future time." = "Choose a future time.";
@@ -103,6 +106,7 @@
 "Once" = "Once";
 "One person at a time" = "One person at a time";
 "Open Camera Settings" = "Open Camera Settings";
+"Open Chameo" = "Open Chameo";
 "Open Location Settings" = "Open Location Settings";
 "Open in Google Maps" = "Open in Google Maps";
 "Open Notifications Settings" = "Open Notifications Settings";

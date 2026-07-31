@@ -2,6 +2,40 @@ import XCTest
 @testable import Chameo
 
 final class AppPreferencesTests: XCTestCase {
+    func testMenuBarHandoffIsPendingForANewInstallation() throws {
+        let suiteName = "AppPreferencesTests-\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        MenuBarHandoffPreference.prepareForCurrentInstallation(defaults: defaults)
+
+        XCTAssertFalse(defaults.bool(forKey: AppPreferenceKey.hasShownMenuBarHandoff))
+        XCTAssertNotNil(defaults.object(forKey: AppPreferenceKey.hasShownMenuBarHandoff))
+    }
+
+    func testMenuBarHandoffDoesNotInterruptExistingUsers() throws {
+        let suiteName = "AppPreferencesTests-\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        defaults.set(true, forKey: AppPreferenceKey.hasCompletedPermissionOnboarding)
+
+        MenuBarHandoffPreference.prepareForCurrentInstallation(defaults: defaults)
+
+        XCTAssertTrue(defaults.bool(forKey: AppPreferenceKey.hasShownMenuBarHandoff))
+    }
+
+    func testMenuBarHandoffPreparationPreservesAnExplicitPendingValue() throws {
+        let suiteName = "AppPreferencesTests-\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        defaults.set(false, forKey: AppPreferenceKey.hasShownMenuBarHandoff)
+        defaults.set(true, forKey: AppPreferenceKey.hasCompletedPermissionOnboarding)
+
+        MenuBarHandoffPreference.prepareForCurrentInstallation(defaults: defaults)
+
+        XCTAssertFalse(defaults.bool(forKey: AppPreferenceKey.hasShownMenuBarHandoff))
+    }
+
     func testStoredReminderSettingsLoadsTypedValues() throws {
         let suiteName = "AppPreferencesTests-\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))

@@ -24,12 +24,15 @@
 "Camera" = "相機";
 "Camera access is off" = "相機存取權已關閉";
 "Camera access status is unavailable." = "無法取得相機存取狀態。";
+"Can’t see the eye? Hold Command and drag it closer to the right. You can always reopen Chameo from Spotlight or Applications." = "看不到眼睛圖示？按住 Command 鍵並將它拖到更靠右的位置。你也可以隨時從「Spotlight」或「應用程式」重新開啟 Chameo。";
 "Cancel" = "取消";
 "Captures after a three-second countdown when framing is ready." = "構圖就緒後倒數三秒並拍攝。";
 "Capture" = "拍攝";
 "Captured" = "已拍攝";
 "Center your face" = "將臉部置中";
 "Chameo Timelapse.mp4" = "Chameo 縮時影片.mp4";
+"Chameo is ready" = "Chameo 已準備就緒";
+"Chameo lives in your menu bar." = "Chameo 位於選單列中。";
 "Chameo saves new photos to this album and shows them in the Library." = "Chameo 會將新照片儲存到此相簿，並顯示在圖庫中。";
 "Saves new photos here and shows them in Library." = "在這裡儲存新照片，並顯示在圖庫中。";
 "Choose a future time." = "請選擇未來的時間。";
@@ -103,6 +106,7 @@
 "Once" = "一次";
 "One person at a time" = "一次只能一人";
 "Open Camera Settings" = "開啟相機設定";
+"Open Chameo" = "開啟 Chameo";
 "Open Location Settings" = "開啟位置設定";
 "Open in Google Maps" = "在 Google 地圖中開啟";
 "Open Notifications Settings" = "開啟通知設定";

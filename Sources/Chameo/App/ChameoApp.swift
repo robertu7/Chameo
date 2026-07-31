@@ -11,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     private let libraryStore = LibraryStore()
     private var statusPopoverController: StatusPopoverController?
     private var permissionOnboardingWindowController: PermissionOnboardingWindowController?
+    private var menuBarHandoffWindowController: MenuBarHandoffWindowController?
     private var reminderRefreshTask: Task<Void, Never>?
     private var libraryRefreshTask: Task<Void, Never>?
 
@@ -32,7 +33,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             presentPermissionOnboarding()
         case .mainExperience:
             startMainExperience(showCamera: false)
+            presentMenuBarHandoffIfNeeded()
         }
+    }
+
+    func applicationShouldHandleReopen(
+        _ sender: NSApplication,
+        hasVisibleWindows flag: Bool
+    ) -> Bool {
+        if let permissionOnboardingWindowController {
+            permissionOnboardingWindowController.present()
+            return false
+        }
+
+        if let menuBarHandoffWindowController {
+            menuBarHandoffWindowController.present()
+            return false
+        }
+
+        if statusPopoverController == nil {
+            startMainExperience(showCamera: false)
+        }
+        statusPopoverController?.showCamera()
+        return false
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -77,6 +100,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     }
 
     private func configureUserDefaults() {
+        MenuBarHandoffPreference.prepareForCurrentInstallation()
+
         let launchAtLogin = AppDistribution.current.launchAtLoginEnabled
             && LaunchAtLoginService.isEnabled
 
@@ -84,6 +109,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             AppPreferenceKey.albumName: AppDistribution.current.defaultAlbumName,
             AppPreferenceKey.handsFreeCountdown: false,
             AppPreferenceKey.hasCompletedPermissionOnboarding: false,
+            AppPreferenceKey.hasShownMenuBarHandoff: false,
             AppPreferenceKey.showFaceGuide: true,
             AppPreferenceKey.saveLocation: false,
             AppPreferenceKey.launchAtLogin: launchAtLogin,
@@ -156,7 +182,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
     private func finishPermissionOnboarding() {
         permissionOnboardingWindowController = nil
-        startMainExperience(showCamera: true)
+        startMainExperience(showCamera: false)
+        presentMenuBarHandoffIfNeeded()
+    }
+
+    private func presentMenuBarHandoffIfNeeded() {
+        guard !UserDefaults.standard.bool(
+            forKey: AppPreferenceKey.hasShownMenuBarHandoff
+        ) else {
+            return
+        }
+
+        let controller = MenuBarHandoffWindowController(
+            localizationController: localizationController,
+            onOpenChameo: { [weak self] in
+                MenuBarHandoffPreference.markShown()
+                self?.menuBarHandoffWindowController = nil
+                self?.statusPopoverController?.showCamera()
+            },
+            onDismiss: { [weak self] in
+                MenuBarHandoffPreference.markShown()
+                self?.menuBarHandoffWindowController = nil
+            }
+        )
+        menuBarHandoffWindowController = controller
+        controller.present()
     }
 
     private func startMainExperience(showCamera: Bool) {
