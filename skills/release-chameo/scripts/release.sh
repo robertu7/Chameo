@@ -73,6 +73,13 @@ run_logged() {
   return 1
 }
 
+parse_run_row() {
+  local row="$1"
+  IFS='|' read -r run_id status conclusion head_sha head_branch url <<<"$row"
+  [[ -n "$run_id" && -n "$status" && -n "$conclusion" && -n "$head_sha" && -n "$head_branch" && -n "$url" ]] ||
+    die "malformed GitHub Actions run data"
+}
+
 validate() {
   local version="$1"
   require_version "$version"
@@ -106,6 +113,7 @@ wait_run() {
   local target="$2"
   local max_attempts="${3:-60}"
   local attempt=1 state="" previous_state="" row=""
+  local run_id="" status="" conclusion="" head_sha="" head_branch="" url=""
 
   require_command gh
   case "$workflow" in
@@ -124,18 +132,17 @@ wait_run() {
     if [[ "$workflow" == "CI" ]]; then
       row="$(gh run list --workflow "$workflow" --commit "$target" --limit 1 \
         --json databaseId,status,conclusion,headSha,headBranch,url \
-        --jq '.[0] | select(. != null) | [.databaseId,.status,(.conclusion // ""),.headSha,.headBranch,.url] | @tsv')"
+        --jq '.[0] | select(. != null) | [.databaseId,.status,(.conclusion // "pending"),.headSha,.headBranch,.url] | map(tostring) | join("|")')"
     else
       row="$(gh run list --workflow "$workflow" --branch "$target" --limit 1 \
         --json databaseId,status,conclusion,headSha,headBranch,url \
-        --jq '.[0] | select(. != null) | [.databaseId,.status,(.conclusion // ""),.headSha,.headBranch,.url] | @tsv')"
+        --jq '.[0] | select(. != null) | [.databaseId,.status,(.conclusion // "pending"),.headSha,.headBranch,.url] | map(tostring) | join("|")')"
     fi
 
     if [[ -z "$row" ]]; then
       state="not_found"
     else
-      local run_id status conclusion head_sha head_branch url
-      IFS=$'\t' read -r run_id status conclusion head_sha head_branch url <<<"$row"
+      parse_run_row "$row"
       [[ "$workflow" != "CI" || "$head_sha" == "$target" ]] || die "CI run SHA mismatch"
       [[ "$workflow" != "Release" || "$head_branch" == "$target" ]] || die "Release run tag mismatch"
       state="${status}:${conclusion:-pending}"
@@ -222,6 +229,10 @@ usage() {
 }
 
 command_name="${1:-}"
+if [[ "${CHAMEO_RELEASE_SOURCE_ONLY:-0}" == "1" ]]; then
+  return 0 2>/dev/null || exit 0
+fi
+
 case "$command_name" in
   inspect)
     [[ $# -eq 1 ]] || die "inspect takes no arguments"
