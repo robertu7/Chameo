@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.3.11
+
+### What’s new
+
+- None.
+
+### Fixes
+
+- None.
+
+### Known testing limitations
+
+- Stage 1 builds are ad-hoc signed and are not notarized by Apple.
+- macOS may request Camera, Photos, Location, or Notification permission again
+  after an update.
+- Installation, relaunch, Gatekeeper behavior, and permission persistence are
+  covered by tester feedback rather than automated end-to-end UI validation.
+
 ## 0.3.10
 
 ### What’s new
