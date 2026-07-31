@@ -8,8 +8,8 @@ Chameo is a SwiftPM macOS app using a small AppKit shell and SwiftUI feature vie
 - `StatusPopoverController.swift` creates the `NSStatusItem` and hosts both the SwiftUI popover and the standalone recovery window. Direct menu-bar clicks use the popover; programmatic entry points such as notification clicks and app reopen use the window so they remain reachable when the menu bar is full.
   It also maps the shared daily capture status onto the menu-bar symbol and
   routes status-item clicks to Camera or today's Library entry.
-- `ContentView.swift` coordinates the Camera, Library, Settings, bottom status area, and camera lifecycle.
-- `SettingsView.swift` composes independent General and Reminder settings tabs; each tab owns only its feature state and operations.
+- `ContentView.swift` coordinates the Camera, Library, in-popover Settings destination, bottom status area, and camera lifecycle.
+- `SettingsView.swift` hosts the compact grouped settings form; each settings section owns only its feature state and operations.
 
 The app uses `NSStatusItem` plus `NSPopover` instead of SwiftUI `MenuBarExtra` because it needs AppKit-controlled presentation. Direct status-item clicks open the popover, while notification taps and Finder or Spotlight reopen events open a standalone window that does not depend on the status item being visible.
 
@@ -124,7 +124,8 @@ Camera hardware starts only when the Camera tab is visible. It stops when the us
   - Standard Save panel and progress/error state for timelapse export.
 
 - `SettingsView`
-  - Grouped settings sections for Album, Camera, Location, Startup, and Reminder.
+  - Opens inside the existing Chameo popover with a contextual back action.
+  - Grouped settings sections for Capture, Reminders, Photos, and App.
   - Saves notification changes only when reminder fields changed.
 
 ## Bundle and Signing

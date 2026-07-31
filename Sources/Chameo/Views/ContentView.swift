@@ -16,6 +16,40 @@ struct ContentView: View {
     @State private var statusMessage: LocalizedMessage?
 
     var body: some View {
+        Group {
+            switch appState.destination {
+            case .main:
+                mainContent
+            case .settings:
+                settingsContent
+            }
+        }
+        .frame(
+            width: ChameoLayout.popoverWidth,
+            height: ChameoLayout.popoverHeight
+        )
+        .environment(\.locale, localizationController.displayLocale)
+        .task {
+            syncCameraLifecycle()
+            await reloadLibraryIfAuthorized(albumName: albumName)
+        }
+        .onDisappear {
+            cameraService.stop()
+        }
+        .onChange(of: appState.destination) { _, _ in
+            syncCameraLifecycle()
+        }
+        .onChange(of: appState.selectedTab) { _, _ in
+            syncCameraLifecycle()
+        }
+        .onChange(of: albumName) { _, newValue in
+            Task {
+                await reloadLibraryIfAuthorized(albumName: newValue)
+            }
+        }
+    }
+
+    private var mainContent: some View {
         VStack(spacing: 0) {
             TabPicker(selection: $appState.selectedTab)
                 .frame(height: 24)
@@ -46,7 +80,9 @@ struct ContentView: View {
             Divider()
 
             HStack {
-                SettingsLink {
+                Button {
+                    appState.destination = .settings
+                } label: {
                     Label(L10n.string("Settings"), systemImage: "gearshape")
                 }
                 .labelStyle(.iconOnly)
@@ -83,27 +119,39 @@ struct ContentView: View {
             }
             .padding(ChameoLayout.sectionSpacing)
         }
-        .frame(width: ChameoLayout.popoverWidth)
-        .environment(\.locale, localizationController.displayLocale)
-        .task {
-            syncCameraLifecycle()
-            await reloadLibraryIfAuthorized(albumName: albumName)
-        }
-        .onDisappear {
-            cameraService.stop()
-        }
-        .onChange(of: appState.selectedTab) { _, _ in
-            syncCameraLifecycle()
-        }
-        .onChange(of: albumName) { _, newValue in
-            Task {
-                await reloadLibraryIfAuthorized(albumName: newValue)
+    }
+
+    private var settingsContent: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: ChameoLayout.compactSpacing) {
+                Button {
+                    appState.destination = .main
+                } label: {
+                    Label(L10n.string("Back"), systemImage: "chevron.left")
+                }
+                .labelStyle(.iconOnly)
+                .frame(
+                    width: ChameoLayout.compactControlSize,
+                    height: ChameoLayout.compactControlSize
+                )
+                .help(L10n.string("Back"))
+
+                Text(L10n.string("Settings"))
+                    .font(.headline)
+
+                Spacer()
             }
+            .padding(.horizontal, ChameoLayout.outerInset)
+            .frame(height: 52)
+
+            Divider()
+
+            SettingsView(layout: .embedded)
         }
     }
 
     private func syncCameraLifecycle() {
-        if appState.selectedTab == .camera {
+        if appState.destination == .main, appState.selectedTab == .camera {
             cameraService.start()
         } else {
             cameraService.stop()

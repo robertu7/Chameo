@@ -2,8 +2,14 @@ import Foundation
 
 @MainActor
 final class AppState: ObservableObject {
+    @Published var destination = ChameoDestination.main
     @Published var selectedTab = ChameoTab.camera
     @Published var selectedLibraryDay: Date?
+}
+
+enum ChameoDestination {
+    case main
+    case settings
 }
 
 enum ChameoTab: String, CaseIterable, Identifiable {

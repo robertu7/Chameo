@@ -9,6 +9,7 @@
 "Allow Camera access to take a Chameo." = "請允許相機存取權以拍攝 Chameo。";
 "Allow Camera and Photos access in the Chameo welcome window before opening Settings." = "請先在 Chameo 歡迎視窗中允許相機和照片存取權，再開啟設定。";
 "Allow Notifications in System Settings to schedule reminders." = "請在「系統設定」中允許通知以排程提醒。";
+"Back" = "返回";
 "Allow Photos access to save and manage Chameos." = "請允許照片存取權以儲存和管理 Chameo。";
 "Allow Photos access to save and view Chameos." = "請允許照片存取權以儲存和檢視 Chameo。";
 "Allow Photos access to save this Chameo." = "請允許照片存取權以儲存此 Chameo。";

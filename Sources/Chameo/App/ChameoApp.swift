@@ -217,7 +217,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
                 appState: appState,
                 cameraService: cameraService,
                 libraryStore: libraryStore,
-                localizationController: localizationController
+                localizationController: localizationController,
+                updateController: updateController
             )
         }
 

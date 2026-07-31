@@ -8,6 +8,7 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
     private let cameraService: CameraService
     private let libraryStore: LibraryStore
     private let localizationController: LocalizationController
+    private let updateController: UpdateController
     private let statusItem: NSStatusItem
     private let popover: NSPopover
     private var standaloneWindowController: StandaloneChameoWindowController?
@@ -21,12 +22,14 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
         appState: AppState,
         cameraService: CameraService,
         libraryStore: LibraryStore,
-        localizationController: LocalizationController
+        localizationController: LocalizationController,
+        updateController: UpdateController
     ) {
         self.appState = appState
         self.cameraService = cameraService
         self.libraryStore = libraryStore
         self.localizationController = localizationController
+        self.updateController = updateController
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         self.popover = NSPopover()
 
@@ -66,6 +69,7 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
         if popover.isShown {
             close()
         } else {
+            appState.destination = .main
             switch libraryStore.dailyStatus() {
             case .captured:
                 appState.selectedLibraryDay = Calendar.current.startOfDay(for: Date())
@@ -78,11 +82,13 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
     }
 
     func showCamera() {
+        appState.destination = .main
         appState.selectedTab = .camera
         showStandaloneWindow()
     }
 
     func showLibraryToday() {
+        appState.destination = .main
         appState.selectedLibraryDay = Calendar.current.startOfDay(for: Date())
         appState.selectedTab = .library
         showStandaloneWindow()
@@ -121,6 +127,7 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
             .environmentObject(cameraService)
             .environmentObject(libraryStore)
             .environmentObject(localizationController)
+            .environmentObject(updateController)
             .environment(\.locale, localizationController.displayLocale)
     }
 
