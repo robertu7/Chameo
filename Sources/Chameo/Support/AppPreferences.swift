@@ -6,7 +6,6 @@ enum AppPreferenceKey {
     static let autoAlignPhotos = "autoAlignPhotos"
     static let handsFreeCountdown = "handsFreeCountdown"
     static let hasCompletedPermissionOnboarding = "hasCompletedPermissionOnboarding"
-    static let hasShownMenuBarHandoff = "hasShownMenuBarHandoff"
     static let lastSelfieDate = "lastSelfieDate"
     static let launchAtLogin = "launchAtLogin"
     static let language = "language"
@@ -17,25 +16,6 @@ enum AppPreferenceKey {
     static let reminderWeekday = "reminderWeekday"
     static let saveLocation = "saveLocation"
     static let showFaceGuide = "showGrid"
-}
-
-enum MenuBarHandoffPreference {
-    static func prepareForCurrentInstallation(
-        defaults: UserDefaults = .standard
-    ) {
-        guard defaults.object(forKey: AppPreferenceKey.hasShownMenuBarHandoff) == nil else {
-            return
-        }
-
-        defaults.set(
-            defaults.bool(forKey: AppPreferenceKey.hasCompletedPermissionOnboarding),
-            forKey: AppPreferenceKey.hasShownMenuBarHandoff
-        )
-    }
-
-    static func markShown(defaults: UserDefaults = .standard) {
-        defaults.set(true, forKey: AppPreferenceKey.hasShownMenuBarHandoff)
-    }
 }
 
 struct StoredReminderSettings {

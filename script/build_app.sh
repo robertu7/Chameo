@@ -129,6 +129,7 @@ chmod +x "$APP_BINARY"
 cp -R "$BUILD_SPARKLE_FRAMEWORK" "$SPARKLE_FRAMEWORK"
 cp "$APP_ICON" "$APP_RESOURCES/AppIcon.icns"
 cp -R "$ROOT_DIR/Sources/Chameo/Resources/MenuBarIcons" "$APP_RESOURCES/MenuBarIcons"
+cp -R "$ROOT_DIR/Sources/Chameo/Resources/Onboarding" "$APP_RESOURCES/Onboarding"
 for localization in en zh-Hans zh-Hant; do
   cp -R \
     "$ROOT_DIR/Sources/Chameo/Resources/Localization/$localization.lproj" \

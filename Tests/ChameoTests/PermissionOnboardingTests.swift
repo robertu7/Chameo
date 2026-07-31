@@ -5,6 +5,28 @@ import Photos
 
 @MainActor
 final class PermissionOnboardingTests: XCTestCase {
+    func testEducationalStepsLeadToPermissionsAndStopAtTheirBounds() {
+        XCTAssertNil(PermissionOnboardingStep.camera.previous)
+        XCTAssertEqual(
+            PermissionOnboardingStep.camera.next,
+            .library
+        )
+        XCTAssertEqual(
+            PermissionOnboardingStep.library.previous,
+            .camera
+        )
+        XCTAssertEqual(
+            PermissionOnboardingStep.library.next,
+            .permissions
+        )
+        XCTAssertEqual(
+            PermissionOnboardingStep.permissions.previous,
+            .library
+        )
+        XCTAssertNil(PermissionOnboardingStep.permissions.next)
+        XCTAssertEqual(PermissionOnboardingStep.allCases.count, 3)
+    }
+
     func testCanContinueOnlyWhenCameraAndPhotosAreAuthorized() {
         let statuses: [RequiredPermissionStatus] = [
             .notDetermined,
@@ -177,7 +199,7 @@ final class PermissionOnboardingTests: XCTestCase {
 
         XCTAssertEqual(
             controller.window?.frame.size,
-            NSSize(width: 420, height: 420)
+            NSSize(width: 520, height: 560)
         )
     }
 

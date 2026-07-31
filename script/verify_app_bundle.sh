@@ -21,6 +21,17 @@ if [[ ! -d "$SPARKLE_FRAMEWORK" ]]; then
   exit 1
 fi
 
+for onboarding_asset in \
+  "$APP_BUNDLE/Contents/Resources/Onboarding/onboarding-camera-light.png" \
+  "$APP_BUNDLE/Contents/Resources/Onboarding/onboarding-camera-dark.png" \
+  "$APP_BUNDLE/Contents/Resources/Onboarding/onboarding-feature-camera.png" \
+  "$APP_BUNDLE/Contents/Resources/Onboarding/onboarding-feature-library.png"; do
+  if [[ ! -f "$onboarding_asset" ]]; then
+    echo "missing onboarding asset: $onboarding_asset" >&2
+    exit 1
+  fi
+done
+
 for nested_code in \
   "$SPARKLE_FRAMEWORK/Versions/B/XPCServices/Installer.xpc" \
   "$SPARKLE_FRAMEWORK/Versions/B/XPCServices/Downloader.xpc" \

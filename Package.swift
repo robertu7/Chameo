@@ -26,6 +26,7 @@ let package = Package(
             path: "Sources/Chameo",
             resources: [
                 .copy("Resources/MenuBarIcons"),
+                .copy("Resources/Onboarding"),
                 .process("Resources/Localization")
             ],
             linkerSettings: [

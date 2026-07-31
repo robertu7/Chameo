@@ -18,6 +18,10 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
     private var appearanceObservation: NSKeyValueObservation?
     private var localizationObservation: AnyCancellable?
 
+    var isPopoverPresented: Bool {
+        popover.isShown
+    }
+
     init(
         appState: AppState,
         cameraService: CameraService,
@@ -85,6 +89,12 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
         appState.destination = .main
         appState.selectedTab = .camera
         showStandaloneWindow()
+    }
+
+    func showCameraPopover() {
+        appState.destination = .main
+        appState.selectedTab = .camera
+        showPopover()
     }
 
     func showLibraryToday() {
