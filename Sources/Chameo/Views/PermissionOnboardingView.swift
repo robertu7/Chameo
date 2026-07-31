@@ -93,16 +93,7 @@ struct PermissionOnboardingView: View {
     }
 
     private var permissions: some View {
-        VStack(spacing: 16) {
-            Image(nsImage: StatusMenuIcon.image(
-                named: "eye",
-                appearance: NSApp.effectiveAppearance
-            ))
-            .resizable()
-            .scaledToFit()
-            .frame(width: 40, height: 40)
-            .accessibilityHidden(true)
-
+        VStack(spacing: 20) {
             VStack(spacing: 7) {
                 Text(L10n.string("Always close at hand"))
                     .font(.title2.bold())
@@ -114,33 +105,40 @@ struct PermissionOnboardingView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            VStack(spacing: 8) {
-                Text(L10n.string("Allow Camera and Photos"))
-                    .font(.headline)
+            Spacer(minLength: 24)
 
-                VStack(spacing: 10) {
-                    permissionRow(
-                        kind: .camera,
-                        title: L10n.string("Camera"),
-                        explanation: L10n.string("Take your daily Chameo."),
-                        systemImage: "camera.fill",
-                        status: model.cameraStatus,
-                        recoveryDestination: .camera
-                    )
+            VStack(spacing: 0) {
+                permissionRow(
+                    kind: .camera,
+                    title: L10n.string("Camera"),
+                    explanation: L10n.string("Take your daily Chameo."),
+                    systemImage: "camera.fill",
+                    status: model.cameraStatus,
+                    recoveryDestination: .camera
+                )
 
-                    Divider()
+                Divider()
+                    .padding(.leading, 58)
 
-                    permissionRow(
-                        kind: .photos,
-                        title: L10n.string("Photos"),
-                        explanation: L10n.string("Save Chameos in a dedicated album."),
-                        systemImage: "photo.on.rectangle.angled",
-                        status: model.photosStatus,
-                        recoveryDestination: .photos
-                    )
-                }
-                .padding(.horizontal, 8)
+                permissionRow(
+                    kind: .photos,
+                    title: L10n.string("Photos"),
+                    explanation: L10n.string("Save Chameos in a dedicated album."),
+                    systemImage: "photo.on.rectangle.angled",
+                    status: model.photosStatus,
+                    recoveryDestination: .photos
+                )
             }
+            .background(
+                .quaternary.opacity(0.55),
+                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(.separator.opacity(0.45), lineWidth: 1)
+            }
+
+            Spacer(minLength: 24)
 
             VStack(spacing: 4) {
                 Text(permissionFooterText)
@@ -151,8 +149,11 @@ struct PermissionOnboardingView: View {
             .font(.caption)
             .foregroundStyle(.secondary)
             .multilineTextAlignment(.center)
+            .padding(.bottom, 18)
         }
-        .padding(.horizontal, 12)
+        .frame(maxWidth: 380)
+        .padding(.top, 30)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     private func onboardingImage(named name: String) -> NSImage {
@@ -228,17 +229,21 @@ struct PermissionOnboardingView: View {
     ) -> some View {
         HStack(spacing: 12) {
             Image(systemName: systemImage)
-                .font(.title3)
-                .foregroundStyle(.tint)
-                .frame(width: 26)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.accentColor)
+                .frame(width: 34, height: 34)
+                .background(
+                    Color.accentColor.opacity(0.12),
+                    in: RoundedRectangle(cornerRadius: 8, style: .continuous)
+                )
                 .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.headline)
+                    .font(.body.weight(.semibold))
 
                 Text(explanation)
-                    .font(.callout)
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
 
@@ -250,7 +255,8 @@ struct PermissionOnboardingView: View {
                 recoveryDestination: recoveryDestination
             )
         }
-        .padding(.vertical, 8)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
         .accessibilityElement(children: .contain)
     }
 
@@ -274,6 +280,8 @@ struct PermissionOnboardingView: View {
                         onPermissionRequestFinished()
                     }
                 }
+                .buttonStyle(.bordered)
+                .controlSize(.regular)
                 .frame(minWidth: 84)
                 .disabled(model.permissionBeingRequested != nil)
 
@@ -287,6 +295,8 @@ struct PermissionOnboardingView: View {
                 Button(L10n.string("Open System Settings")) {
                     PermissionRecoveryService.open(recoveryDestination)
                 }
+                .buttonStyle(.bordered)
+                .controlSize(.regular)
                 .frame(minWidth: 84)
 
             case .restricted:
