@@ -20,7 +20,7 @@ head_branch=""
 url=""
 
 active_sha="8e2c4dbcfbb7fb091a9965b33fde71db0e0690f8"
-parse_run_row "30620565008|in_progress|pending|$active_sha|main|https://github.com/robertu7/Chameo/actions/runs/30620565008"
+parse_run_row "30620565008|in_progress||$active_sha|main|https://github.com/robertu7/Chameo/actions/runs/30620565008"
 assert_equal "30620565008" "$run_id" "active run id"
 assert_equal "in_progress" "$status" "active status"
 assert_equal "pending" "$conclusion" "active conclusion"

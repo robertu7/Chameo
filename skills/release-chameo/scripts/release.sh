@@ -76,6 +76,7 @@ run_logged() {
 parse_run_row() {
   local row="$1"
   IFS='|' read -r run_id status conclusion head_sha head_branch url <<<"$row"
+  [[ -n "$conclusion" ]] || conclusion="pending"
   [[ -n "$run_id" && -n "$status" && -n "$conclusion" && -n "$head_sha" && -n "$head_branch" && -n "$url" ]] ||
     die "malformed GitHub Actions run data"
 }
