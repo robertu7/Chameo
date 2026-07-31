@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.3.9
+
+### What’s new
+
+- Redesigned the permission onboarding experience with clearer setup guidance
+  and refreshed camera and library previews.
+- Added smoother menu bar handoff and window recovery, and made Settings
+  available directly from the Chameo popover.
+
+### Fixes
+
+- Kept the permission onboarding window visible while setup is in progress.
+
+### Known testing limitations
+
+- Stage 1 builds are ad-hoc signed and are not notarized by Apple.
+- macOS may request Camera, Photos, Location, or Notification permission again
+  after an update.
+- Installation, relaunch, Gatekeeper behavior, and permission persistence are
+  covered by tester feedback rather than automated end-to-end UI validation.
+
 ## 0.3.8
 
 ### What’s new
