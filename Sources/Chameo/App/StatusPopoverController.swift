@@ -323,9 +323,15 @@ private final class StandaloneChameoWindowController: NSWindowController, NSWind
     }
 
     func present() {
+        guard let window else {
+            return
+        }
+
+        NSApp.unhide(nil)
         NSApp.activate(ignoringOtherApps: true)
         showWindow(nil)
-        window?.makeKey()
+        window.makeKeyAndOrderFront(nil)
+        window.orderFrontRegardless()
     }
 
     func windowWillClose(_ notification: Notification) {

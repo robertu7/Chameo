@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     private let appState = AppState()
     private let cameraService = CameraService()
     private let libraryStore = LibraryStore()
+    private let notificationOpenRequest = DeferredOpenRequest()
     private var statusPopoverController: StatusPopoverController?
     private var permissionOnboardingWindowController: PermissionOnboardingWindowController?
     private var reminderRefreshTask: Task<Void, Never>?
@@ -91,7 +92,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         }
 
         await MainActor.run {
-            statusPopoverController?.showCamera()
+            notificationOpenRequest.performOrDefer()
         }
     }
 
@@ -193,12 +194,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
                 localizationController: localizationController,
                 updateController: updateController
             )
+            notificationOpenRequest.installHandler { [weak self] in
+                self?.openCameraFromNotification()
+            }
         }
 
         refreshAppState()
 
         if showCamera {
             statusPopoverController?.showCameraPopover()
+        }
+    }
+
+    private func openCameraFromNotification() {
+        Task { @MainActor [weak self] in
+            await Task.yield()
+            self?.statusPopoverController?.showCamera()
         }
     }
 
