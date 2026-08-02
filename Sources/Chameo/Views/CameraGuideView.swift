@@ -47,17 +47,17 @@ struct CameraGuideView: View {
                         }
                         .padding(.bottom, ChameoLayout.sectionSpacing)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                        .transition(.opacity)
+                        .transition(
+                            reduceMotion
+                                ? .opacity
+                                : .opacity.animation(.easeOut(duration: 0.15))
+                        )
                 }
             }
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
         .allowsHitTesting(false)
-        .animation(
-            reduceMotion ? nil : .easeInOut(duration: 0.2),
-            value: guidanceState
-        )
     }
 
     private var guideColor: Color {

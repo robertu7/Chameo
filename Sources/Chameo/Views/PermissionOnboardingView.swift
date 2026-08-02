@@ -82,10 +82,7 @@ struct PermissionOnboardingView: View {
                 .scaledToFit()
                 .frame(maxWidth: 300, maxHeight: 350)
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(.separator.opacity(0.6), lineWidth: 1)
-                }
+                .chameoImageOutline(cornerRadius: 10)
                 .shadow(color: .black.opacity(0.12), radius: 12, y: 5)
                 .accessibilityLabel(accessibilityLabel)
         }

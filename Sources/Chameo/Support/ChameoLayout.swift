@@ -1,4 +1,5 @@
 import CoreGraphics
+import SwiftUI
 
 enum ChameoLayout {
     static let popoverWidth: CGFloat = 448
@@ -12,6 +13,33 @@ enum ChameoLayout {
     static let sectionSpacing: CGFloat = 12
     static let compactSpacing: CGFloat = 6
     static let compactControlSize: CGFloat = 28
+    static let timelapseButtonWidth: CGFloat = 120
 
     static let cornerRadius: CGFloat = 8
+}
+
+struct ChameoImageOutlineModifier: ViewModifier {
+    let cornerRadius: CGFloat
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .strokeBorder(outlineColor, lineWidth: 1)
+            }
+    }
+
+    private var outlineColor: Color {
+        colorScheme == .dark
+            ? Color.white.opacity(0.1)
+            : Color.black.opacity(0.1)
+    }
+}
+
+extension View {
+    func chameoImageOutline(cornerRadius: CGFloat) -> some View {
+        modifier(ChameoImageOutlineModifier(cornerRadius: cornerRadius))
+    }
 }

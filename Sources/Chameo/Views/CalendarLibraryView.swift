@@ -167,17 +167,25 @@ struct CalendarLibraryView: View {
             .buttonStyle(.bordered)
 
             Button(action: onExportTimelapse) {
-                if isExportingTimelapse {
-                    ProgressView()
-                        .controlSize(.small)
-                        .accessibilityLabel(L10n.string("Creating timelapse"))
-                } else {
+                HStack(spacing: ChameoLayout.compactSpacing) {
+                    if isExportingTimelapse {
+                        ProgressView()
+                            .controlSize(.small)
+                            .accessibilityHidden(true)
+                    }
+
                     Label(L10n.string("Timelapse"), systemImage: "film")
                 }
             }
             .buttonStyle(.bordered)
+            .frame(width: ChameoLayout.timelapseButtonWidth)
             .disabled(isExportingTimelapse || assets.isEmpty)
             .help(L10n.string("Create Timelapse"))
+            .accessibilityLabel(
+                isExportingTimelapse
+                    ? L10n.string("Creating timelapse")
+                    : L10n.string("Timelapse")
+            )
         }
     }
 
@@ -573,6 +581,7 @@ private struct CalendarAssetImage: View {
         .frame(width: size, height: size)
         .background(Color.secondary.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .chameoImageOutline(cornerRadius: 8)
         .task(id: asset.id) {
             thumbnail = await PhotoLibraryService.thumbnail(
                 for: asset.asset,

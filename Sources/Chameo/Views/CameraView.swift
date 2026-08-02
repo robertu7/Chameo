@@ -566,30 +566,29 @@ private struct CapturedPreviewView: View {
 
     var body: some View {
         VStack(spacing: 10) {
-            if let image = preview.image {
-                Image(nsImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 392, height: imageHeight)
-                    .background(.black)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    .overlay(alignment: .bottom) {
-                        qualitySuggestionBanner
-                    }
-            } else {
-                Rectangle()
-                    .fill(.quaternary)
-                    .overlay {
-                        Image(systemName: "photo")
-                            .font(.largeTitle)
-                            .foregroundStyle(.secondary)
-                    }
-                    .frame(width: 392, height: imageHeight)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    .overlay(alignment: .bottom) {
-                        qualitySuggestionBanner
-                    }
+            ZStack(alignment: .bottom) {
+                if let image = preview.image {
+                    Image(nsImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 392, height: imageHeight)
+                        .background(.black)
+                } else {
+                    Rectangle()
+                        .fill(.quaternary)
+                        .overlay {
+                            Image(systemName: "photo")
+                                .font(.largeTitle)
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(width: 392, height: imageHeight)
+                }
+
+                qualitySuggestionBanner
             }
+            .frame(width: 392, height: imageHeight)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .chameoImageOutline(cornerRadius: 8)
 
             HStack {
                 actionButtons
