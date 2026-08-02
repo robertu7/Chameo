@@ -497,13 +497,9 @@ struct CameraView: View {
     }
 
     private func announceHandsFreeCountdown(_ count: Int) {
-        NSAccessibility.post(
-            element: NSApp as Any,
-            notification: .announcementRequested,
-            userInfo: [
-                .announcement: L10n.format("Photo in %lld seconds", Int64(count)),
-                .priority: NSAccessibilityPriorityLevel.high.rawValue,
-            ]
+        AccessibilityAnnouncement.post(
+            L10n.format("Photo in %lld seconds", Int64(count)),
+            priority: .high
         )
     }
 }

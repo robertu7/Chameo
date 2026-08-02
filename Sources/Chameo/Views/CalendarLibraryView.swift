@@ -272,6 +272,7 @@ private struct CalendarDayCell: View {
         .help(status.accessibilityDescription)
         .accessibilityLabel(DateFormatters.completeDate.string(from: date))
         .accessibilityValue(status.accessibilityDescription)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     private var backgroundColor: Color {
@@ -428,7 +429,7 @@ private struct CalendarDayPreview: View {
             }
             .buttonStyle(.plain)
             .help(L10n.string("Open in Google Maps"))
-            .accessibilityLabel(L10n.string("Open in Google Maps"))
+            .accessibilityLabel(L10n.format("Open %@ in Google Maps", locationText))
         } else {
             content
         }
@@ -596,6 +597,8 @@ private struct CalendarAssetThumbnail: View {
                 }
         }
         .buttonStyle(.plain)
+        .frame(minWidth: 24, minHeight: 24)
+        .contentShape(Rectangle())
         .accessibilityLabel(
             asset.createdAt.map(DateFormatters.libraryDate.string(from:)) ?? "Chameo")
     }

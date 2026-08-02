@@ -42,6 +42,13 @@ struct ContentView: View {
         .onChange(of: appState.selectedTab) { _, _ in
             syncCameraLifecycle()
         }
+        .onChange(of: statusMessage?.text) { _, newValue in
+            guard let newValue else {
+                return
+            }
+
+            AccessibilityAnnouncement.post(newValue)
+        }
         .onChange(of: albumName) { _, newValue in
             Task {
                 await reloadLibraryIfAuthorized(albumName: newValue)
@@ -98,9 +105,14 @@ struct ContentView: View {
                     Text(statusMessage.text)
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.center)
+                        .truncationMode(.tail)
                         .frame(maxWidth: 260)
+                        .help(statusMessage.text)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(statusMessage.text)
+                        .accessibilityAddTraits(.updatesFrequently)
                 }
 
                 Spacer()

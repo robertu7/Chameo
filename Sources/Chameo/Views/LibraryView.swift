@@ -62,6 +62,20 @@ struct LibraryView: View {
         .task {
             await libraryStore.reload(albumName: albumName)
         }
+        .onChange(of: libraryStore.errorMessage?.text) { _, newValue in
+            guard let newValue else {
+                return
+            }
+
+            AccessibilityAnnouncement.post(newValue, priority: .high)
+        }
+        .onChange(of: timelapseErrorMessage?.text) { _, newValue in
+            guard let newValue else {
+                return
+            }
+
+            AccessibilityAnnouncement.post(newValue, priority: .high)
+        }
     }
 
     private func delete(_ asset: ChameoAsset) async {
@@ -125,6 +139,7 @@ struct PermissionStatusInline: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(2)
+                .accessibilityAddTraits(.updatesFrequently)
 
             Spacer()
 

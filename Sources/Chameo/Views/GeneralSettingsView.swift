@@ -81,6 +81,8 @@ struct GeneralSettingsView: View {
                     )
                 }
                 .disabled(albumChoices.isEmpty || isLoadingPhotosAlbums)
+                .accessibilityLabel(L10n.string("Album"))
+                .accessibilityValue(albumName)
                 .accessibilityHint(
                     L10n.string(
                         "Saves new photos here and shows them in Library."
@@ -200,6 +202,13 @@ struct GeneralSettingsView: View {
                 await updateLaunchAtLogin(newValue)
             }
         }
+        .onChange(of: errorMessage?.text) { _, newValue in
+            guard let newValue else {
+                return
+            }
+
+            AccessibilityAnnouncement.post(newValue, priority: .high)
+        }
     }
 
     private var languageBinding: Binding<AppLanguage> {
@@ -246,6 +255,9 @@ struct GeneralSettingsView: View {
         VStack(alignment: .leading, spacing: 14) {
             Text(L10n.string("New Photos Album"))
                 .font(.headline)
+
+            Text(L10n.string("Album name"))
+                .font(.subheadline.weight(.semibold))
 
             TextField(L10n.string("Album name"), text: $newAlbumName)
                 .textFieldStyle(.roundedBorder)
@@ -302,6 +314,7 @@ struct GeneralSettingsView: View {
         Text(message)
             .font(.caption)
             .foregroundStyle(.red)
+            .accessibilityAddTraits(.updatesFrequently)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal)
             .padding(.bottom, 8)
@@ -470,6 +483,7 @@ private struct SettingsToggle: View {
         Toggle(isOn: $isOn) {
             SettingsLabel(title: title, description: description)
         }
+        .accessibilityLabel(title)
         .accessibilityHint(description)
     }
 }

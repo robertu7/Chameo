@@ -69,6 +69,8 @@ struct ReminderSettingsView: View {
                     }
                 }
                 .disabled(isUpdatingReminder)
+                .accessibilityLabel(L10n.string("Time"))
+                .accessibilityValue(reminderPreviewText)
                 .accessibilityHint(reminderPreviewText)
             }
 
@@ -83,6 +85,7 @@ struct ReminderSettingsView: View {
                 Text(errorMessage.text)
                     .font(.caption)
                     .foregroundStyle(.red)
+                    .accessibilityAddTraits(.updatesFrequently)
             }
         } header: {
             Text(L10n.string("Reminders"))
@@ -119,6 +122,13 @@ struct ReminderSettingsView: View {
         }
         .onChange(of: reminderWeekday) {
             scheduleReminderUpdate()
+        }
+        .onChange(of: errorMessage?.text) { _, newValue in
+            guard let newValue else {
+                return
+            }
+
+            AccessibilityAnnouncement.post(newValue, priority: .high)
         }
     }
 
