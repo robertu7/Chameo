@@ -291,6 +291,14 @@ struct PermissionOnboardingView: View {
                     .foregroundStyle(.green)
                     .frame(minWidth: 84)
 
+            case .limited:
+                Button(L10n.string("Open System Settings")) {
+                    PermissionRecoveryService.open(recoveryDestination)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.regular)
+                .frame(minWidth: 84)
+
             case .denied:
                 Button(L10n.string("Open System Settings")) {
                     PermissionRecoveryService.open(recoveryDestination)

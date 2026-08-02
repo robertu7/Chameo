@@ -1,0 +1,3 @@
+# Recover one pending Chameo
+
+The mobile app persists at most one pending Chameo so iOS termination cannot silently discard a photo already presented for review. The file remains only in the protected local app container, retains its original capture time and any optional location obtained at capture time, and is excluded from device backup. Library and Settings remain available, but Camera restores Preview and cannot take another photo until the person explicitly Saves or Retakes. Save never substitutes a newer location and targets the album selected at Save time; either decision deletes the pending file, and it never enters Photos automatically.

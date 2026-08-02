@@ -1,0 +1,3 @@
+# Aggregate duplicate Chameo albums
+
+Chameo treats all Photos albums whose titles exactly match the configured album name as one logical Chameo album for Library reads, daily completion, deletion, and timelapse generation. This tolerates Mac and mobile independently creating same-name albums before iCloud Photos synchronizes. Saves target the matching collection with the most Chameos, break ties by local identifier, and remember that identifier on the device until the collection disappears; Chameo never creates another collection while any match exists. Photos may continue to display duplicates until the person merges or renames them.

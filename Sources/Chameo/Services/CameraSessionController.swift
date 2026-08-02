@@ -301,44 +301,13 @@ struct ActiveCameraInfo: Equatable, Sendable {
     let shouldMirrorPreview: Bool
 }
 
-struct CameraSelectionCandidate: Equatable, Sendable {
-    let uniqueID: String
-    let isBuiltIn: Bool
-
-    init(uniqueID: String, isBuiltIn: Bool) {
-        self.uniqueID = uniqueID
-        self.isBuiltIn = isBuiltIn
-    }
-
+extension CameraSelectionCandidate {
     init(device: AVCaptureDevice) {
-        uniqueID = device.uniqueID
-        isBuiltIn = device.deviceType == .builtInWideAngleCamera && !device.isContinuityCamera
-    }
-}
-
-enum CameraSelectionPolicy {
-    static func preferredUniqueID(
-        systemPreferredUniqueID: String?,
-        userPreferredUniqueID: String?,
-        candidates: [CameraSelectionCandidate]
-    ) -> String? {
-        if let systemPreferredUniqueID,
-           candidates.contains(where: { $0.uniqueID == systemPreferredUniqueID }) {
-            return systemPreferredUniqueID
-        }
-
-        if let userPreferredUniqueID,
-           candidates.contains(where: { $0.uniqueID == userPreferredUniqueID }) {
-            return userPreferredUniqueID
-        }
-
-        return candidates.first(where: \.isBuiltIn)?.uniqueID ?? candidates.first?.uniqueID
-    }
-}
-
-enum CameraMirroringPolicy {
-    static func shouldMirrorPreview(isContinuityCamera: Bool) -> Bool {
-        !isContinuityCamera
+        self.init(
+            uniqueID: device.uniqueID,
+            isBuiltIn: device.deviceType == .builtInWideAngleCamera
+                && !device.isContinuityCamera
+        )
     }
 }
 

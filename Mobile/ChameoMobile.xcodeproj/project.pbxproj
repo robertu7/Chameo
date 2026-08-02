@@ -1,0 +1,861 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		018C9E8BA248F458BDD9477D /* MobileTimelapseExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B96E8CD35D7B3365DD36CC80 /* MobileTimelapseExporter.swift */; };
+		05E93B7106F85AC757494998 /* MobileCaptureModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95D7F7FE0A06F1083D1F2E4D /* MobileCaptureModel.swift */; };
+		0607AFCBF94E4C396C834709 /* MobileLibraryModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3848B5C4EB12EB24199588F3 /* MobileLibraryModel.swift */; };
+		082105318681ECAAC0384659 /* onboarding-camera-light.png in Resources */ = {isa = PBXBuildFile; fileRef = 2BE154EBCC9526F053EFD7B8 /* onboarding-camera-light.png */; };
+		0C5BE5896BA994C2677E4648 /* MobileCaptureQualityStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16AE8F4F19AAC1CFF903602D /* MobileCaptureQualityStore.swift */; };
+		13FA1620AEE4C69B93F84B3E /* MobileRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 147E59EC10EF4E06DD4F8666 /* MobileRootView.swift */; };
+		1B0CC31413D6A171DAA3D502 /* ChameoMobileUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 838233EF90511B5BDF77BBE3 /* ChameoMobileUITests.swift */; };
+		1CE860125496AEF3C93B00CB /* MobilePhotoLibraryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D92C268D59D5BBC10388372 /* MobilePhotoLibraryService.swift */; };
+		1EF4276CF01ABB2FDD720516 /* MobileLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C05A910596774D98B13F9978 /* MobileLibraryView.swift */; };
+		21CA475AF37B5988FC1BBA8E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 644651AA7BB5FE4781CAC23D /* Assets.xcassets */; };
+		25A8DDFCDE6089D01BCDBD62 /* MobileReminderService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A7A08ED631F5C5CD1FC74DB /* MobileReminderService.swift */; };
+		264497D7E53417719D7DBD37 /* MobileCameraService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B3817700E15CC98657B6AD2 /* MobileCameraService.swift */; };
+		265F66BAD43B083027897E85 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B7B78A00A5E9E2448771DAF7 /* PrivacyInfo.xcprivacy */; };
+		2B91940D816D26A9BAE0897E /* CameraPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9A15350D1F2B53AFB9AB05A /* CameraPreview.swift */; };
+		2E3E6A6FDFD279CD1794D740 /* MobilePermissionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62FFAE4B7BFE3FE47A2014BA /* MobilePermissionService.swift */; };
+		2E895B82700D5AC15D9364BD /* MobileFaceProcessingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C548F4C792B7ECBBC1B8A4C3 /* MobileFaceProcessingService.swift */; };
+		3F73ADF56417599B9B23AEA7 /* FullScreenRequirementReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = D79BA59C79FEA1B78DA52808 /* FullScreenRequirementReader.swift */; };
+		487892C2F48C4088785662A2 /* MobilePermissionServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D9A6EF4FD1F043DE51A5424 /* MobilePermissionServiceTests.swift */; };
+		58D959A6420984071299135F /* onboarding-feature-library.png in Resources */ = {isa = PBXBuildFile; fileRef = B1F913C11E5B9E7D6884F802 /* onboarding-feature-library.png */; };
+		5E20FE8D750C1ADD7D146515 /* MobileCameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99A88104ECA352EC9B53DE27 /* MobileCameraView.swift */; };
+		627C33A3C75956D9689DFC97 /* MobileAppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FE714AA06E421854E7E8E6F /* MobileAppModel.swift */; };
+		72D9F45ACD9852030337A785 /* ChameoCore in Frameworks */ = {isa = PBXBuildFile; productRef = 3A99E0CB6E40652096EC6F44 /* ChameoCore */; };
+		757E1E3B0EBA51292E21F7FB /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = A7B158D47D9EFFA99A13BEED /* InfoPlist.strings */; };
+		81C79E5DF168C29C0A2AF3DD /* onboarding-camera-dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 5EEA7398310946919C18C773 /* onboarding-camera-dark.png */; };
+		87D8AEE31C31D9E88FA68205 /* onboarding-feature-camera.png in Resources */ = {isa = PBXBuildFile; fileRef = 664A1CFEA86BBAEDE4324077 /* onboarding-feature-camera.png */; };
+		88E3218CB2B945D16C7A8EAB /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = B6DBCFE3CF7BCCB21845F698 /* Localizable.strings */; };
+		A2CD66963DCA0A398CFA8A04 /* PendingChameoStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBB6943F92B080530A478FC4 /* PendingChameoStoreTests.swift */; };
+		AD440D7E7622F58211006EB1 /* MobileNotificationDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2992309567D615A5BC4F9CBF /* MobileNotificationDelegate.swift */; };
+		D03CD359B46708BD1FD7FC71 /* ChameoMobileApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 680790C2C4694EE4C27A5805 /* ChameoMobileApp.swift */; };
+		D8BDCD7F37A9D15B3516B5E6 /* PendingChameoStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E9B220A4846F10F55BA6490 /* PendingChameoStore.swift */; };
+		E2BC2227E952F4EF45EA5573 /* MobileOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B76C20AB4EBC8A2E13C4B47B /* MobileOnboardingView.swift */; };
+		E70AA08243CD03835E258ECA /* MobileTimelapseExporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DB52C6F57ADA92152CFCECE /* MobileTimelapseExporterTests.swift */; };
+		F3AD555E9821E57292850F1F /* MobileTimelapseModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A19E41EE2E60A374CE047AE5 /* MobileTimelapseModel.swift */; };
+		FE723B21DCEE5711F7AB2766 /* MobileLocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E3C8CC7ED677E5CDC5B881B /* MobileLocationService.swift */; };
+		FF118803ACC80856A0914CE8 /* MobileSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62CBC65FD23B6249FDF81754 /* MobileSettingsView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		614E1BAA3ED8FF29ED0E34A2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9B4C23743525E93F1B9C0571 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8697F69945DDBAC0163A7EDC;
+			remoteInfo = ChameoMobile;
+		};
+		C1FD0E479F0E7CC51B25FABC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9B4C23743525E93F1B9C0571 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8697F69945DDBAC0163A7EDC;
+			remoteInfo = ChameoMobile;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		11A4F1D124FE5EF1668E485D /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		1325DF8B2D536F9A912A073C /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		147E59EC10EF4E06DD4F8666 /* MobileRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileRootView.swift; sourceTree = "<group>"; };
+		16AE8F4F19AAC1CFF903602D /* MobileCaptureQualityStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileCaptureQualityStore.swift; sourceTree = "<group>"; };
+		1DB52C6F57ADA92152CFCECE /* MobileTimelapseExporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileTimelapseExporterTests.swift; sourceTree = "<group>"; };
+		1E2D89D3FB7BDDABF4E9E139 /* ChameoMobile.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ChameoMobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2992309567D615A5BC4F9CBF /* MobileNotificationDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileNotificationDelegate.swift; sourceTree = "<group>"; };
+		2BE154EBCC9526F053EFD7B8 /* onboarding-camera-light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "onboarding-camera-light.png"; sourceTree = "<group>"; };
+		31759B51C3A66FA853B54419 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		3848B5C4EB12EB24199588F3 /* MobileLibraryModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileLibraryModel.swift; sourceTree = "<group>"; };
+		3D92C268D59D5BBC10388372 /* MobilePhotoLibraryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobilePhotoLibraryService.swift; sourceTree = "<group>"; };
+		4D9A6EF4FD1F043DE51A5424 /* MobilePermissionServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobilePermissionServiceTests.swift; sourceTree = "<group>"; };
+		5E9B220A4846F10F55BA6490 /* PendingChameoStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingChameoStore.swift; sourceTree = "<group>"; };
+		5EEA7398310946919C18C773 /* onboarding-camera-dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "onboarding-camera-dark.png"; sourceTree = "<group>"; };
+		613474655A7546EA0DFDE3FE /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Version.xcconfig; sourceTree = "<group>"; };
+		62CBC65FD23B6249FDF81754 /* MobileSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileSettingsView.swift; sourceTree = "<group>"; };
+		62FFAE4B7BFE3FE47A2014BA /* MobilePermissionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobilePermissionService.swift; sourceTree = "<group>"; };
+		644651AA7BB5FE4781CAC23D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		664A1CFEA86BBAEDE4324077 /* onboarding-feature-camera.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "onboarding-feature-camera.png"; sourceTree = "<group>"; };
+		680790C2C4694EE4C27A5805 /* ChameoMobileApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChameoMobileApp.swift; sourceTree = "<group>"; };
+		6A7A08ED631F5C5CD1FC74DB /* MobileReminderService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileReminderService.swift; sourceTree = "<group>"; };
+		6B3817700E15CC98657B6AD2 /* MobileCameraService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileCameraService.swift; sourceTree = "<group>"; };
+		6FE714AA06E421854E7E8E6F /* MobileAppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileAppModel.swift; sourceTree = "<group>"; };
+		7155DCAEA91F50FF9F1ADFE2 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		74F1B512CB61BFD52D09438A /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		7E3C8CC7ED677E5CDC5B881B /* MobileLocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileLocationService.swift; sourceTree = "<group>"; };
+		838233EF90511B5BDF77BBE3 /* ChameoMobileUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChameoMobileUITests.swift; sourceTree = "<group>"; };
+		95D7F7FE0A06F1083D1F2E4D /* MobileCaptureModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileCaptureModel.swift; sourceTree = "<group>"; };
+		99A88104ECA352EC9B53DE27 /* MobileCameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileCameraView.swift; sourceTree = "<group>"; };
+		A19E41EE2E60A374CE047AE5 /* MobileTimelapseModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileTimelapseModel.swift; sourceTree = "<group>"; };
+		A9A15350D1F2B53AFB9AB05A /* CameraPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreview.swift; sourceTree = "<group>"; };
+		B1F913C11E5B9E7D6884F802 /* onboarding-feature-library.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "onboarding-feature-library.png"; sourceTree = "<group>"; };
+		B55CA7F69453D0E249C36B60 /* ChameoMobileTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ChameoMobileTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B76C20AB4EBC8A2E13C4B47B /* MobileOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileOnboardingView.swift; sourceTree = "<group>"; };
+		B7B78A00A5E9E2448771DAF7 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		B96E8CD35D7B3365DD36CC80 /* MobileTimelapseExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileTimelapseExporter.swift; sourceTree = "<group>"; };
+		C05A910596774D98B13F9978 /* MobileLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileLibraryView.swift; sourceTree = "<group>"; };
+		C548F4C792B7ECBBC1B8A4C3 /* MobileFaceProcessingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileFaceProcessingService.swift; sourceTree = "<group>"; };
+		D79BA59C79FEA1B78DA52808 /* FullScreenRequirementReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullScreenRequirementReader.swift; sourceTree = "<group>"; };
+		D8C7F0BA4D39384222D0C70E /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		DB1DA0016175E60E93BC78D9 /* ChameoMobileUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ChameoMobileUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		EBB6943F92B080530A478FC4 /* PendingChameoStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingChameoStoreTests.swift; sourceTree = "<group>"; };
+		F4DCD786245A9E1858E1248B /* Chameo */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Chameo; path = ..; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		F177265642EDFB5A0A3B895A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				72D9F45ACD9852030337A785 /* ChameoCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		07E33FCF32B4814D28E4758F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1E2D89D3FB7BDDABF4E9E139 /* ChameoMobile.app */,
+				B55CA7F69453D0E249C36B60 /* ChameoMobileTests.xctest */,
+				DB1DA0016175E60E93BC78D9 /* ChameoMobileUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		08D51E18B51DF711EDDB43B3 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				F4DCD786245A9E1858E1248B /* Chameo */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		272AE93407ABA1374E72C5A4 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				644651AA7BB5FE4781CAC23D /* Assets.xcassets */,
+				B7B78A00A5E9E2448771DAF7 /* PrivacyInfo.xcprivacy */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		2C21C928425A484E294CF52F = {
+			isa = PBXGroup;
+			children = (
+				428D16EA44DBB588AA61CFFB /* Chameo */,
+				5428EB5354C05A4BEAEB50EF /* Config */,
+				08D51E18B51DF711EDDB43B3 /* Packages */,
+				272AE93407ABA1374E72C5A4 /* Resources */,
+				EE39BF72AE77175DBEB11A74 /* Sources */,
+				42DC48EA2E6FB623873A79D6 /* Tests */,
+				7F75A7BCA9EDF40808D9F25F /* UITests */,
+				07E33FCF32B4814D28E4758F /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		428D16EA44DBB588AA61CFFB /* Chameo */ = {
+			isa = PBXGroup;
+			children = (
+				7E44656DC8878905F0E8F472 /* Sources */,
+			);
+			name = Chameo;
+			path = ..;
+			sourceTree = "<group>";
+		};
+		42DC48EA2E6FB623873A79D6 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				4D9A6EF4FD1F043DE51A5424 /* MobilePermissionServiceTests.swift */,
+				1DB52C6F57ADA92152CFCECE /* MobileTimelapseExporterTests.swift */,
+				EBB6943F92B080530A478FC4 /* PendingChameoStoreTests.swift */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		5428EB5354C05A4BEAEB50EF /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				613474655A7546EA0DFDE3FE /* Version.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		573F2CDACF460F573D9D4839 /* Localization */ = {
+			isa = PBXGroup;
+			children = (
+				A7B158D47D9EFFA99A13BEED /* InfoPlist.strings */,
+				B6DBCFE3CF7BCCB21845F698 /* Localizable.strings */,
+			);
+			path = Localization;
+			sourceTree = "<group>";
+		};
+		57A5F48D64FA395B46E04BE8 /* Library */ = {
+			isa = PBXGroup;
+			children = (
+				3848B5C4EB12EB24199588F3 /* MobileLibraryModel.swift */,
+				C05A910596774D98B13F9978 /* MobileLibraryView.swift */,
+				A19E41EE2E60A374CE047AE5 /* MobileTimelapseModel.swift */,
+			);
+			path = Library;
+			sourceTree = "<group>";
+		};
+		7857E77995BEC707F3A36778 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				B76C20AB4EBC8A2E13C4B47B /* MobileOnboardingView.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		7E44656DC8878905F0E8F472 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				B006DB80034738E1E037707F /* Chameo */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		7F75A7BCA9EDF40808D9F25F /* UITests */ = {
+			isa = PBXGroup;
+			children = (
+				838233EF90511B5BDF77BBE3 /* ChameoMobileUITests.swift */,
+			);
+			path = UITests;
+			sourceTree = "<group>";
+		};
+		806AF874E704283E9B36FA76 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				5EEA7398310946919C18C773 /* onboarding-camera-dark.png */,
+				2BE154EBCC9526F053EFD7B8 /* onboarding-camera-light.png */,
+				664A1CFEA86BBAEDE4324077 /* onboarding-feature-camera.png */,
+				B1F913C11E5B9E7D6884F802 /* onboarding-feature-library.png */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		91ACB757FB31CAF893118E06 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				6B3817700E15CC98657B6AD2 /* MobileCameraService.swift */,
+				16AE8F4F19AAC1CFF903602D /* MobileCaptureQualityStore.swift */,
+				C548F4C792B7ECBBC1B8A4C3 /* MobileFaceProcessingService.swift */,
+				7E3C8CC7ED677E5CDC5B881B /* MobileLocationService.swift */,
+				62FFAE4B7BFE3FE47A2014BA /* MobilePermissionService.swift */,
+				3D92C268D59D5BBC10388372 /* MobilePhotoLibraryService.swift */,
+				6A7A08ED631F5C5CD1FC74DB /* MobileReminderService.swift */,
+				B96E8CD35D7B3365DD36CC80 /* MobileTimelapseExporter.swift */,
+				5E9B220A4846F10F55BA6490 /* PendingChameoStore.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		B006DB80034738E1E037707F /* Chameo */ = {
+			isa = PBXGroup;
+			children = (
+				CE01AD15E37312D4F4CB4BFD /* Resources */,
+			);
+			path = Chameo;
+			sourceTree = "<group>";
+		};
+		CE01AD15E37312D4F4CB4BFD /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				573F2CDACF460F573D9D4839 /* Localization */,
+				806AF874E704283E9B36FA76 /* Onboarding */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		E341D9B15161EC1AF868A919 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				62CBC65FD23B6249FDF81754 /* MobileSettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		EE39BF72AE77175DBEB11A74 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				680790C2C4694EE4C27A5805 /* ChameoMobileApp.swift */,
+				F9AB93796C2651FECAF1696B /* App */,
+				F38D950AC17BF3CB21618AEC /* Camera */,
+				57A5F48D64FA395B46E04BE8 /* Library */,
+				7857E77995BEC707F3A36778 /* Onboarding */,
+				91ACB757FB31CAF893118E06 /* Services */,
+				E341D9B15161EC1AF868A919 /* Settings */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		F38D950AC17BF3CB21618AEC /* Camera */ = {
+			isa = PBXGroup;
+			children = (
+				A9A15350D1F2B53AFB9AB05A /* CameraPreview.swift */,
+				D79BA59C79FEA1B78DA52808 /* FullScreenRequirementReader.swift */,
+				99A88104ECA352EC9B53DE27 /* MobileCameraView.swift */,
+				95D7F7FE0A06F1083D1F2E4D /* MobileCaptureModel.swift */,
+			);
+			path = Camera;
+			sourceTree = "<group>";
+		};
+		F9AB93796C2651FECAF1696B /* App */ = {
+			isa = PBXGroup;
+			children = (
+				6FE714AA06E421854E7E8E6F /* MobileAppModel.swift */,
+				2992309567D615A5BC4F9CBF /* MobileNotificationDelegate.swift */,
+				147E59EC10EF4E06DD4F8666 /* MobileRootView.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		3638C27FD1476C691A936B90 /* ChameoMobileTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 585E551172C673B1B2F9C26C /* Build configuration list for PBXNativeTarget "ChameoMobileTests" */;
+			buildPhases = (
+				71C38815B00DD4F4D033230C /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				41ECD5CB2634C71E59BE24EA /* PBXTargetDependency */,
+			);
+			name = ChameoMobileTests;
+			packageProductDependencies = (
+			);
+			productName = ChameoMobileTests;
+			productReference = B55CA7F69453D0E249C36B60 /* ChameoMobileTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		38BC3372036D283DC3977A24 /* ChameoMobileUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E8324847296C95CE98A2201A /* Build configuration list for PBXNativeTarget "ChameoMobileUITests" */;
+			buildPhases = (
+				2DF12D6D231140015285933C /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				09B8A1434B444A2E1A6EA840 /* PBXTargetDependency */,
+			);
+			name = ChameoMobileUITests;
+			packageProductDependencies = (
+			);
+			productName = ChameoMobileUITests;
+			productReference = DB1DA0016175E60E93BC78D9 /* ChameoMobileUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		8697F69945DDBAC0163A7EDC /* ChameoMobile */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 46880486618FE16D54B36134 /* Build configuration list for PBXNativeTarget "ChameoMobile" */;
+			buildPhases = (
+				EC2ECC44873C4F6FA3B2EECD /* Stage iOS App Icon */,
+				E7D276BC2E03E315A2A5349C /* Sources */,
+				E538328FC320D598347286BA /* Resources */,
+				F177265642EDFB5A0A3B895A /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ChameoMobile;
+			packageProductDependencies = (
+				3A99E0CB6E40652096EC6F44 /* ChameoCore */,
+			);
+			productName = ChameoMobile;
+			productReference = 1E2D89D3FB7BDDABF4E9E139 /* ChameoMobile.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		9B4C23743525E93F1B9C0571 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					38BC3372036D283DC3977A24 = {
+						TestTargetID = 8697F69945DDBAC0163A7EDC;
+					};
+					8697F69945DDBAC0163A7EDC = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 80779897F247BD14CAE36A48 /* Build configuration list for PBXProject "ChameoMobile" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+				"zh-Hans",
+				"zh-Hant",
+			);
+			mainGroup = 2C21C928425A484E294CF52F;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				4A591C75202D523D14B869F7 /* XCLocalSwiftPackageReference ".." */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 07E33FCF32B4814D28E4758F /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				8697F69945DDBAC0163A7EDC /* ChameoMobile */,
+				3638C27FD1476C691A936B90 /* ChameoMobileTests */,
+				38BC3372036D283DC3977A24 /* ChameoMobileUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		E538328FC320D598347286BA /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				21CA475AF37B5988FC1BBA8E /* Assets.xcassets in Resources */,
+				757E1E3B0EBA51292E21F7FB /* InfoPlist.strings in Resources */,
+				88E3218CB2B945D16C7A8EAB /* Localizable.strings in Resources */,
+				265F66BAD43B083027897E85 /* PrivacyInfo.xcprivacy in Resources */,
+				81C79E5DF168C29C0A2AF3DD /* onboarding-camera-dark.png in Resources */,
+				082105318681ECAAC0384659 /* onboarding-camera-light.png in Resources */,
+				87D8AEE31C31D9E88FA68205 /* onboarding-feature-camera.png in Resources */,
+				58D959A6420984071299135F /* onboarding-feature-library.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		EC2ECC44873C4F6FA3B2EECD /* Stage iOS App Icon */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Stage iOS App Icon";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "/bin/cp \"${SRCROOT}/../Assets/AppIconSource.png\" \"${SRCROOT}/Resources/Assets.xcassets/AppIcon.appiconset/AppIconSource.png\"\n/bin/cp \"${SRCROOT}/../Assets/AppIconSource.png\" \"${SRCROOT}/Resources/Assets.xcassets/LaunchIcon.imageset/LaunchIcon.png\"\n/usr/bin/sips -z 512 512 \"${SRCROOT}/Resources/Assets.xcassets/LaunchIcon.imageset/LaunchIcon.png\" >/dev/null\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		2DF12D6D231140015285933C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1B0CC31413D6A171DAA3D502 /* ChameoMobileUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		71C38815B00DD4F4D033230C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				487892C2F48C4088785662A2 /* MobilePermissionServiceTests.swift in Sources */,
+				E70AA08243CD03835E258ECA /* MobileTimelapseExporterTests.swift in Sources */,
+				A2CD66963DCA0A398CFA8A04 /* PendingChameoStoreTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E7D276BC2E03E315A2A5349C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2B91940D816D26A9BAE0897E /* CameraPreview.swift in Sources */,
+				D03CD359B46708BD1FD7FC71 /* ChameoMobileApp.swift in Sources */,
+				3F73ADF56417599B9B23AEA7 /* FullScreenRequirementReader.swift in Sources */,
+				627C33A3C75956D9689DFC97 /* MobileAppModel.swift in Sources */,
+				264497D7E53417719D7DBD37 /* MobileCameraService.swift in Sources */,
+				5E20FE8D750C1ADD7D146515 /* MobileCameraView.swift in Sources */,
+				05E93B7106F85AC757494998 /* MobileCaptureModel.swift in Sources */,
+				0C5BE5896BA994C2677E4648 /* MobileCaptureQualityStore.swift in Sources */,
+				2E895B82700D5AC15D9364BD /* MobileFaceProcessingService.swift in Sources */,
+				0607AFCBF94E4C396C834709 /* MobileLibraryModel.swift in Sources */,
+				1EF4276CF01ABB2FDD720516 /* MobileLibraryView.swift in Sources */,
+				FE723B21DCEE5711F7AB2766 /* MobileLocationService.swift in Sources */,
+				AD440D7E7622F58211006EB1 /* MobileNotificationDelegate.swift in Sources */,
+				E2BC2227E952F4EF45EA5573 /* MobileOnboardingView.swift in Sources */,
+				2E3E6A6FDFD279CD1794D740 /* MobilePermissionService.swift in Sources */,
+				1CE860125496AEF3C93B00CB /* MobilePhotoLibraryService.swift in Sources */,
+				25A8DDFCDE6089D01BCDBD62 /* MobileReminderService.swift in Sources */,
+				13FA1620AEE4C69B93F84B3E /* MobileRootView.swift in Sources */,
+				FF118803ACC80856A0914CE8 /* MobileSettingsView.swift in Sources */,
+				018C9E8BA248F458BDD9477D /* MobileTimelapseExporter.swift in Sources */,
+				F3AD555E9821E57292850F1F /* MobileTimelapseModel.swift in Sources */,
+				D8BDCD7F37A9D15B3516B5E6 /* PendingChameoStore.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		09B8A1434B444A2E1A6EA840 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8697F69945DDBAC0163A7EDC /* ChameoMobile */;
+			targetProxy = 614E1BAA3ED8FF29ED0E34A2 /* PBXContainerItemProxy */;
+		};
+		41ECD5CB2634C71E59BE24EA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8697F69945DDBAC0163A7EDC /* ChameoMobile */;
+			targetProxy = C1FD0E479F0E7CC51B25FABC /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		A7B158D47D9EFFA99A13BEED /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				31759B51C3A66FA853B54419 /* en */,
+				74F1B512CB61BFD52D09438A /* zh-Hans */,
+				11A4F1D124FE5EF1668E485D /* zh-Hant */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		B6DBCFE3CF7BCCB21845F698 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				D8C7F0BA4D39384222D0C70E /* en */,
+				7155DCAEA91F50FF9F1ADFE2 /* zh-Hans */,
+				1325DF8B2D536F9A912A073C /* zh-Hant */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		08C1B0DF614E3E82DDD3799D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		0D83F802D3F402A1C545180A /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 613474655A7546EA0DFDE3FE /* Version.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_ASSET_PATHS = "\"Preview Content\"";
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Resources/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.robertu.Chameo;
+				PRODUCT_MODULE_NAME = ChameoMobile;
+				PRODUCT_NAME = Chameo;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		54A5ED0B2CCEDA0090358398 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.robertu.Chameo.mobile-ui-tests";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = ChameoMobile;
+			};
+			name = Debug;
+		};
+		AE929CEF8915928FDB824C4B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.robertu.Chameo.mobile-ui-tests";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = ChameoMobile;
+			};
+			name = Release;
+		};
+		B3E3D7A8D6897973FA67E759 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 613474655A7546EA0DFDE3FE /* Version.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_ASSET_PATHS = "\"Preview Content\"";
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Resources/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.robertu.Chameo;
+				PRODUCT_MODULE_NAME = ChameoMobile;
+				PRODUCT_NAME = Chameo;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C4839F8D8C3960D99D93295F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		C90A79E45CE78A69F2AEEF0E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.robertu.Chameo.mobile-tests";
+				SDKROOT = iphoneos;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Chameo.app/Chameo";
+			};
+			name = Release;
+		};
+		F21266992C91EC3FE279BBC6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.robertu.Chameo.mobile-tests";
+				SDKROOT = iphoneos;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Chameo.app/Chameo";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		46880486618FE16D54B36134 /* Build configuration list for PBXNativeTarget "ChameoMobile" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B3E3D7A8D6897973FA67E759 /* Debug */,
+				0D83F802D3F402A1C545180A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		585E551172C673B1B2F9C26C /* Build configuration list for PBXNativeTarget "ChameoMobileTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F21266992C91EC3FE279BBC6 /* Debug */,
+				C90A79E45CE78A69F2AEEF0E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		80779897F247BD14CAE36A48 /* Build configuration list for PBXProject "ChameoMobile" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				08C1B0DF614E3E82DDD3799D /* Debug */,
+				C4839F8D8C3960D99D93295F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E8324847296C95CE98A2201A /* Build configuration list for PBXNativeTarget "ChameoMobileUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				54A5ED0B2CCEDA0090358398 /* Debug */,
+				AE929CEF8915928FDB824C4B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		4A591C75202D523D14B869F7 /* XCLocalSwiftPackageReference ".." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ..;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		3A99E0CB6E40652096EC6F44 /* ChameoCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ChameoCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 9B4C23743525E93F1B9C0571 /* Project object */;
+}

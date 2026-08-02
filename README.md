@@ -4,7 +4,7 @@
 
 # Chameo
 
-Chameo is a macOS menu bar app for taking quick daily selfies and storing the photos in a dedicated Photos.app album. The name leans into the idea of seeing how your face, mood, style, and life change over time.
+Chameo includes a macOS menu bar app and an independent native iPhone/iPad companion. Both apps store daily selfies in a dedicated Photos album, so iCloud Photos can make the same album available on each device. The name leans into the idea of seeing how your face, mood, style, and life change over time.
 
 The app is intentionally small: click the camera icon in the menu bar, take a photo, preview it, then save it or retake it.
 
@@ -122,6 +122,7 @@ Library deletion removes the original photo from Photos. Photos may move deleted
 
 - [Architecture](docs/architecture.md)
 - [Development](docs/development.md)
+- [iOS/iPadOS Development](docs/ios-development.md)
 - [Permissions & Privacy](docs/permissions.md)
 - [Production Readiness](docs/production-readiness.md)
 - [Roadmap](docs/roadmap.md)

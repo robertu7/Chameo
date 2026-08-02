@@ -31,6 +31,7 @@ final class PermissionOnboardingTests: XCTestCase {
         let statuses: [RequiredPermissionStatus] = [
             .notDetermined,
             .authorized,
+            .limited,
             .denied,
             .restricted,
         ]
@@ -62,7 +63,7 @@ final class PermissionOnboardingTests: XCTestCase {
         let photosCases: [(PHAuthorizationStatus, RequiredPermissionStatus)] = [
             (.notDetermined, .notDetermined),
             (.authorized, .authorized),
-            (.limited, .authorized),
+            (.limited, .limited),
             (.denied, .denied),
             (.restricted, .restricted),
         ]
