@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.3.12
+
+### What’s new
+
+- Improved notification-triggered camera opens during app startup by deferring
+  requests until the UI is ready and reliably foregrounding the camera window.
+
+### Fixes
+
+- None.
+
+### Known testing limitations
+
+- Stage 1 builds are ad-hoc signed and are not notarized by Apple.
+- macOS may request Camera, Photos, Location, or Notification permission again
+  after an update.
+- Installation, relaunch, Gatekeeper behavior, and permission persistence are
+  covered by tester feedback rather than automated end-to-end UI validation.
+
 ## 0.3.11
 
 ### What’s new
