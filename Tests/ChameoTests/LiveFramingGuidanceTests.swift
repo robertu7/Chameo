@@ -230,6 +230,62 @@ final class LiveFramingGuidanceTests: XCTestCase {
         )
     }
 
+    func testCountdownRetainsReadyForSlightMovementButCancelsForMissingFace() {
+        var evaluator = LiveFramingGuidanceEvaluator()
+        var countdown = HandsFreeCountdownMachine()
+        _ = countdown.handle(.setVisible(true))
+        _ = countdown.handle(.setEnabled(true))
+
+        let centered = directFrame(
+            face: observation(
+                previewCenterX: previewSize.width / 2,
+                previewWidth: targetFaceWidth
+            )
+        )
+        for _ in 0..<5 {
+            let guidance = evaluator.evaluate(
+                frame: centered,
+                previewSize: previewSize,
+                mirrored: false
+            )
+            _ = countdown.handle(.guidanceChanged(guidance))
+        }
+        XCTAssertEqual(countdown.phase, .counting(3))
+
+        let slightlyMoved = directFrame(
+            face: observation(
+                previewCenterX: previewSize.width / 2 + 8,
+                previewWidth: targetFaceWidth
+            )
+        )
+        let guidance = evaluator.evaluate(
+            frame: slightlyMoved,
+            previewSize: previewSize,
+            mirrored: false
+        )
+
+        XCTAssertEqual(guidance, .ready)
+        XCTAssertEqual(countdown.handle(.guidanceChanged(guidance)), [])
+        XCTAssertEqual(countdown.phase, .counting(3))
+
+        let missingFaceGuidance = evaluator.evaluate(
+            frame: LiveFramingFrame(
+                pixelWidth: Int(previewSize.width),
+                pixelHeight: Int(previewSize.height),
+                faces: []
+            ),
+            previewSize: previewSize,
+            mirrored: false
+        )
+
+        XCTAssertEqual(missingFaceGuidance, .neutral)
+        XCTAssertEqual(
+            countdown.handle(.guidanceChanged(missingFaceGuidance)),
+            [.cancelTimer]
+        )
+        XCTAssertEqual(countdown.phase, .armed)
+    }
+
     func testResetReturnsEvaluatorToNeutral() {
         var evaluator = LiveFramingGuidanceEvaluator()
         let frame = LiveFramingFrame(pixelWidth: 1280, pixelHeight: 720, faces: [])

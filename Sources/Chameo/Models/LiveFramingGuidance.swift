@@ -157,6 +157,7 @@ struct LiveFramingGuidanceEvaluator {
 
     private var smoothedFace: LiveFramingFaceGeometry?
     private var previousRawFace: LiveFramingFaceGeometry?
+    private var committedState = LiveFramingGuidanceState.neutral
     private var pendingState: LiveFramingGuidanceState?
     private var pendingStateCount = 0
 
@@ -199,6 +200,7 @@ struct LiveFramingGuidanceEvaluator {
     mutating func reset() -> LiveFramingGuidanceState {
         smoothedFace = nil
         previousRawFace = nil
+        committedState = .neutral
         pendingState = nil
         pendingStateCount = 0
         return .neutral
@@ -307,6 +309,18 @@ struct LiveFramingGuidanceEvaluator {
         let requiredCount = candidate == .ready
             ? Self.readySampleCount
             : Self.adjustmentSampleCount
-        return pendingStateCount >= requiredCount ? candidate : .neutral
+        guard pendingStateCount >= requiredCount else {
+            // Hard face-detection failures invalidate capture immediately. Soft
+            // framing changes keep the last committed state until they persist.
+            switch candidate {
+            case .adjusting(.centerFace), .adjusting(.onePerson), .neutral:
+                return .neutral
+            case .ready, .adjusting:
+                return committedState
+            }
+        }
+
+        committedState = candidate
+        return candidate
     }
 }
