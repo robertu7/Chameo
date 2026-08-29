@@ -2,26 +2,28 @@ import Foundation
 
 @MainActor
 final class DeferredOpenRequest {
-    private var handler: (() -> Void)?
-    private var isPending = false
+    private var handler: ((ReminderNotificationOpenDestination) -> Void)?
+    private var pendingDestination: ReminderNotificationOpenDestination?
 
-    func performOrDefer() {
+    func performOrDefer(_ destination: ReminderNotificationOpenDestination) {
         guard let handler else {
-            isPending = true
+            pendingDestination = destination
             return
         }
 
-        handler()
+        handler(destination)
     }
 
-    func installHandler(_ handler: @escaping () -> Void) {
+    func installHandler(
+        _ handler: @escaping (ReminderNotificationOpenDestination) -> Void
+    ) {
         self.handler = handler
 
-        guard isPending else {
+        guard let pendingDestination else {
             return
         }
 
-        isPending = false
-        handler()
+        self.pendingDestination = nil
+        handler(pendingDestination)
     }
 }

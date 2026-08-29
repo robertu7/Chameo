@@ -7,6 +7,11 @@ enum ReminderService {
     static let primaryIdentifierPrefix = ReminderNotificationIdentifier.primaryPrefix
     private static let legacyFollowUpIdentifierPrefix = "\(requestIdentifier).followUp."
     private static let maximumNotificationRequests = 60
+    private static let pendingRemovalAttempts = 3
+    private static let pendingRemovalChecksPerAttempt = 20
+    private static let pendingRemovalCheckDelay = Duration.milliseconds(10)
+    private static let selfieDeliveredCleanupAttempts = 3
+    private static let selfieDeliveredCleanupDelay = Duration.milliseconds(200)
     private static let wakeDeliveredCleanupAttempts = 4
     private static let wakeDeliveredCleanupDelay = Duration.milliseconds(500)
     private static let operationQueue = ReminderOperationQueue()
@@ -85,18 +90,32 @@ enum ReminderService {
 
         do {
             try await operationQueue.perform {
-                try await reconcileNotifications(
-                    date: settings.date,
-                    repeatMode: settings.repeatMode,
-                    weekday: settings.weekday,
-                    center: center,
-                    now: date
+                do {
+                    try await reconcileNotifications(
+                        date: settings.date,
+                        repeatMode: settings.repeatMode,
+                        weekday: settings.weekday,
+                        center: center,
+                        now: date
+                    )
+                } catch {
+                    await removeDeliveredReminderNotifications(
+                        from: center,
+                        maximumAttempts: selfieDeliveredCleanupAttempts,
+                        retryDelay: selfieDeliveredCleanupDelay
+                    )
+                    throw error
+                }
+
+                await removeDeliveredReminderNotifications(
+                    from: center,
+                    maximumAttempts: selfieDeliveredCleanupAttempts,
+                    retryDelay: selfieDeliveredCleanupDelay
                 )
-                await removeDeliveredReminderNotifications(from: center)
             }
         } catch {
             logger.error(
-                "Failed to reconcile reminders after a saved selfie: \(error.localizedDescription, privacy: .private)"
+                "Failed to reconcile reminders after a saved selfie; delivered cleanup was still attempted: \(error.localizedDescription, privacy: .private)"
             )
         }
     }
@@ -188,15 +207,18 @@ enum ReminderService {
     ) async throws {
         guard !identifiers.isEmpty else { return }
 
-        await center.removePendingReminderNotifications(withIdentifiers: identifiers)
         let identifiersToRemove = Set(identifiers)
 
-        for _ in 0..<50 {
-            let pendingIdentifiers = Set(await center.pendingReminderNotificationIdentifiers())
-            if identifiersToRemove.isDisjoint(with: pendingIdentifiers) {
-                return
+        for _ in 0..<pendingRemovalAttempts {
+            await center.removePendingReminderNotifications(withIdentifiers: identifiers)
+
+            for _ in 0..<pendingRemovalChecksPerAttempt {
+                let pendingIdentifiers = Set(await center.pendingReminderNotificationIdentifiers())
+                if identifiersToRemove.isDisjoint(with: pendingIdentifiers) {
+                    return
+                }
+                try await Task.sleep(for: pendingRemovalCheckDelay)
             }
-            try await Task.sleep(for: .milliseconds(10))
         }
 
         throw ReminderError.updateTimedOut
@@ -218,7 +240,7 @@ enum ReminderService {
         )
     }
 
-    private static func hasSelfieTaken(
+    static func hasSelfieTaken(
         on date: Date,
         settings: StoredReminderSettings = .load()
     ) -> Bool {
@@ -271,18 +293,25 @@ enum ReminderService {
 
     private static func removeDeliveredReminderNotifications(
         from center: any ReminderNotificationCenter,
-        maximumAttempts: Int = 1
+        maximumAttempts: Int = 1,
+        retryDelay: Duration = wakeDeliveredCleanupDelay
     ) async {
+        var removedReminder = false
+
         for attempt in 1...max(1, maximumAttempts) {
             let identifiers = await center.deliveredReminderNotificationIdentifiers().filter(isReminderIdentifier)
-            if !identifiers.isEmpty {
+            if identifiers.isEmpty {
+                if removedReminder {
+                    return
+                }
+            } else {
                 await center.removeDeliveredReminderNotifications(withIdentifiers: identifiers)
-                return
+                removedReminder = true
             }
 
             guard attempt < maximumAttempts else { return }
             do {
-                try await Task.sleep(for: wakeDeliveredCleanupDelay)
+                try await Task.sleep(for: retryDelay)
             } catch {
                 return
             }

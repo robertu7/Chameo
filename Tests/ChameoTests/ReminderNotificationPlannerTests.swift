@@ -115,6 +115,48 @@ final class ReminderNotificationPlannerTests: XCTestCase {
     }
 }
 
+final class ReminderNotificationResponsePolicyTests: XCTestCase {
+    private let reminderIdentifier = ReminderService.primaryIdentifierPrefix + "20260623-1330"
+
+    func testDefaultActionOpensCameraWhenTodayIsIncomplete() {
+        XCTAssertEqual(
+            ReminderNotificationResponsePolicy.destination(
+                identifier: reminderIdentifier,
+                actionIdentifier: UNNotificationDefaultActionIdentifier,
+                isCompletedToday: false
+            ),
+            .camera
+        )
+    }
+
+    func testDefaultActionStillOpensLibraryWhenTodayIsAlreadyCompleted() {
+        XCTAssertEqual(
+            ReminderNotificationResponsePolicy.destination(
+                identifier: reminderIdentifier,
+                actionIdentifier: UNNotificationDefaultActionIdentifier,
+                isCompletedToday: true
+            ),
+            .libraryToday
+        )
+    }
+
+    func testDismissActionDoesNotOpenChameo() {
+        XCTAssertNil(ReminderNotificationResponsePolicy.destination(
+            identifier: reminderIdentifier,
+            actionIdentifier: UNNotificationDismissActionIdentifier,
+            isCompletedToday: false
+        ))
+    }
+
+    func testUnrelatedNotificationDoesNotOpenChameo() {
+        XCTAssertNil(ReminderNotificationResponsePolicy.destination(
+            identifier: "unrelated.notification",
+            actionIdentifier: UNNotificationDefaultActionIdentifier,
+            isCompletedToday: false
+        ))
+    }
+}
+
 final class ReminderOperationQueueTests: XCTestCase {
     func testSaveReconciliationFinishesAfterOverlappingLaunchRefresh() async throws {
         let queue = ReminderOperationQueue()
@@ -171,6 +213,55 @@ final class ReminderSelfieCompletionTests: XCTestCase {
         XCTAssertFalse(deliveredIdentifiers.contains(context.legacyReminder))
         XCTAssertFalse(deliveredIdentifiers.contains(ReminderService.requestIdentifier))
         XCTAssertTrue(deliveredIdentifiers.contains(unrelatedDelivered))
+    }
+
+    func testRecordingSelfieStillClearsDeliveredReminderWhenPendingRemovalDoesNotSettle() async throws {
+        let restoreDefaults = preserveReminderDefaults()
+        defer { restoreDefaults() }
+
+        let context = try configureReminderDefaults(completedAt: nil)
+        let center = ReminderNotificationCenterRecorder(
+            pending: [context.todayPrimary],
+            delivered: [context.todayPrimary],
+            keepsPendingRequestsOnRemoval: true
+        )
+
+        await ReminderService.recordSelfieTaken(at: context.now, center: center)
+
+        let deliveredIdentifiers = await center.deliveredIdentifiers
+        XCTAssertFalse(deliveredIdentifiers.contains(context.todayPrimary))
+    }
+
+    func testRecordingSelfieRetriesPendingRemovalBeforeGivingUp() async throws {
+        let restoreDefaults = preserveReminderDefaults()
+        defer { restoreDefaults() }
+
+        let context = try configureReminderDefaults(completedAt: nil)
+        let center = ReminderNotificationCenterRecorder(
+            pending: [context.todayPrimary],
+            pendingRemovalFailuresRemaining: 1
+        )
+
+        await ReminderService.recordSelfieTaken(at: context.now, center: center)
+
+        let pendingIdentifiers = await center.pendingIdentifiers
+        XCTAssertFalse(pendingIdentifiers.contains(context.todayPrimary))
+    }
+
+    func testRecordingSelfieRemovesDeliveredReminderRestoredDuringCleanup() async throws {
+        let restoreDefaults = preserveReminderDefaults()
+        defer { restoreDefaults() }
+
+        let context = try configureReminderDefaults(completedAt: nil)
+        let center = ReminderNotificationCenterRecorder(
+            restoredDelivered: [context.todayPrimary],
+            restoreAfterDeliveredQueries: 1
+        )
+
+        await ReminderService.recordSelfieTaken(at: context.now, center: center)
+
+        let deliveredIdentifiers = await center.deliveredIdentifiers
+        XCTAssertFalse(deliveredIdentifiers.contains(context.todayPrimary))
     }
 
     func testLaunchRefreshRemovesDeliveredReminderNotificationsWhenTodayIsAlreadyCompleted() async throws {
@@ -379,19 +470,22 @@ private actor ReminderNotificationCenterRecorder: ReminderNotificationCenter {
     private var deliveredQueryCount = 0
     private let restoreAfterDeliveredQueries: Int?
     private let keepsPendingRequestsOnRemoval: Bool
+    private var pendingRemovalFailuresRemaining: Int
 
     init(
         pending: [String] = [],
         delivered: [String] = [],
         restoredDelivered: [String] = [],
         restoreAfterDeliveredQueries: Int? = nil,
-        keepsPendingRequestsOnRemoval: Bool = false
+        keepsPendingRequestsOnRemoval: Bool = false,
+        pendingRemovalFailuresRemaining: Int = 0
     ) {
         self.pending = Set(pending)
         self.delivered = Set(delivered)
         self.restoredDelivered = Set(restoredDelivered)
         self.restoreAfterDeliveredQueries = restoreAfterDeliveredQueries
         self.keepsPendingRequestsOnRemoval = keepsPendingRequestsOnRemoval
+        self.pendingRemovalFailuresRemaining = pendingRemovalFailuresRemaining
     }
 
     var pendingIdentifiers: Set<String> {
@@ -426,6 +520,10 @@ private actor ReminderNotificationCenterRecorder: ReminderNotificationCenter {
 
     func removePendingReminderNotifications(withIdentifiers identifiers: [String]) async {
         guard !keepsPendingRequestsOnRemoval else {
+            return
+        }
+        guard pendingRemovalFailuresRemaining == 0 else {
+            pendingRemovalFailuresRemaining -= 1
             return
         }
 

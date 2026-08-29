@@ -5,40 +5,40 @@ import XCTest
 final class DeferredOpenRequestTests: XCTestCase {
     func testRequestMadeBeforeAppUIIsReadyIsDeliveredWhenHandlerIsInstalled() {
         let request = DeferredOpenRequest()
-        var openCount = 0
+        var destinations: [ReminderNotificationOpenDestination] = []
 
-        request.performOrDefer()
-        XCTAssertEqual(openCount, 0)
+        request.performOrDefer(.camera)
+        XCTAssertTrue(destinations.isEmpty)
 
-        request.installHandler {
-            openCount += 1
+        request.installHandler { destination in
+            destinations.append(destination)
         }
 
-        XCTAssertEqual(openCount, 1)
+        XCTAssertEqual(destinations, [.camera])
     }
 
     func testRequestMadeAfterAppUIIsReadyIsDeliveredImmediately() {
         let request = DeferredOpenRequest()
-        var openCount = 0
-        request.installHandler {
-            openCount += 1
+        var destinations: [ReminderNotificationOpenDestination] = []
+        request.installHandler { destination in
+            destinations.append(destination)
         }
 
-        request.performOrDefer()
+        request.performOrDefer(.libraryToday)
 
-        XCTAssertEqual(openCount, 1)
+        XCTAssertEqual(destinations, [.libraryToday])
     }
 
-    func testMultipleStartupRequestsCoalesceIntoOneOpen() {
+    func testMultipleStartupRequestsCoalesceIntoLatestDestination() {
         let request = DeferredOpenRequest()
-        var openCount = 0
+        var destinations: [ReminderNotificationOpenDestination] = []
 
-        request.performOrDefer()
-        request.performOrDefer()
-        request.installHandler {
-            openCount += 1
+        request.performOrDefer(.camera)
+        request.performOrDefer(.libraryToday)
+        request.installHandler { destination in
+            destinations.append(destination)
         }
 
-        XCTAssertEqual(openCount, 1)
+        XCTAssertEqual(destinations, [.libraryToday])
     }
 }

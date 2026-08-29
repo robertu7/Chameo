@@ -80,20 +80,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse
     ) async {
-        guard ReminderService.isReminderIdentifier(response.notification.request.identifier) else {
-            return
-        }
-
-        guard ReminderService.shouldPresentReminderNotification(
-            identifier: response.notification.request.identifier
+        guard let destination = ReminderNotificationResponsePolicy.destination(
+            identifier: response.notification.request.identifier,
+            actionIdentifier: response.actionIdentifier,
+            isCompletedToday: ReminderService.hasSelfieTaken(on: Date())
         ) else {
-            await ReminderService.refreshRemindersFromStoredSettings()
             return
         }
 
         await MainActor.run {
-            notificationOpenRequest.performOrDefer()
+            notificationOpenRequest.performOrDefer(destination)
         }
+        await ReminderService.refreshRemindersFromStoredSettings()
     }
 
     private func configureUserDefaults() {
@@ -194,8 +192,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
                 localizationController: localizationController,
                 updateController: updateController
             )
-            notificationOpenRequest.installHandler { [weak self] in
-                self?.openCameraFromNotification()
+            notificationOpenRequest.installHandler { [weak self] destination in
+                self?.openFromNotification(destination)
             }
         }
 
@@ -206,10 +204,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         }
     }
 
-    private func openCameraFromNotification() {
+    private func openFromNotification(_ destination: ReminderNotificationOpenDestination) {
         Task { @MainActor [weak self] in
             await Task.yield()
-            self?.statusPopoverController?.showCamera()
+            switch destination {
+            case .camera:
+                self?.statusPopoverController?.showCamera()
+            case .libraryToday:
+                self?.statusPopoverController?.showLibraryToday()
+            }
         }
     }
 
