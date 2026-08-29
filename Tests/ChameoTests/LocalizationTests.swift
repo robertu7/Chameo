@@ -138,6 +138,7 @@ final class LocalizationCatalogTests: XCTestCase {
         let expectedKeys: Set<String> = [
             "NSCameraUsageDescription",
             "NSPhotoLibraryUsageDescription",
+            "NSPhotoLibraryAddUsageDescription",
             "NSLocationUsageDescription",
             "NSLocationWhenInUseUsageDescription",
             "NSUserNotificationUsageDescription",

@@ -2,35 +2,6 @@ import CoreImage
 import Foundation
 import Vision
 
-enum FaceCaptureQualityEvaluation: Equatable, Sendable {
-    case scored(Float)
-    case noFace
-    case scoreUnavailable
-    case unreadableImage
-    case analysisFailed
-}
-
-struct FaceCaptureQualityCandidate: Equatable, Sendable {
-    let area: CGFloat
-    let score: Float?
-}
-
-enum FaceCaptureQualitySelection {
-    static func evaluation(
-        from candidates: [FaceCaptureQualityCandidate]
-    ) -> FaceCaptureQualityEvaluation {
-        guard let largestFace = candidates.max(by: { $0.area < $1.area }) else {
-            return .noFace
-        }
-
-        guard let score = largestFace.score else {
-            return .scoreUnavailable
-        }
-
-        return .scored(score)
-    }
-}
-
 enum FaceCaptureQualityService {
     static func evaluation(from data: Data) async -> FaceCaptureQualityEvaluation {
         await Task.detached(priority: .utility) {

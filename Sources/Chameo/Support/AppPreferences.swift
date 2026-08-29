@@ -15,6 +15,7 @@ enum AppPreferenceKey {
     static let reminderSettingsMigrated = "reminderSettingsMigrated"
     static let reminderWeekday = "reminderWeekday"
     static let saveLocation = "saveLocation"
+    static let selectedPhysicalAlbumIdentifiers = "selectedPhysicalAlbumIdentifiers"
     static let showFaceGuide = "showGrid"
 }
 

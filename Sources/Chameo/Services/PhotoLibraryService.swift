@@ -20,24 +20,34 @@ enum PhotoLibraryService {
 
     static func ensureAuthorized() async throws {
         switch authorizationStatus() {
-        case .authorized, .limited:
+        case .authorized:
             return
         case .notDetermined:
             let status = await requestAuthorization()
-            guard status == .authorized || status == .limited else {
+            guard status == .authorized else {
                 throw PhotoLibraryError.notAuthorized
             }
-        case .denied, .restricted:
+        case .limited, .denied, .restricted:
             throw PhotoLibraryError.notAuthorized
         @unknown default:
             throw PhotoLibraryError.notAuthorized
         }
     }
 
-    static func fetchAlbum(named albumName: String) -> PHAssetCollection? {
+    static func matchingAlbums(named albumName: String) -> [PHAssetCollection] {
         let options = PHFetchOptions()
         options.predicate = NSPredicate(format: "title = %@", albumName)
-        return PHAssetCollection.fetchAssetCollections(with: .album, subtype: .albumRegular, options: options).firstObject
+        let result = PHAssetCollection.fetchAssetCollections(
+            with: .album,
+            subtype: .albumRegular,
+            options: options
+        )
+        var collections: [PHAssetCollection] = []
+        result.enumerateObjects { collection, _, _ in
+            guard collection.localizedTitle == albumName else { return }
+            collections.append(collection)
+        }
+        return collections.sorted { $0.localIdentifier < $1.localIdentifier }
     }
 
     static func fetchAlbumNames() async throws -> [String] {
@@ -69,7 +79,12 @@ enum PhotoLibraryService {
         try await albumCoordinator.album(named: normalizedAlbumName(albumName))
     }
 
-    static func savePhoto(data: Data, albumName: String, location: CLLocation? = nil) async throws -> ChameoAsset {
+    static func savePhoto(
+        data: Data,
+        albumName: String,
+        creationDate: Date = Date(),
+        location: CLLocation? = nil
+    ) async throws -> ChameoAsset {
         try await ensureAuthorized()
         let album = try await ensureAlbum(named: normalizedAlbumName(albumName))
         let temporaryURL = try writeTemporaryJPEG(data)
@@ -85,7 +100,7 @@ enum PhotoLibraryService {
             }
 
             let assetRequest = PHAssetCreationRequest.forAsset()
-            assetRequest.creationDate = Date()
+            assetRequest.creationDate = creationDate
             assetRequest.location = location
             assetRequest.addResource(with: .photo, fileURL: temporaryURL, options: nil)
 
@@ -107,19 +122,30 @@ enum PhotoLibraryService {
 
     static func fetchAssets(albumName: String) async throws -> [ChameoAsset] {
         try await ensureAuthorized()
-        guard let album = fetchAlbum(named: normalizedAlbumName(albumName)) else {
+        let albums = matchingAlbums(named: normalizedAlbumName(albumName))
+        guard !albums.isEmpty else {
             return []
         }
 
         let options = PHFetchOptions()
         options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-        let result = PHAsset.fetchAssets(in: album, options: options)
-
-        var assets: [ChameoAsset] = []
-        result.enumerateObjects { asset, _, _ in
-            assets.append(ChameoAsset(asset: asset))
+        var assetsByIdentifier: [String: ChameoAsset] = [:]
+        for album in albums {
+            let result = PHAsset.fetchAssets(in: album, options: options)
+            result.enumerateObjects { asset, _, _ in
+                guard ChameoAssetEligibility.isEligible(
+                    isPhoto: asset.mediaType == .image,
+                    creationDate: asset.creationDate
+                ) else {
+                    return
+                }
+                assetsByIdentifier[asset.localIdentifier] = ChameoAsset(asset: asset)
+            }
         }
-        return assets
+        return assetsByIdentifier.values.sorted { lhs, rhs in
+            guard lhs.createdAt != rhs.createdAt else { return lhs.id < rhs.id }
+            return (lhs.createdAt ?? .distantPast) > (rhs.createdAt ?? .distantPast)
+        }
     }
 
     static func deleteAsset(_ asset: PHAsset) async throws {
@@ -163,6 +189,38 @@ enum PhotoLibraryService {
         return trimmed.isEmpty ? AppDistribution.current.defaultAlbumName : trimmed
     }
 
+    fileprivate static func eligibleAssetCount(in album: PHAssetCollection) -> Int {
+        let assets = PHAsset.fetchAssets(in: album, options: nil)
+        var count = 0
+        assets.enumerateObjects { asset, _, _ in
+            if ChameoAssetEligibility.isEligible(
+                isPhoto: asset.mediaType == .image,
+                creationDate: asset.creationDate
+            ) {
+                count += 1
+            }
+        }
+        return count
+    }
+
+    fileprivate static func rememberedAlbumIdentifier(for name: String) -> String? {
+        let values = UserDefaults.standard.dictionary(
+            forKey: AppPreferenceKey.selectedPhysicalAlbumIdentifiers
+        ) as? [String: String]
+        return values?[name]
+    }
+
+    fileprivate static func rememberAlbumIdentifier(_ identifier: String, for name: String) {
+        var values = UserDefaults.standard.dictionary(
+            forKey: AppPreferenceKey.selectedPhysicalAlbumIdentifiers
+        ) as? [String: String] ?? [:]
+        values[name] = identifier
+        UserDefaults.standard.set(
+            values,
+            forKey: AppPreferenceKey.selectedPhysicalAlbumIdentifiers
+        )
+    }
+
     private static func writeTemporaryJPEG(_ data: Data) throws -> URL {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("Chameo-\(UUID().uuidString)")
@@ -194,7 +252,8 @@ enum PhotoLibraryService {
 
 private actor PhotoAlbumCoordinator {
     func album(named name: String) async throws -> PHAssetCollection {
-        if let existingAlbum = PhotoLibraryService.fetchAlbum(named: name) {
+        let existingAlbums = PhotoLibraryService.matchingAlbums(named: name)
+        if let existingAlbum = selectAlbum(from: existingAlbums, named: name) {
             return existingAlbum
         }
 
@@ -214,6 +273,27 @@ private actor PhotoAlbumCoordinator {
             throw PhotoLibraryError.albumCreationFailed
         }
 
+        PhotoLibraryService.rememberAlbumIdentifier(localIdentifier, for: name)
+        return album
+    }
+
+    private func selectAlbum(
+        from albums: [PHAssetCollection],
+        named name: String
+    ) -> PHAssetCollection? {
+        let candidates = albums.map {
+            AlbumSelectionCandidate(
+                identifier: $0.localIdentifier,
+                eligibleChameoCount: PhotoLibraryService.eligibleAssetCount(in: $0)
+            )
+        }
+        guard let identifier = AlbumSelectionPolicy.saveDestination(
+            from: candidates,
+            rememberedIdentifier: PhotoLibraryService.rememberedAlbumIdentifier(for: name)
+        ), let album = albums.first(where: { $0.localIdentifier == identifier }) else {
+            return nil
+        }
+        PhotoLibraryService.rememberAlbumIdentifier(identifier, for: name)
         return album
     }
 }

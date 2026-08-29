@@ -1,0 +1,5 @@
+# Preserve the Mac SwiftPM build
+
+The existing Mac app remains a SwiftPM executable with its current Sparkle dependency, bundle-staging scripts, entitlements, tests, and release workflow. The root `Package.swift` gains a `ChameoCore` library product and target, and the existing Mac executable depends on that product. A separate Xcode project owns only the universal iOS/iPadOS app target and depends on `ChameoCore` from the same root package. Shared domain rules live in `ChameoCore`; user interfaces and adapters for Camera, Photos, Location, Notifications, and export remain in their respective platform targets. A nested Swift package is not introduced.
+
+This structure minimizes regression risk to the established Mac distribution pipeline and allows the mobile app to use Xcode signing, Simulator, device deployment, assets, privacy manifests, and localized resources naturally. The accepted cost is maintaining two app build entry points and independent app version/build numbers. Migrating the Mac app into the mobile Xcode project is not part of this work.

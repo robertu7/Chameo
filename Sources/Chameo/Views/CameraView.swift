@@ -299,6 +299,10 @@ struct CameraView: View {
 
     private func takeChameo() async {
         statusMessage = nil
+        let capturedAt = Date()
+        let locationTask: Task<CLLocation?, Never>? = saveLocation
+            ? Task { await locationService.requestCurrentLocation() }
+            : nil
 
         do {
             let data = try await cameraService.capturePhoto(mirrored: false)
@@ -309,12 +313,16 @@ struct CameraView: View {
                 for: qualityEvaluation,
                 acceptedScores: CaptureQualityHistoryStore.acceptedScores()
             )
+            let captureLocation = await locationTask?.value
+            locationPermissionDenied = locationService.isPermissionDenied
 
             if autoAlignPhotos {
                 statusMessage = .localized("Aligning photo…")
                 let result = await FaceAlignmentService.alignmentResult(from: data)
                 capturedPreview = CapturedPreview(
                     data: result.data,
+                    capturedAt: capturedAt,
+                    location: captureLocation,
                     qualityEvaluation: qualityEvaluation,
                     qualitySuggestion: qualitySuggestion
                 )
@@ -325,6 +333,8 @@ struct CameraView: View {
             } else {
                 capturedPreview = CapturedPreview(
                     data: data,
+                    capturedAt: capturedAt,
+                    location: captureLocation,
                     qualityEvaluation: qualityEvaluation,
                     qualitySuggestion: qualitySuggestion
                 )
@@ -334,6 +344,7 @@ struct CameraView: View {
                 )
             }
         } catch {
+            locationTask?.cancel()
             statusMessage = .error(error)
         }
 
@@ -384,24 +395,13 @@ struct CameraView: View {
         }
 
         do {
-            var location = Optional.none as CLLocation?
-            if saveLocation {
-                statusMessage = .localized("Getting location…")
-                location = await locationService.requestCurrentLocation()
-                locationPermissionDenied = locationService.isPermissionDenied
-                if location == nil {
-                    statusMessage = .localized("Location unavailable. Saving without location…")
-                }
-            }
-
-            if location != nil || !saveLocation {
-                statusMessage = .localized("Saving to Photos…")
-            }
+            statusMessage = .localized("Saving to Photos…")
 
             _ = try await PhotoLibraryService.savePhoto(
                 data: capturedPreview.data,
                 albumName: albumName,
-                location: location
+                creationDate: capturedPreview.capturedAt,
+                location: capturedPreview.location
             )
             CaptureQualityHistoryStore.recordAccepted(
                 capturedPreview.qualityEvaluation
@@ -410,7 +410,7 @@ struct CameraView: View {
             photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
             await libraryStore.reload(albumName: albumName)
             self.capturedPreview = nil
-            if saveLocation && location == nil {
+            if saveLocation && capturedPreview.location == nil {
                 statusMessage = .localized("Saved to Photos without location")
             } else {
                 statusMessage = .formatted(
@@ -541,16 +541,22 @@ private struct CapturedPreview: Identifiable {
     let id = UUID()
     let data: Data
     let image: NSImage?
+    let capturedAt: Date
+    let location: CLLocation?
     let qualityEvaluation: FaceCaptureQualityEvaluation
     let qualitySuggestion: CaptureQualitySuggestion?
 
     init(
         data: Data,
+        capturedAt: Date,
+        location: CLLocation?,
         qualityEvaluation: FaceCaptureQualityEvaluation,
         qualitySuggestion: CaptureQualitySuggestion?
     ) {
         self.data = data
         self.image = NSImage(data: data)
+        self.capturedAt = capturedAt
+        self.location = location
         self.qualityEvaluation = qualityEvaluation
         self.qualitySuggestion = qualitySuggestion
     }

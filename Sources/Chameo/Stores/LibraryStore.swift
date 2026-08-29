@@ -76,9 +76,10 @@ final class LibraryStore: ObservableObject {
     }
 
     func timelapseAssets() -> [ChameoAsset] {
-        TimelapseSelection.allItemsChronologically(
+        TimelapseSelection.datedItemsChronologically(
             from: assets,
-            date: \.createdAt
+            date: \.createdAt,
+            identifier: \.id
         )
     }
 

@@ -2,22 +2,6 @@
 import Foundation
 import Photos
 
-enum RequiredPermissionKind: Equatable {
-    case camera
-    case photos
-}
-
-enum RequiredPermissionStatus: Equatable {
-    case notDetermined
-    case authorized
-    case denied
-    case restricted
-
-    var isGranted: Bool {
-        self == .authorized
-    }
-}
-
 @MainActor
 protocol RequiredPermissionProviding {
     var cameraStatus: RequiredPermissionStatus { get }
@@ -64,8 +48,10 @@ final class SystemRequiredPermissionService: RequiredPermissionProviding {
         switch status {
         case .notDetermined:
             return .notDetermined
-        case .authorized, .limited:
+        case .authorized:
             return .authorized
+        case .limited:
+            return .limited
         case .denied:
             return .denied
         case .restricted:

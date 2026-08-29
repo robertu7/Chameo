@@ -6,9 +6,11 @@ let package = Package(
     name: "Chameo",
     defaultLocalization: "en",
     platforms: [
-        .macOS(.v14)
+        .macOS(.v14),
+        .iOS("18.0")
     ],
     products: [
+        .library(name: "ChameoCore", targets: ["ChameoCore"]),
         .executable(name: "Chameo", targets: ["Chameo"])
     ],
     dependencies: [
@@ -21,6 +23,7 @@ let package = Package(
         .executableTarget(
             name: "Chameo",
             dependencies: [
+                "ChameoCore",
                 .product(name: "Sparkle", package: "Sparkle")
             ],
             path: "Sources/Chameo",
@@ -37,6 +40,15 @@ let package = Package(
                     "@executable_path/../Frameworks"
                 ])
             ]
+        ),
+        .target(
+            name: "ChameoCore",
+            path: "Sources/ChameoCore"
+        ),
+        .testTarget(
+            name: "ChameoCoreTests",
+            dependencies: ["ChameoCore"],
+            path: "Tests/ChameoCoreTests"
         ),
         .testTarget(
             name: "ChameoTests",
