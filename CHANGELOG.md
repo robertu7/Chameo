@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.3.13
+
+### What’s new
+
+- Polished image previews and timelapse controls.
+- Improved accessibility across the app.
+
+### Fixes
+
+- Improved reminder notification routing and cleanup retry behavior.
+
+### Known testing limitations
+
+- Stage 1 builds are ad-hoc signed and are not notarized by Apple.
+- macOS may request Camera, Photos, Location, or Notification permission again
+  after an update.
+- Installation, relaunch, Gatekeeper behavior, and permission persistence are
+  covered by tester feedback rather than automated end-to-end UI validation.
+
 ## 0.3.12
 
 ### What’s new
