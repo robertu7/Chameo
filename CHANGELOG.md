@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.3.15
+
+### What’s new
+
+- None.
+
+### Fixes
+
+- Clear Chameo reminder notifications before Sparkle replaces an ad-hoc build.
+- Suspend reminder scheduling during update cleanup and refuse replacement when
+  cleanup cannot be verified.
+
+### Known testing limitations
+
+- Existing notifications created by prior ad-hoc builds are not repaired by
+  this update.
+- Native Sparkle installation, relaunch, Notification Center click routing,
+  Gatekeeper behavior, and permission persistence remain covered by tester
+  feedback rather than automated end-to-end UI validation.
+
 ## 0.3.14
 
 ### What’s new
