@@ -3,6 +3,36 @@ import UserNotifications
 @testable import Chameo
 
 final class ReminderNotificationPlannerTests: XCTestCase {
+    func testUpdateCleanupRemovesPendingAndDeliveredButPreservesUnrelatedNotifications() async throws {
+        let id = ReminderService.primaryIdentifierPrefix + "old"
+        let center = ReminderNotificationCenterRecorder(pending: [id, "other"], delivered: [id, "other"])
+        try await ReminderService.clearRemindersForApplicationUpdate(from: center)
+        let pending = await center.pendingIdentifiers
+        let delivered = await center.deliveredIdentifiers
+        XCTAssertEqual(pending, ["other"])
+        XCTAssertEqual(delivered, ["other"])
+    }
+
+    func testUpdateCleanupFailsWhenDeliveredRemindersRemain() async {
+        let center = ReminderNotificationCenterRecorder(
+            delivered: [ReminderService.requestIdentifier], keepsDeliveredRequestsOnRemoval: true
+        )
+        do {
+            try await ReminderService.clearRemindersForApplicationUpdate(from: center)
+            XCTFail("Replacement must not proceed while delivered reminders remain")
+        } catch { XCTAssertTrue(error is ReminderError) }
+    }
+
+    func testUpdateCleanupFailsWhenPendingRemindersRemain() async {
+        let center = ReminderNotificationCenterRecorder(
+            pending: [ReminderService.requestIdentifier], keepsPendingRequestsOnRemoval: true
+        )
+        do {
+            try await ReminderService.clearRemindersForApplicationUpdate(from: center)
+            XCTFail("Replacement must not proceed while pending reminders remain")
+        } catch { XCTAssertTrue(error is ReminderError) }
+    }
+
     private var calendar: Calendar {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(secondsFromGMT: 0)!
@@ -470,6 +500,7 @@ private actor ReminderNotificationCenterRecorder: ReminderNotificationCenter {
     private var deliveredQueryCount = 0
     private let restoreAfterDeliveredQueries: Int?
     private let keepsPendingRequestsOnRemoval: Bool
+    private let keepsDeliveredRequestsOnRemoval: Bool
     private var pendingRemovalFailuresRemaining: Int
 
     init(
@@ -478,6 +509,7 @@ private actor ReminderNotificationCenterRecorder: ReminderNotificationCenter {
         restoredDelivered: [String] = [],
         restoreAfterDeliveredQueries: Int? = nil,
         keepsPendingRequestsOnRemoval: Bool = false,
+        keepsDeliveredRequestsOnRemoval: Bool = false,
         pendingRemovalFailuresRemaining: Int = 0
     ) {
         self.pending = Set(pending)
@@ -485,6 +517,7 @@ private actor ReminderNotificationCenterRecorder: ReminderNotificationCenter {
         self.restoredDelivered = Set(restoredDelivered)
         self.restoreAfterDeliveredQueries = restoreAfterDeliveredQueries
         self.keepsPendingRequestsOnRemoval = keepsPendingRequestsOnRemoval
+        self.keepsDeliveredRequestsOnRemoval = keepsDeliveredRequestsOnRemoval
         self.pendingRemovalFailuresRemaining = pendingRemovalFailuresRemaining
     }
 
@@ -531,6 +564,7 @@ private actor ReminderNotificationCenterRecorder: ReminderNotificationCenter {
     }
 
     func removeDeliveredReminderNotifications(withIdentifiers identifiers: [String]) async {
+        guard !keepsDeliveredRequestsOnRemoval else { return }
         delivered.subtract(identifiers)
     }
 }

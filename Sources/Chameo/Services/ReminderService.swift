@@ -20,6 +20,35 @@ enum ReminderService {
         category: "reminders"
     )
 
+    // Keep the old code identity alive until its reminders are gone. The queue
+    // drains earlier work and suppresses refresh/settings work during replacement.
+    static func prepareForApplicationUpdate() async throws {
+        try await operationQueue.suspend {
+            try await clearRemindersForApplicationUpdate(from: SystemReminderNotificationCenter())
+        }
+    }
+
+    static func resumeAfterApplicationUpdateCancellation() async {
+        await operationQueue.resume()
+        await refreshRemindersFromStoredSettings()
+    }
+
+    static func clearRemindersForApplicationUpdate(
+        from center: any ReminderNotificationCenter
+    ) async throws {
+        for _ in 0..<pendingRemovalAttempts {
+            let pending = await center.pendingReminderNotificationIdentifiers().filter(isReminderIdentifier)
+            let delivered = await center.deliveredReminderNotificationIdentifiers().filter(isReminderIdentifier)
+            await center.removePendingReminderNotifications(withIdentifiers: pending)
+            await center.removeDeliveredReminderNotifications(withIdentifiers: delivered)
+            try await Task.sleep(for: selfieDeliveredCleanupDelay)
+            let remainingPending = await center.pendingReminderNotificationIdentifiers().filter(isReminderIdentifier)
+            let remainingDelivered = await center.deliveredReminderNotificationIdentifiers().filter(isReminderIdentifier)
+            if remainingPending.isEmpty && remainingDelivered.isEmpty { return }
+        }
+        throw ReminderError.updateTimedOut
+    }
+
     static func authorizationStatus() async -> UNAuthorizationStatus {
         await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
     }

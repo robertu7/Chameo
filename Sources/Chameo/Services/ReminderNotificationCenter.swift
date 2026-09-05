@@ -46,8 +46,31 @@ struct SystemReminderNotificationCenter: @unchecked Sendable, ReminderNotificati
 
 actor ReminderOperationQueue {
     private var tail: Task<Void, Never>?
+    private var isSuspended = false
+
+    func suspend(perform cleanup: @escaping @Sendable () async throws -> Void) async throws {
+        try await enqueue {
+            await self.setSuspended(true)
+            try await cleanup()
+        }
+    }
+
+    func resume() async {
+        try? await enqueue { await self.setSuspended(false) }
+    }
+
+    private func setSuspended(_ value: Bool) {
+        isSuspended = value
+    }
 
     func perform(_ operation: @escaping @Sendable () async throws -> Void) async throws {
+        try await enqueue {
+            guard await !self.isSuspended else { return }
+            try await operation()
+        }
+    }
+
+    private func enqueue(_ operation: @escaping @Sendable () async throws -> Void) async throws {
         let previous = tail
         let operationTask = Task<Result<Void, Error>, Never> {
             await previous?.value

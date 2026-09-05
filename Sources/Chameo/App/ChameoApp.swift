@@ -15,6 +15,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     private var reminderRefreshTask: Task<Void, Never>?
     private var libraryRefreshTask: Task<Void, Never>?
 
+    private var updateTerminationTask: Task<Void, Never>?
+
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard updateTerminationTask == nil else { return .terminateLater }
+        guard updateController.reminderBarrier.requiresCleanup else { return .terminateNow }
+        updateTerminationTask = Task {
+            let mayTerminate = await updateController.reminderBarrier.prepareForTermination()
+            updateTerminationTask = nil
+            sender.reply(toApplicationShouldTerminate: mayTerminate)
+            if !mayTerminate && updateController.reminderBarrier.requiresCleanup {
+                NSAlert(error: ReminderError.updateTimedOut).runModal()
+            }
+        }
+        return .terminateLater
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         configureUserDefaults()
         NSApp.setActivationPolicy(.accessory)
