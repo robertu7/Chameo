@@ -18,13 +18,14 @@ final class TimelapseWindowController: NSWindowController {
         window.title = L10n.string("Timelapse")
         window.isReleasedWhenClosed = false
         window.isRestorable = false
-        window.contentMinSize = NSSize(width: 560, height: 580)
         window.contentViewController = NSHostingController(rootView:
             TimelapseExportView(onCreate: { [weak window] in export.chooseDestination(in: window) })
                 .environmentObject(export)
                 .environmentObject(libraryStore)
                 .environmentObject(localizationController)
         )
+        // Installing the content controller can resize the window, so constrain it afterward.
+        window.contentMinSize = NSSize(width: 560, height: 580)
         window.setContentSize(Self.contentSize)
         window.center()
         super.init(window: window)
