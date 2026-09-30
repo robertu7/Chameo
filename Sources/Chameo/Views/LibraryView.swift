@@ -5,6 +5,7 @@ struct LibraryView: View {
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var libraryStore: LibraryStore
     let albumName: String
+    let onOpenTimelapse: () -> Void
 
     @State private var didDeletePhoto = false
     @EnvironmentObject private var timelapseExport: TimelapseExportController
@@ -80,7 +81,7 @@ struct LibraryView: View {
         if !timelapseExport.hasStatus && !timelapseExport.isBusy {
             timelapseExport.prepare(assets: libraryStore.timelapseAssets())
         }
-        appState.destination = .timelapse
+        onOpenTimelapse()
     }
 }
 

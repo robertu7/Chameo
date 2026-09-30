@@ -72,7 +72,7 @@ final class TimelapseExportController: ObservableObject {
         notificationStatus = await notifications.authorizationStatus()
     }
 
-    func chooseDestination() {
+    func chooseDestination(in window: NSWindow? = nil) {
         guard !isBusy, !assets.isEmpty else { return }
         state = .choosingDestination
         let panel = NSSavePanel()
@@ -81,10 +81,15 @@ final class TimelapseExportController: ObservableObject {
         panel.nameFieldStringValue = previousDestination?.lastPathComponent ?? L10n.string("Chameo Timelapse.mp4")
         panel.directoryURL = previousDestination?.deletingLastPathComponent()
         panel.prompt = L10n.string("Save")
-        panel.begin { [weak self] response in
+        let completion: (NSApplication.ModalResponse) -> Void = { [weak self] response in
             guard let self else { return }
             self.savePanel = nil
             self.destinationChosen(response == .OK ? panel.url : nil)
+        }
+        if let window {
+            panel.beginSheetModal(for: window, completionHandler: completion)
+        } else {
+            panel.begin(completionHandler: completion)
         }
     }
 

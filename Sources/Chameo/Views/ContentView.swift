@@ -2,6 +2,8 @@ import AppKit
 import SwiftUI
 
 struct ContentView: View {
+    let onOpenTimelapse: () -> Void
+
     @EnvironmentObject private var timelapseExport: TimelapseExportController
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var cameraService: CameraService
@@ -19,7 +21,7 @@ struct ContentView: View {
     var body: some View {
         Group {
             switch appState.destination {
-            case .main, .timelapse:
+            case .main:
                 mainContent
             case .settings:
                 settingsContent
@@ -59,34 +61,24 @@ struct ContentView: View {
 
     private var mainContent: some View {
         VStack(spacing: 0) {
-            TabPicker(selection: Binding(
-                get: { appState.selectedTab },
-                set: { tab in
-                    appState.destination = .main
-                    appState.selectedTab = tab
-                }
-            ))
+            TabPicker(selection: $appState.selectedTab)
                 .frame(height: 24)
                 .fixedSize(horizontal: true, vertical: false)
                 .padding([.top, .horizontal], ChameoLayout.outerInset)
                 .padding(.bottom, 28)
 
             Group {
-                if appState.destination == .timelapse {
-                    TimelapseExportView()
-                } else {
-                    switch appState.selectedTab {
-                    case .camera:
-                        CameraView(
-                            albumName: albumName,
-                            handsFreeCountdown: handsFreeCountdown,
-                            showFaceGuide: showFaceGuide,
-                            saveLocation: saveLocation,
-                            statusMessage: $statusMessage
-                        )
-                    case .library:
-                        LibraryView(albumName: albumName)
-                    }
+                switch appState.selectedTab {
+                case .camera:
+                    CameraView(
+                        albumName: albumName,
+                        handsFreeCountdown: handsFreeCountdown,
+                        showFaceGuide: showFaceGuide,
+                        saveLocation: saveLocation,
+                        statusMessage: $statusMessage
+                    )
+                case .library:
+                    LibraryView(albumName: albumName, onOpenTimelapse: onOpenTimelapse)
                 }
             }
             .frame(
@@ -115,7 +107,7 @@ struct ContentView: View {
                 VStack(spacing: 2) {
                     if timelapseExport.hasStatus {
                         Button {
-                            appState.destination = .timelapse
+                            onOpenTimelapse()
                         } label: {
                             Text(timelapseExport.footerText)
                                 .lineLimit(1)
@@ -182,7 +174,7 @@ struct ContentView: View {
             SettingsView(layout: .embedded)
             if timelapseExport.hasStatus {
                 Button(timelapseExport.footerText) {
-                    appState.destination = .timelapse
+                    onOpenTimelapse()
                 }
                 .buttonStyle(.borderless)
                 .font(.caption)

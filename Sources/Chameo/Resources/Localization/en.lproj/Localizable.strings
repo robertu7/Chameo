@@ -233,3 +233,10 @@
 "Could not open timelapse" = "Could not open timelapse";
 "Close" = "Close";
 "1 photo" = "1 photo";
+
+// Timelapse window
+"Your Chameos, brought together." = "Your Chameos, brought together.";
+"All album photos" = "All album photos";
+"Video duration" = "Video duration";
+"%.1f seconds" = "%.1f seconds";
+"Format" = "Format";

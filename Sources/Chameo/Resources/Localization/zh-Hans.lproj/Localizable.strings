@@ -233,3 +233,10 @@
 "Could not open timelapse" = "无法打开延时视频";
 "Close" = "关闭";
 "1 photo" = "1 张照片";
+
+// Timelapse window
+"Your Chameos, brought together." = "把每一天的 Chameo 串成回忆。";
+"All album photos" = "相簿中的全部照片";
+"Video duration" = "视频时长";
+"%.1f seconds" = "%.1f 秒";
+"Format" = "格式";

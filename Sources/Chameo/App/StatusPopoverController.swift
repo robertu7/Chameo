@@ -12,6 +12,7 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
     private let updateController: UpdateController
     private let statusItem: NSStatusItem
     private let popover: NSPopover
+    private var timelapseWindowController: TimelapseWindowController?
     private var standaloneWindowController: StandaloneChameoWindowController?
     private var localEventMonitor: Any?
     private var globalEventMonitor: Any?
@@ -134,8 +135,20 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
         syncCameraLifecycle()
     }
 
+    private func showTimelapse() {
+        if popover.isShown { close() }
+        if timelapseWindowController == nil {
+            timelapseWindowController = TimelapseWindowController(
+                export: timelapseExport,
+                libraryStore: libraryStore,
+                localizationController: localizationController
+            )
+        }
+        timelapseWindowController?.present()
+    }
+
     private func makeContentView() -> some View {
-        ContentView()
+        ContentView(onOpenTimelapse: { [weak self] in self?.showTimelapse() })
             .environmentObject(appState)
             .environmentObject(cameraService)
             .environmentObject(libraryStore)

@@ -210,7 +210,30 @@ private final class FakeTimelapseNotifications: TimelapseNotifying {
 
 
 extension TimelapseExportTests {
-    func testExportScreenRendersAtPopoverSizeInEveryLanguage() async throws {
+    func testClosingExportWindowKeepsTaskAndReusesWindow() async throws {
+        let probe = ExportProbe()
+        let controller = makeController(probe: probe)
+        controller.prepare(assets: [asset(), asset()])
+        let video = try temporaryVideo()
+        defer { try? FileManager.default.removeItem(at: video.deletingLastPathComponent()) }
+        controller.destinationChosen(video)
+        await waitUntil { probe.callback != nil }
+        let presenter = TimelapseWindowController(export: controller, libraryStore: LibraryStore(),
+                                                  localizationController: LocalizationController())
+        let window = try XCTUnwrap(presenter.window)
+        XCTAssertTrue(window.styleMask.contains(.resizable))
+        XCTAssertEqual(window.contentMinSize, NSSize(width: 560, height: 580))
+        window.close()
+        XCTAssertTrue(presenter.window === window)
+        XCTAssertEqual(controller.state, .running)
+        await probe.send(.framesWritten(1))
+        XCTAssertEqual(controller.completedPhotos, 1)
+        probe.finish()
+        await waitUntil { !controller.isBusy }
+        guard case .succeeded = controller.state else { return XCTFail("Closing the window must not cancel export") }
+    }
+
+    func testExportScreenRendersAtWindowSizeInEveryLanguage() async throws {
         let previous = UserDefaults.standard.object(forKey: AppPreferenceKey.language)
         defer {
             if let previous { UserDefaults.standard.set(previous, forKey: AppPreferenceKey.language) }
@@ -237,16 +260,17 @@ extension TimelapseExportTests {
     }
 
     private func render(_ controller: TimelapseExportController, to url: URL) throws {
-        let view = TimelapseExportView()
+        let view = TimelapseExportView(thumbnailLoader: { _ in nil })
+            .environmentObject(LocalizationController())
             .environmentObject(AppState())
             .environmentObject(LibraryStore())
             .environmentObject(controller)
             .environment(\.locale, L10n.currentLocalization.displayLocale)
-            .frame(width: ChameoLayout.contentWidth, height: ChameoLayout.contentHeight)
+            .frame(width: TimelapseWindowController.contentSize.width, height: TimelapseWindowController.contentSize.height)
             .background(Color(nsColor: .windowBackgroundColor))
         // ImageRenderer cannot draw AppKit-backed scroll views and controls.
         // Render a real hosting view in an offscreen window instead.
-        let rect = NSRect(x: 0, y: 0, width: ChameoLayout.contentWidth, height: ChameoLayout.contentHeight)
+        let rect = NSRect(x: 0, y: 0, width: TimelapseWindowController.contentSize.width, height: TimelapseWindowController.contentSize.height)
         let hosting = NSHostingView(rootView: view)
         let window = NSWindow(contentRect: rect, styleMask: .borderless, backing: .buffered, defer: false)
         window.contentView = hosting
@@ -255,8 +279,8 @@ extension TimelapseExportTests {
         hosting.displayIfNeeded()
         let bitmap = try XCTUnwrap(hosting.bitmapImageRepForCachingDisplay(in: rect))
         hosting.cacheDisplay(in: rect, to: bitmap)
-        XCTAssertGreaterThanOrEqual(bitmap.pixelsWide, Int(ChameoLayout.contentWidth))
-        XCTAssertGreaterThanOrEqual(bitmap.pixelsHigh, Int(ChameoLayout.contentHeight))
+        XCTAssertGreaterThanOrEqual(bitmap.pixelsWide, Int(TimelapseWindowController.contentSize.width))
+        XCTAssertGreaterThanOrEqual(bitmap.pixelsHigh, Int(TimelapseWindowController.contentSize.height))
         let png = try XCTUnwrap(bitmap.representation(using: .png, properties: [:]))
         try png.write(to: url)
     }
