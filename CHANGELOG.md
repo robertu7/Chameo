@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.4.1
+
+### What’s new
+
+- Moved timelapse creation into a dedicated resizable window, with local photo
+  previews and clearer export progress and completion details.
+
+### Fixes
+
+- None.
+
+### Known testing limitations
+
+- Timelapse photo and iCloud handling, notification actions, and remembered-file
+  behavior after relaunch are not covered by automated end-to-end validation.
+- Stage 1 builds are ad-hoc signed and are not notarized by Apple.
+- macOS may request Camera, Photos, Location, or Notification permission again
+  after an update.
+
 ## 0.4.0
 
 ### What’s new
