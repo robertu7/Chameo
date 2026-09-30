@@ -1,6 +1,5 @@
 import AppKit
 import SwiftUI
-import UniformTypeIdentifiers
 
 struct LibraryView: View {
     @EnvironmentObject private var appState: AppState
@@ -8,8 +7,7 @@ struct LibraryView: View {
     let albumName: String
 
     @State private var didDeletePhoto = false
-    @State private var isExportingTimelapse = false
-    @State private var timelapseErrorMessage: LocalizedMessage?
+    @EnvironmentObject private var timelapseExport: TimelapseExportController
 
     private var isPhotosPermissionError: Bool {
         switch PhotoLibraryService.authorizationStatus() {
@@ -41,7 +39,7 @@ struct LibraryView: View {
                     assets: libraryStore.assets,
                     selectedDay: $appState.selectedLibraryDay,
                     isRefreshing: libraryStore.isLoading,
-                    isExportingTimelapse: isExportingTimelapse,
+                    isExportingTimelapse: timelapseExport.isGenerating,
                     onTakeChameo: {
                         appState.selectedTab = .camera
                     },
@@ -50,7 +48,7 @@ struct LibraryView: View {
                 )
             }
 
-            if let error = libraryStore.errorMessage ?? timelapseErrorMessage {
+            if let error = libraryStore.errorMessage {
                 PermissionStatusInline(
                     message: error.text,
                     destination: isPhotosPermissionError ? .photos : nil
@@ -69,13 +67,6 @@ struct LibraryView: View {
 
             AccessibilityAnnouncement.post(newValue, priority: .high)
         }
-        .onChange(of: timelapseErrorMessage?.text) { _, newValue in
-            guard let newValue else {
-                return
-            }
-
-            AccessibilityAnnouncement.post(newValue, priority: .high)
-        }
     }
 
     private func delete(_ asset: ChameoAsset) async {
@@ -85,44 +76,11 @@ struct LibraryView: View {
         }
     }
 
-    @MainActor
     private func exportTimelapse() {
-        guard !isExportingTimelapse else {
-            return
+        if !timelapseExport.hasStatus && !timelapseExport.isBusy {
+            timelapseExport.prepare(assets: libraryStore.timelapseAssets())
         }
-
-        timelapseErrorMessage = nil
-        isExportingTimelapse = true
-
-        let savePanel = NSSavePanel()
-        savePanel.allowedContentTypes = [.mpeg4Movie]
-        savePanel.nameFieldStringValue = L10n.string("Chameo Timelapse.mp4")
-        savePanel.prompt = L10n.string("Save")
-
-        savePanel.begin { response in
-            guard response == .OK, let url = savePanel.url else {
-                isExportingTimelapse = false
-                return
-            }
-
-            Task {
-                let isAccessingSecurityScopedResource = url.startAccessingSecurityScopedResource()
-                defer {
-                    if isAccessingSecurityScopedResource {
-                        url.stopAccessingSecurityScopedResource()
-                    }
-                    isExportingTimelapse = false
-                }
-
-                do {
-                    let assets = libraryStore.timelapseAssets()
-                    try await TimelapseService.generate(assets: assets, to: url)
-                    NSWorkspace.shared.activateFileViewerSelecting([url])
-                } catch {
-                    timelapseErrorMessage = .error(error)
-                }
-            }
-        }
+        appState.destination = .timelapse
     }
 }
 

@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 
 struct ContentView: View {
+    @EnvironmentObject private var timelapseExport: TimelapseExportController
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var cameraService: CameraService
     @EnvironmentObject private var libraryStore: LibraryStore
@@ -18,7 +19,7 @@ struct ContentView: View {
     var body: some View {
         Group {
             switch appState.destination {
-            case .main:
+            case .main, .timelapse:
                 mainContent
             case .settings:
                 settingsContent
@@ -58,24 +59,34 @@ struct ContentView: View {
 
     private var mainContent: some View {
         VStack(spacing: 0) {
-            TabPicker(selection: $appState.selectedTab)
+            TabPicker(selection: Binding(
+                get: { appState.selectedTab },
+                set: { tab in
+                    appState.destination = .main
+                    appState.selectedTab = tab
+                }
+            ))
                 .frame(height: 24)
                 .fixedSize(horizontal: true, vertical: false)
                 .padding([.top, .horizontal], ChameoLayout.outerInset)
                 .padding(.bottom, 28)
 
             Group {
-                switch appState.selectedTab {
-                case .camera:
-                    CameraView(
-                        albumName: albumName,
-                        handsFreeCountdown: handsFreeCountdown,
-                        showFaceGuide: showFaceGuide,
-                        saveLocation: saveLocation,
-                        statusMessage: $statusMessage
-                    )
-                case .library:
-                    LibraryView(albumName: albumName)
+                if appState.destination == .timelapse {
+                    TimelapseExportView()
+                } else {
+                    switch appState.selectedTab {
+                    case .camera:
+                        CameraView(
+                            albumName: albumName,
+                            handsFreeCountdown: handsFreeCountdown,
+                            showFaceGuide: showFaceGuide,
+                            saveLocation: saveLocation,
+                            statusMessage: $statusMessage
+                        )
+                    case .library:
+                        LibraryView(albumName: albumName)
+                    }
                 }
             }
             .frame(
@@ -101,19 +112,29 @@ struct ContentView: View {
 
                 Spacer()
 
-                if let statusMessage {
-                    Text(statusMessage.text)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.center)
-                        .truncationMode(.tail)
-                        .frame(maxWidth: 260)
-                        .help(statusMessage.text)
-                        .accessibilityElement(children: .ignore)
-                        .accessibilityLabel(statusMessage.text)
-                        .accessibilityAddTraits(.updatesFrequently)
+                VStack(spacing: 2) {
+                    if timelapseExport.hasStatus {
+                        Button {
+                            appState.destination = .timelapse
+                        } label: {
+                            Text(timelapseExport.footerText)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                        }
+                        .buttonStyle(.borderless)
+                        .help(L10n.string("Show timelapse export"))
+                    }
+                    if let statusMessage {
+                        Text(statusMessage.text)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(timelapseExport.hasStatus ? 1 : 2)
+                            .multilineTextAlignment(.center)
+                            .help(statusMessage.text)
+                            .accessibilityLabel(statusMessage.text)
+                    }
                 }
+                .font(.caption)
+                .frame(maxWidth: 260)
 
                 Spacer()
 
@@ -159,6 +180,15 @@ struct ContentView: View {
             Divider()
 
             SettingsView(layout: .embedded)
+            if timelapseExport.hasStatus {
+                Button(timelapseExport.footerText) {
+                    appState.destination = .timelapse
+                }
+                .buttonStyle(.borderless)
+                .font(.caption)
+                .lineLimit(1)
+                .padding(.bottom, 8)
+            }
         }
     }
 

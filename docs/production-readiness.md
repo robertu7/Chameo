@@ -43,7 +43,7 @@ menu-bar app for personal use on macOS 14 or newer.
 - Location is disabled by default and requested only during an explicit save
   when enabled.
 - Timelapse export uses a standard save panel and holds security-scoped access
-  only for the export.
+  for generation and explicit result actions. A read-only file bookmark preserves access to the latest completed export after relaunch.
 - Chameo has no analytics SDK or credential store. Its only direct distribution
   network path is the sandboxed Sparkle updater, which checks the configured
   GitHub Pages feed and downloads user-approved releases. Photos and geocoding

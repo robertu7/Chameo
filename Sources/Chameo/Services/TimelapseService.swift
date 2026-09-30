@@ -28,14 +28,33 @@ enum TimelapseError: LocalizedError {
 
 enum TimelapseService {
     private static let videoSize = CGSize(width: 1080, height: 1080)
-    private static let framesPerSecond: CMTimeScale = 10
+    static let framesPerSecond: CMTimeScale = 10
+    typealias ProgressHandler = @Sendable (TimelapseProgress) async -> Void
+    typealias ImageLoader = (PHAsset, @escaping @Sendable (Double) async -> Void) async throws -> CGImage
     private static let imageContext = CIContext(options: [.cacheIntermediates: false])
 
-    static func generate(assets: [ChameoAsset], to outputURL: URL) async throws {
+    static func generate(
+        assets: [ChameoAsset], to outputURL: URL,
+        onProgress: @escaping ProgressHandler = { _ in },
+        imageLoader: @escaping ImageLoader = { asset, onDownload in
+            try await image(for: asset, onDownload: onDownload)
+        }
+    ) async throws {
         guard !assets.isEmpty else {
             throw TimelapseError.noAssets
         }
 
+        await onProgress(.preparing)
+        try await generateFile(to: outputURL) { stagedURL in
+            try await write(assets: assets, to: stagedURL, onProgress: onProgress, imageLoader: imageLoader)
+        }
+    }
+
+    /// The write closure must finish before the only cancellation/commit boundary.
+    static func generateFile(
+        to outputURL: URL, write: (URL) async throws -> Void
+    ) async throws {
+        try Task.checkCancellation()
         let fileManager = FileManager.default
         let replacementDirectory = try fileManager.url(
             for: .itemReplacementDirectory,
@@ -50,7 +69,7 @@ enum TimelapseService {
         let stagedURL = replacementDirectory
             .appendingPathComponent(UUID().uuidString)
             .appendingPathExtension("mp4")
-        try await write(assets: assets, to: stagedURL)
+        try await write(stagedURL)
         try Task.checkCancellation()
 
         if fileManager.fileExists(atPath: outputURL.path) {
@@ -60,7 +79,10 @@ enum TimelapseService {
         }
     }
 
-    private static func write(assets: [ChameoAsset], to outputURL: URL) async throws {
+    private static func write(
+        assets: [ChameoAsset], to outputURL: URL, onProgress: @escaping ProgressHandler,
+        imageLoader: @escaping ImageLoader
+    ) async throws {
         let assetWriter: AVAssetWriter
         do {
             assetWriter = try AVAssetWriter(outputURL: outputURL, fileType: .mp4)
@@ -105,7 +127,11 @@ enum TimelapseService {
         do {
             for (frameIndex, asset) in assets.enumerated() {
                 try Task.checkCancellation()
-                let image = try await image(for: asset.asset)
+                await onProgress(.loadingPhoto(frameIndex))
+                let image = try await imageLoader(asset.asset) { fraction in
+                    await onProgress(.downloadingPhoto(frameIndex, fraction))
+                }
+                try Task.checkCancellation()
                 let pixelBuffer = try makePixelBuffer(
                     for: image,
                     using: pixelBufferAdaptor
@@ -116,14 +142,15 @@ enum TimelapseService {
                 guard pixelBufferAdaptor.append(pixelBuffer, withPresentationTime: frameTime) else {
                     throw TimelapseError.writingFailed
                 }
+                await onProgress(.framesWritten(frameIndex + 1))
             }
 
+            assetWriter.endSession(atSourceTime: CMTime(value: CMTimeValue(assets.count), timescale: framesPerSecond))
             writerInput.markAsFinished()
-            await withCheckedContinuation { continuation in
-                assetWriter.finishWriting {
-                    continuation.resume()
-                }
-            }
+            await onProgress(.saving)
+            let completion = TimelapseWriterCompletion()
+            assetWriter.finishWriting { completion.finish() }
+            try await waitForFinalization(isFinished: { completion.isFinished })
 
             try Task.checkCancellation()
             guard assetWriter.status == .completed else {
@@ -140,16 +167,26 @@ enum TimelapseService {
         _ writerInput: AVAssetWriterInput,
         writer: AVAssetWriter
     ) async throws {
-        while !writerInput.isReadyForMoreMediaData {
+        try await waitForWriterReadiness(
+            isReady: { writerInput.isReadyForMoreMediaData },
+            isWriting: { writer.status == .writing }
+        )
+    }
+
+    static func waitForWriterReadiness(isReady: () -> Bool, isWriting: () -> Bool) async throws {
+        try Task.checkCancellation()
+        while !isReady() {
             try Task.checkCancellation()
-            guard writer.status == .writing else {
+            guard isWriting() else {
                 throw TimelapseError.writingFailed
             }
             try await Task.sleep(for: .milliseconds(10))
         }
     }
 
-    private static func image(for asset: PHAsset) async throws -> CGImage {
+    private static func image(
+        for asset: PHAsset, onDownload: @escaping @Sendable (Double) async -> Void
+    ) async throws -> CGImage {
         let imageManager = PHImageManager.default()
         let requestState = TimelapseImageRequestState()
 
@@ -163,6 +200,10 @@ enum TimelapseService {
                 options.deliveryMode = .highQualityFormat
                 options.resizeMode = .exact
                 options.isNetworkAccessAllowed = true
+                options.progressHandler = { fraction, _, _, _ in
+                    guard fraction.isFinite, requestState.shouldReportProgress() else { return }
+                    Task { await onDownload(fraction) }
+                }
 
                 let requestID = imageManager.requestImage(
                     for: asset,
@@ -179,6 +220,7 @@ enum TimelapseService {
                         return
                     }
 
+                    guard (info?[PHImageResultIsDegradedKey] as? Bool) != true else { return }
                     guard let image else {
                         requestState.resume(throwing: TimelapseError.imageUnavailable)
                         return
@@ -201,6 +243,14 @@ enum TimelapseService {
         } onCancel: {
             requestState.cancel(imageManager: imageManager)
         }
+    }
+
+    static func waitForFinalization(isFinished: () -> Bool) async throws {
+        while !isFinished() {
+            try Task.checkCancellation()
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        try Task.checkCancellation()
     }
 
     private static func makePixelBuffer(
@@ -236,72 +286,5 @@ enum TimelapseService {
             colorSpace: CGColorSpace(name: CGColorSpace.sRGB)
         )
         return pixelBuffer
-    }
-}
-
-private final class TimelapseImageRequestState: @unchecked Sendable {
-    private let lock = NSLock()
-    private var continuation: CheckedContinuation<CGImage, Error>?
-    private var requestID: PHImageRequestID?
-    private var isCancelled = false
-
-    func install(_ continuation: CheckedContinuation<CGImage, Error>) -> Bool {
-        lock.lock()
-        if isCancelled {
-            lock.unlock()
-            continuation.resume(throwing: CancellationError())
-            return false
-        }
-        self.continuation = continuation
-        lock.unlock()
-        return true
-    }
-
-    func setRequestID(_ requestID: PHImageRequestID, imageManager: PHImageManager) {
-        lock.lock()
-        self.requestID = requestID
-        let shouldCancel = isCancelled
-        lock.unlock()
-
-        if shouldCancel {
-            imageManager.cancelImageRequest(requestID)
-        }
-    }
-
-    func cancel(imageManager: PHImageManager) {
-        lock.lock()
-        isCancelled = true
-        let requestID = requestID
-        let continuation = continuation
-        self.continuation = nil
-        lock.unlock()
-
-        if let requestID {
-            imageManager.cancelImageRequest(requestID)
-        }
-        continuation?.resume(throwing: CancellationError())
-    }
-
-    func resume(returning image: CGImage) {
-        resume { continuation in
-            continuation.resume(returning: image)
-        }
-    }
-
-    func resume(throwing error: Error) {
-        resume { continuation in
-            continuation.resume(throwing: error)
-        }
-    }
-
-    private func resume(_ action: (CheckedContinuation<CGImage, Error>) -> Void) {
-        lock.lock()
-        let continuation = continuation
-        self.continuation = nil
-        lock.unlock()
-
-        if let continuation {
-            action(continuation)
-        }
     }
 }

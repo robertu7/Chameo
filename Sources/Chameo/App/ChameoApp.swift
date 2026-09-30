@@ -9,6 +9,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     private let appState = AppState()
     private let cameraService = CameraService()
     private let libraryStore = LibraryStore()
+    private let timelapseNotifications = TimelapseNotificationService()
+    private lazy var timelapseExport = TimelapseExportController(notifications: timelapseNotifications)
+    private let timelapseOpenRequest = DeferredTimelapseOpenRequest()
     private let notificationOpenRequest = DeferredOpenRequest()
     private var statusPopoverController: StatusPopoverController?
     private var permissionOnboardingWindowController: PermissionOnboardingWindowController?
@@ -19,8 +22,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         guard updateTerminationTask == nil else { return .terminateLater }
-        guard updateController.reminderBarrier.requiresCleanup else { return .terminateNow }
+        timelapseExport.cancelDestinationPanel()
+        if timelapseExport.state == .running {
+            let alert = NSAlert()
+            alert.messageText = L10n.string("Cancel timelapse and quit?")
+            alert.informativeText = L10n.string("The unfinished export will be discarded. Any existing video at the destination will be kept.")
+            alert.addButton(withTitle: L10n.string("Keep Generating"))
+            alert.addButton(withTitle: L10n.string("Cancel Export and Quit"))
+            if alert.runModal() != .alertSecondButtonReturn {
+                if updateController.reminderBarrier.requiresCleanup {
+                    Task { await updateController.reminderBarrier.cancelUpdate() }
+                }
+                return .terminateCancel
+            }
+        } else if !timelapseExport.isGenerating && !updateController.reminderBarrier.requiresCleanup {
+            return .terminateNow
+        }
         updateTerminationTask = Task {
+            await timelapseExport.cancelAndWait()
             let mayTerminate = await updateController.reminderBarrier.prepareForTermination()
             updateTerminationTask = nil
             sender.reply(toApplicationShouldTerminate: mayTerminate)
@@ -36,6 +55,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         NSApp.setActivationPolicy(.accessory)
         UNUserNotificationCenter.current().delegate = self
         installRefreshObservers()
+        timelapseOpenRequest.installHandler { [weak self] id in
+            guard let self else { return }
+            self.timelapseExport.openResult(id: id)
+            if let error = self.timelapseExport.resultActionError {
+                let alert = NSAlert()
+                alert.messageText = L10n.string("Could not open timelapse")
+                alert.informativeText = error
+                alert.addButton(withTitle: L10n.string("Close"))
+                alert.runModal()
+            }
+        }
+        Task { await timelapseNotifications.registerCategory() }
 
         let requiredPermissions = SystemRequiredPermissionService()
         switch AppStartupPolicy.destination(
@@ -82,6 +113,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {
+        if notification.request.identifier == TimelapseNotificationPolicy.requestIdentifier {
+            return [.banner]
+        }
         guard ReminderService.shouldPresentReminderNotification(
             identifier: notification.request.identifier
         ) else {
@@ -96,6 +130,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse
     ) async {
+        if let id = TimelapseNotificationPolicy.exportID(
+            identifier: response.notification.request.identifier,
+            action: response.actionIdentifier,
+            userInfo: response.notification.request.content.userInfo
+        ) {
+            await MainActor.run { timelapseOpenRequest.performOrDefer(id) }
+            return
+        }
         guard let destination = ReminderNotificationResponsePolicy.destination(
             identifier: response.notification.request.identifier,
             actionIdentifier: response.actionIdentifier,
@@ -174,6 +216,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     }
 
     @objc private func languageDidChange(_ notification: Notification) {
+        Task { await timelapseNotifications.registerCategory() }
         refreshReminderNotifications()
     }
 
@@ -205,6 +248,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
                 appState: appState,
                 cameraService: cameraService,
                 libraryStore: libraryStore,
+                timelapseExport: timelapseExport,
                 localizationController: localizationController,
                 updateController: updateController
             )

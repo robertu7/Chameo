@@ -214,7 +214,7 @@ cat >>"$INFO_PLIST" <<PLIST
   <key>NSLocationWhenInUseUsageDescription</key>
   <string>Chameo can add your current city and country to photos you save.</string>
   <key>NSUserNotificationUsageDescription</key>
-  <string>Chameo sends reminders to take your daily photo.</string>
+  <string>Chameo sends daily photo reminders and notifications when timelapse videos are ready.</string>
   <key>NSPrincipalClass</key>
   <string>NSApplication</string>
 </dict>

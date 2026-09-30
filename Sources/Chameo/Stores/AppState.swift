@@ -10,6 +10,7 @@ final class AppState: ObservableObject {
 enum ChameoDestination {
     case main
     case settings
+    case timelapse
 }
 
 enum ChameoTab: String, CaseIterable, Identifiable {

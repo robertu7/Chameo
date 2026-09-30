@@ -6,6 +6,7 @@ import SwiftUI
 final class StatusPopoverController: NSObject, NSPopoverDelegate {
     private let appState: AppState
     private let cameraService: CameraService
+    private let timelapseExport: TimelapseExportController
     private let libraryStore: LibraryStore
     private let localizationController: LocalizationController
     private let updateController: UpdateController
@@ -26,12 +27,14 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
         appState: AppState,
         cameraService: CameraService,
         libraryStore: LibraryStore,
+        timelapseExport: TimelapseExportController,
         localizationController: LocalizationController,
         updateController: UpdateController
     ) {
         self.appState = appState
         self.cameraService = cameraService
         self.libraryStore = libraryStore
+        self.timelapseExport = timelapseExport
         self.localizationController = localizationController
         self.updateController = updateController
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
@@ -136,6 +139,7 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
             .environmentObject(appState)
             .environmentObject(cameraService)
             .environmentObject(libraryStore)
+            .environmentObject(timelapseExport)
             .environmentObject(localizationController)
             .environmentObject(updateController)
             .environment(\.locale, localizationController.displayLocale)

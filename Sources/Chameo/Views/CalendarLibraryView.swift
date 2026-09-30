@@ -179,7 +179,7 @@ struct CalendarLibraryView: View {
             }
             .buttonStyle(.bordered)
             .frame(width: ChameoLayout.timelapseButtonWidth)
-            .disabled(isExportingTimelapse || assets.isEmpty)
+            .disabled(!isExportingTimelapse && assets.isEmpty)
             .help(L10n.string("Create Timelapse"))
             .accessibilityLabel(
                 isExportingTimelapse

@@ -66,7 +66,7 @@ Behavior:
 
 ## Notifications
 
-Purpose: remind the user to take a Chameo.
+Purpose: remind the user to take a Chameo and announce completed timelapse exports.
 
 Bundle key:
 
@@ -77,6 +77,8 @@ Behavior:
 - The app schedules dated primary notifications for upcoming reminder days.
 - Updating reminder settings reconciles pending requests, and saving a Chameo cancels remaining reminders and clears delivered reminder banners for that completed day.
 - Clicking a reminder notification opens the app to the Camera tab.
+- Timelapse export requests authorization after Save if permission is undetermined. Declining does not prevent export.
+- Silent completion notifications offer Open Folder; their actions resolve the saved export independently of reminder routing.
 
 ## User-Selected Files
 
@@ -85,10 +87,11 @@ Purpose: write a timelapse MP4 only to the destination selected in the standard 
 Entitlement:
 
 - `com.apple.security.files.user-selected.read-write`
+- `com.apple.security.files.bookmarks.app-scope` (a read-only bookmark for the latest completed timelapse)
 
 Behavior:
 
-- Chameo holds security-scoped access only for the duration of the export.
+- Chameo holds security-scoped access during generation and explicit result actions; a read-only bookmark remembers the latest completed file across relaunches.
 - Video is staged in an item-replacement directory so a failed export does not destroy an existing destination file.
 
 ## Library Deletion

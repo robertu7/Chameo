@@ -89,7 +89,14 @@ Camera hardware starts only when the Camera tab is visible. It stops when the us
 - `TimelapseService`
   - Loads the selected Photos assets without blocking the main actor.
   - Writes frames to a staged square H.264 MP4 and replaces the selected destination only after a successful export.
+  - Emits ordered frame counts and per-photo iCloud download progress; finalization remains cancellable.
   - Cancels Photos requests and video writing when its task is cancelled.
+- `TimelapseExportController`
+  - Owns one export independently of Library view, tab, popover, and standalone-window lifetimes.
+  - Presents an all-album summary, progress/cancellation, retry, and explicit result actions.
+- `TimelapseNotificationService` / `TimelapseResultStore`
+  - Sends silent completion notifications with an Open Folder action, separate from reminders.
+  - Persists the latest completed export and a read-only security-scoped file bookmark for notification clicks after relaunch.
 
 - `ReminderService`
   - Schedules dated primary notifications.
@@ -121,7 +128,7 @@ Camera hardware starts only when the Camera tab is visible. It stops when the us
   - Hover, focus, and selected-day previews with thumbnails, local date/time,
     location name, and multiple-photo access.
   - Inline destructive confirmation before Photos deletion.
-  - Standard Save panel and progress/error state for timelapse export.
+  - Dedicated timelapse summary/progress/result screen, standard Save panel, and persistent export footer.
 
 - `SettingsView`
   - Opens inside the existing Chameo popover with a contextual back action.
