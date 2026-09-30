@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.4.0
+
+### What’s new
+
+- Added a persistent timelapse export experience with progress, iCloud download
+  status, cancellation, retry, and a completion notification with Open Folder.
+
+### Fixes
+
+- None.
+
+### Known testing limitations
+
+- Timelapse photo and iCloud handling, notification actions, and remembered-file
+  behavior after relaunch are not covered by automated end-to-end validation.
+- Stage 1 builds are ad-hoc signed and are not notarized by Apple.
+- macOS may request Camera, Photos, Location, or Notification permission again
+  after an update.
+
 ## 0.3.15
 
 ### What’s new
