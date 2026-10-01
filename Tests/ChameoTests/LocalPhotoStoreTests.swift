@@ -5,20 +5,33 @@ import XCTest
 
 @MainActor
 final class LocalPhotoStoreTests: XCTestCase {
-    func testDisabledByDefaultAndDoesNotWrite() async throws {
+    func testEnabledByDefaultAndSavesWithoutFolderSelection() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
         let settings = await fixture.store.settings()
-        XCTAssertFalse(settings.isEnabled)
+        XCTAssertTrue(settings.isEnabled)
+        XCTAssertEqual(settings.activeFolder?.displayPath, fixture.folder.path)
         let saved = try await fixture.store.saveOriginal(try localTestJPEG(), source: localTestSnapshot())
-        XCTAssertFalse(saved)
-        XCTAssertTrue(try fixture.photos().isEmpty)
+        XCTAssertTrue(saved)
+        XCTAssertEqual(try fixture.photos().count, 1)
+        XCTAssertEqual(fixture.access.bookmarkCount, 0)
+        XCTAssertEqual(fixture.access.starts, 0)
+    }
+
+    func testCreatesFixedFolderOnSaveButNotDuringInitialization() async throws {
+        let fixture = try LocalPhotoFixture()
+        defer { fixture.remove() }
+        try FileManager.default.removeItem(at: fixture.folder)
+        let store = fixture.recreateStore()
+        _ = await store.settings()
+        XCTAssertFalse(FileManager.default.fileExists(atPath: fixture.folder.path))
+        try await store.saveOriginal(try localTestJPEG(), source: localTestSnapshot())
+        XCTAssertEqual(try fixture.photos().count, 1)
     }
 
     func testPreservesBytesFormatAndIndexAcrossRecreation() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
         let data = try localTestJPEG()
         let snapshot = localTestSnapshot()
         try await fixture.store.saveOriginal(data, source: snapshot, fileExtension: "heic")
@@ -37,7 +50,6 @@ final class LocalPhotoStoreTests: XCTestCase {
     func testConcurrentSavesProduceOneOriginalAndNoPartials() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
         let data = try localTestJPEG()
         try await withThrowingTaskGroup(of: Void.self) { group in
             for _ in 0..<8 {
@@ -53,44 +65,48 @@ final class LocalPhotoStoreTests: XCTestCase {
         XCTAssertEqual(try fixture.photos().count, 2)
     }
 
-    func testChangingFolderKeepsEarlierOriginalAndDisablingLeavesFiles() async throws {
+    func testMigratesCustomFolderForFutureWritesAndKeepsEarlierOriginal() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
         let data = try localTestJPEG()
         try await fixture.store.saveOriginal(data, source: localTestSnapshot())
-        let next = fixture.root.appendingPathComponent("second")
-        try FileManager.default.createDirectory(at: next, withIntermediateDirectories: true)
-        try await fixture.store.selectFolder(next)
-        let copy = try await fixture.store.original(for: localTestSnapshot())
+        let legacy = try await fixture.makeLegacyFolder()
+        let store = fixture.recreateStore()
+        let settings = await store.settings()
+        XCTAssertEqual(settings.activeFolder?.displayPath, fixture.folder.path)
+        let copy = try await store.original(for: localTestSnapshot())
         XCTAssertEqual(copy?.data, data)
-        try await fixture.store.saveOriginal(data, source: localTestSnapshot(id: "second"))
+        try await store.saveOriginal(data, source: localTestSnapshot(id: "second"))
         XCTAssertEqual(try fixture.photos().count, 1)
-        XCTAssertEqual(try FileManager.default.contentsOfDirectory(at: next, includingPropertiesForKeys: nil).count, 1)
-        try await fixture.store.setEnabled(false)
-        let disabledCopy = try await fixture.store.original(for: localTestSnapshot())
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(at: legacy, includingPropertiesForKeys: nil).count, 1)
+        let recreatedCopy = try await fixture.recreateStore().original(for: localTestSnapshot())
+        XCTAssertEqual(recreatedCopy?.data, data)
+        try await store.setEnabled(false)
+        let disabledCopy = try await store.original(for: localTestSnapshot())
         XCTAssertNil(disabledCopy)
         XCTAssertEqual(try fixture.photos().count, 1)
     }
 
-    func testInvalidDestinationLeavesSettingAndExistingFilesUntouched() async throws {
+    func testBlockedFixedFolderCannotEnableAndDoesNotOverwriteUserFile() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
+        try await fixture.store.setEnabled(false)
+        try FileManager.default.removeItem(at: fixture.folder)
+        let data = Data("user file".utf8)
+        try data.write(to: fixture.folder)
         let previous = await fixture.store.settings()
         do {
-            try await fixture.store.selectFolder(fixture.root.appendingPathComponent("missing"))
-            XCTFail("Expected missing folder to fail")
+            try await fixture.store.setEnabled(true)
+            XCTFail("Expected blocked folder to fail")
         } catch {}
         let current = await fixture.store.settings()
         XCTAssertEqual(current, previous)
-        XCTAssertTrue(try fixture.contents().isEmpty)
+        XCTAssertEqual(try Data(contentsOf: fixture.folder), data)
     }
 
     func testUserModifiedFileIsPreservedAndRejected() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
         try await fixture.store.saveOriginal(try localTestJPEG(), source: localTestSnapshot())
         let file = try XCTUnwrap(fixture.photos().first)
         let changed = Data("user edited this file".utf8)
@@ -106,7 +122,6 @@ final class LocalPhotoStoreTests: XCTestCase {
     func testCancelledSaveDoesNotCreateFile() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
         let data = try localTestJPEG()
         let task = Task {
             withUnsafeCurrentTask { $0?.cancel() }
@@ -120,17 +135,32 @@ final class LocalPhotoStoreTests: XCTestCase {
     func testStaleBookmarkIsRefreshedAndAccessIsBalanced() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
+        try await fixture.store.saveOriginal(try localTestJPEG(), source: localTestSnapshot())
+        _ = try await fixture.makeLegacyFolder()
+        let store = fixture.recreateStore()
         fixture.access.markStale()
-        _ = try await fixture.store.activeFolderURL()
-        XCTAssertEqual(fixture.access.bookmarkCount, 2)
+        _ = try await store.original(for: localTestSnapshot())
+        XCTAssertEqual(fixture.access.bookmarkCount, 1)
         XCTAssertEqual(fixture.access.starts, fixture.access.stops)
+    }
+
+    func testSavedOffSettingSurvivesMigrationAndRecreation() async throws {
+        let fixture = try LocalPhotoFixture()
+        defer { fixture.remove() }
+        let folder = LocalPhotoFolder(id: UUID(), bookmark: Data(fixture.root.path.utf8), displayPath: fixture.root.path)
+        try fixture.preferences.save(LocalPhotoConfiguration(isEnabled: false, activeFolderID: folder.id, folders: [folder]))
+        let store = fixture.recreateStore()
+        let settings = await store.settings()
+        XCTAssertFalse(settings.isEnabled)
+        XCTAssertEqual(settings.activeFolder?.displayPath, fixture.folder.path)
+        let saved = try await store.saveOriginal(try localTestJPEG(), source: localTestSnapshot())
+        XCTAssertFalse(saved)
+        XCTAssertTrue(try fixture.photos().isEmpty)
     }
 
     func testCorruptIndexNeverOverwritesOriginalFiles() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
         try Data("broken index".utf8).write(to: fixture.indexURL)
         let store = fixture.recreateStore()
         do { try await store.saveOriginal(try localTestJPEG(), source: localTestSnapshot()); XCTFail("Expected index error") }
@@ -158,11 +188,23 @@ final class LocalPhotoFixture: @unchecked Sendable {
         suite = "LocalPhotoTests-\(UUID().uuidString)"
         defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
         preferences = LocalPhotoPreferences(defaults: defaults)
-        store = LocalPhotoStore(indexURL: indexURL, preferences: preferences, folderAccess: access)
+        store = LocalPhotoStore(indexURL: indexURL, preferences: preferences, folderAccess: access, fixedFolderURL: folder)
     }
 
     func recreateStore() -> LocalPhotoStore {
-        LocalPhotoStore(indexURL: indexURL, preferences: preferences, folderAccess: access)
+        LocalPhotoStore(indexURL: indexURL, preferences: preferences, folderAccess: access, fixedFolderURL: folder)
+    }
+
+    /// Reproduce the old bookmark-backed preferences and indexed folder identity.
+    func makeLegacyFolder() async throws -> URL {
+        let current = await store.settings()
+        let active = try XCTUnwrap(current.activeFolder)
+        let legacy = root.appendingPathComponent("legacy")
+        try FileManager.default.moveItem(at: folder, to: legacy)
+        let oldFolder = LocalPhotoFolder(id: active.id, bookmark: Data(legacy.path.utf8), displayPath: legacy.path)
+        try preferences.save(LocalPhotoConfiguration(isEnabled: current.isEnabled,
+                                                    activeFolderID: oldFolder.id, folders: [oldFolder]))
+        return legacy
     }
     func contents() throws -> [URL] { try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil) }
     func photos() throws -> [URL] { try contents().filter { !$0.lastPathComponent.hasPrefix(".") } }

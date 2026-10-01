@@ -4,40 +4,44 @@ import XCTest
 
 @MainActor
 final class LocalPhotoSettingsTests: XCTestCase {
-    func testEnablingWithCancelledPickerStaysOff() async throws {
+    func testDefaultSettingsShowFixedFolderWithoutCreatingIt() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        let controller = LocalPhotoSettingsController(store: fixture.store, picker: { nil })
-        await controller.setEnabled(true)
-        XCTAssertFalse(controller.configuration.isEnabled)
-        XCTAssertNil(controller.configuration.activeFolder)
+        try FileManager.default.removeItem(at: fixture.folder)
+        let controller = LocalPhotoSettingsController(store: fixture.store)
+        await controller.refresh()
+        XCTAssertTrue(controller.configuration.isEnabled)
+        XCTAssertEqual(controller.configuration.activeFolder?.displayPath, fixture.folder.path)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: fixture.folder.path))
         XCTAssertNil(controller.errorMessage)
         XCTAssertFalse(controller.isBusy)
     }
 
-    func testCancelledChangeAndInvalidDestinationPreserveSelection() async throws {
+    func testEnableFailureKeepsSettingOffAndRetryClearsError() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
-        let cancelled = LocalPhotoSettingsController(store: fixture.store, picker: { nil })
-        await cancelled.refresh()
-        let previous = cancelled.configuration
-        await cancelled.chooseFolder()
-        XCTAssertEqual(cancelled.configuration, previous)
-        let invalid = LocalPhotoSettingsController(store: fixture.store, picker: { fixture.root.appendingPathComponent("missing") })
-        await invalid.refresh()
-        await invalid.chooseFolder()
-        XCTAssertEqual(invalid.configuration, previous)
-        XCTAssertNotNil(invalid.errorMessage)
+        let controller = LocalPhotoSettingsController(store: fixture.store)
+        await controller.setEnabled(false)
+        let previous = controller.configuration
+        try FileManager.default.removeItem(at: fixture.folder)
+        try Data("blocked".utf8).write(to: fixture.folder)
+        await controller.setEnabled(true)
+        XCTAssertEqual(controller.configuration, previous)
+        XCTAssertNotNil(controller.errorMessage)
+        XCTAssertFalse(controller.isBusy)
+        try FileManager.default.removeItem(at: fixture.folder)
+        await controller.setEnabled(true)
+        XCTAssertTrue(controller.configuration.isEnabled)
+        XCTAssertNil(controller.errorMessage)
     }
 
     func testSettingsRecreationRemembersFolderAndEnabledState() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        let first = LocalPhotoSettingsController(store: fixture.store, picker: { fixture.folder })
+        let first = LocalPhotoSettingsController(store: fixture.store)
         await first.setEnabled(true)
         XCTAssertTrue(first.configuration.isEnabled)
-        let next = LocalPhotoSettingsController(store: fixture.recreateStore(), picker: { nil })
+        let next = LocalPhotoSettingsController(store: fixture.recreateStore())
         await next.refresh()
         XCTAssertEqual(next.configuration, first.configuration)
         await next.setEnabled(false)
@@ -85,7 +89,6 @@ final class LocalPhotoSettingsTests: XCTestCase {
     func testSuccessfulCaptureSavesIdenticalBytesOnce() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
         let data = try localTestJPEG()
         var photosCalls = 0
         let result = try await CapturePhotoSaveService.save(

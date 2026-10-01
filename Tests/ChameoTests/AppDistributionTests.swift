@@ -17,6 +17,8 @@ final class AppDistributionTests: XCTestCase {
         XCTAssertEqual(configuration.defaultAlbumName, "Chameo")
         XCTAssertTrue(configuration.updatesEnabled)
         XCTAssertTrue(configuration.launchAtLoginEnabled)
+        XCTAssertEqual(LocalPhotoDestination.folder(in: URL(fileURLWithPath: "/Users/example"), distribution: configuration).path,
+                       "/Users/example/Pictures/Chameo")
     }
 
     func testTestConfigurationUsesSeparateIdentityAndDisablesReleaseCapabilities() {
@@ -34,6 +36,8 @@ final class AppDistributionTests: XCTestCase {
         XCTAssertEqual(configuration.defaultAlbumName, "Chameo (test)")
         XCTAssertFalse(configuration.updatesEnabled)
         XCTAssertFalse(configuration.launchAtLoginEnabled)
+        XCTAssertEqual(LocalPhotoDestination.folder(in: URL(fileURLWithPath: "/Users/example"), distribution: configuration).path,
+                       "/Users/example/Pictures/Chameo (test)")
     }
 
     func testMissingDistributionKeysUseSafeLocalDefaults() {

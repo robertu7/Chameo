@@ -8,7 +8,6 @@ final class TimelapsePhotoLoaderTests: XCTestCase {
     func testValidLocalOriginalWorksWithoutPhotosImageRequest() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
         let data = try localTestJPEG()
         try await fixture.store.saveOriginal(data, source: localTestSnapshot())
         let source = try TestTimelapsePhotoSource(data: data)
@@ -26,7 +25,6 @@ final class TimelapsePhotoLoaderTests: XCTestCase {
     func testDownloadsOlderOriginalOnceAndReusesIt() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
         let source = try TestTimelapsePhotoSource(data: localTestJPEG())
         let loader = TimelapsePhotoLoader(store: fixture.store, source: source)
         _ = try await loader.image(for: "asset", onDownload: { _ in })
@@ -39,7 +37,6 @@ final class TimelapsePhotoLoaderTests: XCTestCase {
     func testPhotosEditKeepsOriginalAndUsesCurrentImage() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
         let data = try localTestJPEG()
         try await fixture.store.saveOriginal(data, source: localTestSnapshot())
         let source = try TestTimelapsePhotoSource(data: data, snapshot: localTestSnapshot(modification: 2, edited: true))
@@ -54,7 +51,6 @@ final class TimelapsePhotoLoaderTests: XCTestCase {
     func testOlderEditedPhotoArchivesOriginalAndCombinesDownloadProgress() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
         let data = try localTestJPEG()
         let source = try TestTimelapsePhotoSource(data: data, snapshot: localTestSnapshot(edited: true))
         let loader = TimelapsePhotoLoader(store: fixture.store, source: source)
@@ -74,7 +70,6 @@ final class TimelapsePhotoLoaderTests: XCTestCase {
     func testEditDuringOriginalDownloadUsesCurrentPhotosImage() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
         let source = try TestTimelapsePhotoSource(data: localTestJPEG())
         source.changeDuringDownload(to: localTestSnapshot(modification: 2, edited: true))
         let loader = TimelapsePhotoLoader(store: fixture.store, source: source)
@@ -88,7 +83,6 @@ final class TimelapsePhotoLoaderTests: XCTestCase {
     func testUserModifiedLocalPhotoFallsBackWithoutReplacingIt() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
         try await fixture.store.saveOriginal(try localTestJPEG(), source: localTestSnapshot())
         let file = try XCTUnwrap(fixture.photos().first)
         let changed = Data("corrupt or edited file".utf8)
@@ -106,7 +100,6 @@ final class TimelapsePhotoLoaderTests: XCTestCase {
     func testMissingLocalFileIsDownloadedAgain() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
         try await fixture.store.saveOriginal(try localTestJPEG(), source: localTestSnapshot())
         try FileManager.default.removeItem(at: XCTUnwrap(fixture.photos().first))
         let source = try TestTimelapsePhotoSource(data: localTestJPEG())
@@ -119,8 +112,8 @@ final class TimelapsePhotoLoaderTests: XCTestCase {
     func testUnavailableFolderSkipsOriginalDownloadAndFallsBack() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
         try FileManager.default.removeItem(at: fixture.folder)
+        try Data("blocked destination".utf8).write(to: fixture.folder)
         let source = try TestTimelapsePhotoSource(data: localTestJPEG())
         let loader = TimelapsePhotoLoader(store: fixture.store, source: source)
         _ = try await loader.image(for: "asset", onDownload: { _ in })
@@ -133,12 +126,11 @@ final class TimelapsePhotoLoaderTests: XCTestCase {
     func testLocalWriteFailureStillUsesDownloadedOriginal() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
         // The index parent becomes a file, simulating a persistence failure.
         let blocked = fixture.root.appendingPathComponent("blocked")
         try Data().write(to: blocked)
         let store = LocalPhotoStore(indexURL: blocked.appendingPathComponent("index.json"),
-                                   preferences: fixture.preferences, folderAccess: fixture.access)
+                                   preferences: fixture.preferences, folderAccess: fixture.access, fixedFolderURL: fixture.folder)
         let source = try TestTimelapsePhotoSource(data: localTestJPEG())
         let loader = TimelapsePhotoLoader(store: store, source: source)
         let image = try await loader.image(for: "asset", onDownload: { _ in })
@@ -151,7 +143,6 @@ final class TimelapsePhotoLoaderTests: XCTestCase {
     func testDisabledStoreUsesPhotosEvenWithLocalOriginal() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
         try await fixture.store.saveOriginal(try localTestJPEG(), source: localTestSnapshot())
         try await fixture.store.setEnabled(false)
         let source = try TestTimelapsePhotoSource(data: localTestJPEG())
@@ -164,7 +155,6 @@ final class TimelapsePhotoLoaderTests: XCTestCase {
     func testLocalOriginalOrientationIsAppliedWithoutDownsizing() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
         let data = try localTestJPEG(orientation: 6)
         try await fixture.store.saveOriginal(data, source: localTestSnapshot())
         let loader = TimelapsePhotoLoader(store: fixture.store, source: try TestTimelapsePhotoSource(data: data))
@@ -176,7 +166,6 @@ final class TimelapsePhotoLoaderTests: XCTestCase {
     func testCancelledDownloadDoesNotFallBackOrSaveOriginal() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
         let source = try TestTimelapsePhotoSource(data: localTestJPEG())
         source.cancelOriginalDownload()
         let loader = TimelapsePhotoLoader(store: fixture.store, source: source)
@@ -191,7 +180,6 @@ final class TimelapsePhotoLoaderTests: XCTestCase {
     func testUnavailableBothSourcesFailsExportImageLoading() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
         let source = try TestTimelapsePhotoSource(data: localTestJPEG())
         source.failOriginalDownload()
         source.failCurrentImage()

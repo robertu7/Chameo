@@ -65,16 +65,30 @@ actor LocalPhotoStore {
     private let indexURL: URL
     private let preferences: LocalPhotoPreferences
     private let folderAccess: any LocalPhotoFolderAccess
+    private let fixedFolderURL: URL?
     private var configuration: LocalPhotoConfiguration
     private var index: Index?
 
     init(indexURL: URL = LocalPhotoStore.defaultIndexURL,
          preferences: LocalPhotoPreferences = LocalPhotoPreferences(),
-         folderAccess: any LocalPhotoFolderAccess = SecurityScopedPhotoFolderAccess()) {
+         folderAccess: any LocalPhotoFolderAccess = SecurityScopedPhotoFolderAccess(),
+         fixedFolderURL: URL? = LocalPhotoDestination.defaultURL) {
         self.indexURL = indexURL
         self.preferences = preferences
         self.folderAccess = folderAccess
-        configuration = preferences.load()
+        self.fixedFolderURL = fixedFolderURL
+        var loaded = preferences.load()
+        // Preserve legacy folder identities so the index can still read their
+        // originals. Future writes always target the entitlement-backed folder.
+        if let fixedFolderURL {
+            let id = loaded.folders.first { $0.bookmark == nil }?.id ?? UUID()
+            loaded.folders.removeAll { $0.id == id }
+            loaded.folders.append(LocalPhotoFolder(id: id, bookmark: nil, displayPath: fixedFolderURL.path))
+            loaded.activeFolderID = id
+        } else {
+            loaded.activeFolderID = nil
+        }
+        configuration = loaded
     }
 
     static var defaultIndexURL: URL {
@@ -87,50 +101,39 @@ actor LocalPhotoStore {
     func settings() -> LocalPhotoConfiguration { configuration }
 
     func setEnabled(_ enabled: Bool) throws {
-        guard !enabled || configuration.activeFolder != nil else { throw LocalPhotoError.folderUnavailable }
-        if enabled, let folder = configuration.activeFolder {
-            try withFolder(folder.id) { url in
-                guard FileManager.default.isWritableFile(atPath: url.path) else { throw LocalPhotoError.folderUnavailable }
-            }
-        }
+        if enabled { try prepareFixedFolder() }
         var next = configuration
         next.isEnabled = enabled
         try preferences.save(next)
         configuration = next
     }
 
-    /// Accept only a validated destination; cancellation is handled by the picker.
-    func selectFolder(_ url: URL, enable: Bool = true) throws {
-        let accessing = folderAccess.startAccessing(url)
-        defer { if accessing { folderAccess.stopAccessing(url) } }
+    /// Create only on a save, export, enable, or explicit Open Folder action.
+    /// A real write probe catches denied access before downloading old originals.
+    private func prepareFixedFolder() throws {
+        guard let url = fixedFolderURL, configuration.activeFolder != nil else {
+            throw LocalPhotoError.folderUnavailable
+        }
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
         try validateDirectory(url)
         let probe = url.appendingPathComponent(".chameo-\(UUID().uuidString).probe")
         defer { try? FileManager.default.removeItem(at: probe) }
         try Data().write(to: probe, options: [.withoutOverwriting])
-        let bookmark = try folderAccess.bookmark(for: url)
-        var next = configuration
-        // Reuse a folder identity when the user selects it again.
-        let id = next.folders.first { $0.displayPath == url.path }?.id ?? UUID()
-        next.folders.removeAll { $0.id == id }
-        next.folders.append(LocalPhotoFolder(id: id, bookmark: bookmark, displayPath: url.path))
-        next.activeFolderID = id
-        next.isEnabled = enable
-        try preferences.save(next)
-        configuration = next
+        // Persist the new folder identity before committing an index record.
+        try preferences.save(configuration)
     }
 
     func activeFolderURL() throws -> URL {
+        try prepareFixedFolder()
         guard let folder = configuration.activeFolder else { throw LocalPhotoError.folderUnavailable }
         return try withFolder(folder.id) { $0 }
     }
 
     func validateDestination() throws {
-        guard configuration.isEnabled, let folder = configuration.activeFolder else {
+        guard configuration.isEnabled else {
             throw LocalPhotoError.folderUnavailable
         }
-        try withFolder(folder.id) { url in
-            guard FileManager.default.isWritableFile(atPath: url.path) else { throw LocalPhotoError.folderUnavailable }
-        }
+        try prepareFixedFolder()
     }
 
     func original(for source: LocalPhotoSnapshot) throws -> StoredLocalPhoto? {
@@ -157,6 +160,7 @@ actor LocalPhotoStore {
         guard configuration.isEnabled else { return false }
         try Task.checkCancellation()
         try loadIndex()
+        try prepareFixedFolder()
         if try original(for: source) != nil { return true }
         guard let folder = configuration.activeFolder else { throw LocalPhotoError.folderUnavailable }
         let ext = try Self.imageExtension(data, suggested: fileExtension)
@@ -187,7 +191,13 @@ actor LocalPhotoStore {
         guard let position = configuration.folders.firstIndex(where: { $0.id == id }) else {
             throw LocalPhotoError.folderUnavailable
         }
-        let resolved = try folderAccess.resolve(configuration.folders[position].bookmark)
+        guard let bookmark = configuration.folders[position].bookmark else {
+            guard id == configuration.activeFolderID, let url = fixedFolderURL else {
+                throw LocalPhotoError.folderUnavailable
+            }
+            return try perform(url)
+        }
+        let resolved = try folderAccess.resolve(bookmark)
         let accessing = folderAccess.startAccessing(resolved.url)
         defer { if accessing { folderAccess.stopAccessing(resolved.url) } }
         try validateDirectory(resolved.url)

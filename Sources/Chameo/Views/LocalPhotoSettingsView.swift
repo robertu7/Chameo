@@ -31,9 +31,6 @@ struct LocalPhotoSettingsView: View {
                     .accessibilityLabel(L10n.string("Updating photo folder"))
             }
             Spacer()
-            Button(L10n.string("Choose Folder…")) {
-                Task { await localPhotos.chooseFolder() }
-            }
             Button(L10n.string("Open Folder")) {
                 Task { await localPhotos.openFolder() }
             }
@@ -41,7 +38,7 @@ struct LocalPhotoSettingsView: View {
         }
         .disabled(localPhotos.isBusy)
 
-        Text(L10n.string("Changing folders leaves existing copies in place. Turning this off keeps your saved files."))
+        Text(L10n.string("Turning this off keeps your saved files."))
             .font(.caption)
             .foregroundStyle(.secondary)
 

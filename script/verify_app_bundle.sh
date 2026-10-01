@@ -94,6 +94,7 @@ for entitlement in \
   com.apple.security.app-sandbox \
   com.apple.security.device.camera \
   com.apple.security.personal-information.photos-library \
+  com.apple.security.assets.pictures.read-write \
   com.apple.security.temporary-exception.mach-lookup.global-name; do
   if ! /usr/libexec/PlistBuddy -c "Print :$entitlement" "$ENTITLEMENTS_PATH" >/dev/null; then
     echo "missing signed entitlement: $entitlement" >&2

@@ -2,12 +2,13 @@ import Foundation
 
 struct LocalPhotoFolder: Codable, Equatable, Sendable, Identifiable {
     let id: UUID
-    var bookmark: Data
+    // Only destinations selected in older versions need security-scoped access.
+    var bookmark: Data?
     var displayPath: String
 }
 
 struct LocalPhotoConfiguration: Codable, Equatable, Sendable {
-    var isEnabled = false
+    var isEnabled = true
     var activeFolderID: UUID?
     var folders: [LocalPhotoFolder] = []
 
@@ -70,7 +71,7 @@ enum LocalPhotoError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .folderUnavailable:
-            return L10n.string("The photo folder is unavailable. Reconnect the drive or choose a folder in Settings.")
+            return L10n.string("The photo folder is unavailable. Check that your Pictures folder is writable and has enough free space.")
         case .fileChanged:
             return L10n.string("A local photo has changed. Chameo will use the version in Photos.")
         case .invalidIndex:

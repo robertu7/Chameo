@@ -94,6 +94,25 @@ Behavior:
 - Chameo holds security-scoped access during generation and explicit result actions; a read-only bookmark remembers the latest completed file across relaunches.
 - Video is staged in an item-replacement directory so a failed export does not destroy an existing destination file.
 
+## Local Photo Copies
+
+Purpose: retain user-facing originals in the fixed `~/Pictures/Chameo` folder
+(`~/Pictures/Chameo (test)` for the isolated test app). Enabled by default for new
+installations; a saved off setting is preserved.
+
+Entitlement:
+
+- `com.apple.security.assets.pictures.read-write`
+
+The entitlement grants access to the user's Pictures folder; Chameo writes its
+copies only to its own fixed subfolder. The folder is created on demand, without
+a folder chooser. The internal index remains in Application Support.
+
+Existing copies in previously selected folders remain in place. Their
+security-scoped bookmarks are retained for reading during exports. Turning
+folder saving off keeps all saved files. A folder failure does not undo a
+successful Photos save or prevent export from using Photos.
+
 ## Library Deletion
 
 Library deletion uses PhotoKit asset deletion. Deleting a photo from Chameo removes the original asset from Photos, not just from the configured album.

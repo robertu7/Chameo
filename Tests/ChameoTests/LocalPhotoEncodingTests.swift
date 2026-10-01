@@ -11,7 +11,6 @@ final class LocalPhotoEncodingTests: XCTestCase {
     func testLocalFirstResolverProducesReal1080SquareVideoAndPreservesCenterCrop() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
         let data = try stripedJPEG()
         let snapshot = localTestSnapshot()
         try await fixture.store.saveOriginal(data, source: snapshot)
@@ -49,8 +48,8 @@ final class LocalPhotoEncodingTests: XCTestCase {
     func testRealEncoderStillCompletesWhenLocalFolderFails() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
         try FileManager.default.removeItem(at: fixture.folder)
+        try Data("blocked destination".utf8).write(to: fixture.folder)
         let source = try TestTimelapsePhotoSource(data: localTestJPEG())
         let video = fixture.root.appendingPathComponent("video.mp4")
         let summary = try await TimelapseService.generate(
@@ -66,8 +65,8 @@ final class LocalPhotoEncodingTests: XCTestCase {
     func testExportCombinesLocalAndNotificationWarnings() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
-        try await fixture.store.selectFolder(fixture.folder)
         try FileManager.default.removeItem(at: fixture.folder)
+        try Data("blocked destination".utf8).write(to: fixture.folder)
         let source = try TestTimelapsePhotoSource(data: localTestJPEG())
         let notices = LocalPhotoFailingNotifications()
         let controller = TimelapseExportController(notifications: notices, localPhotos: fixture.store,

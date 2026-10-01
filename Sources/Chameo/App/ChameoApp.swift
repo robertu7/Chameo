@@ -1,5 +1,4 @@
 import AppKit
-import SwiftUI
 @preconcurrency import UserNotifications
 
 @MainActor
@@ -311,16 +310,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 }
 
 @main
-struct ChameoApp: App {
-    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+@MainActor
+enum ChameoApp {
+    static func main() {
+        let application = NSApplication.shared
+        let delegate = AppDelegate()
+        application.delegate = delegate
 
-    var body: some Scene {
-        Settings {
-            SettingsView()
-                .environmentObject(appDelegate.localizationController)
-                .environmentObject(appDelegate.updateController)
-                .environmentObject(appDelegate.localPhotos)
-                .environment(\.locale, appDelegate.localizationController.displayLocale)
+        // AppDelegate owns every window; Settings is presented inside ContentView.
+        // Keep the delegate alive because NSApplication holds it weakly.
+        withExtendedLifetime(delegate) {
+            application.run()
         }
     }
 }
