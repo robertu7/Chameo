@@ -241,7 +241,6 @@
 "%.1f seconds" = "%.1f seconds";
 "Format" = "Format";
 
-"Save Original Photos to a Folder" = "Save Original Photos to a Folder";
 
 "Saves new captures and downloads older originals during timelapse export." = "Saves new captures and downloads older originals during timelapse export.";
 
@@ -262,3 +261,15 @@
 "Could not read the local photo index. Chameo will use Photos." = "Could not read the local photo index. Chameo will use Photos.";
 
 "Could not read the original photo." = "Could not read the original photo.";
+"Keep Local Copies" = "Keep Local Copies";
+"Local copies are independent of Photos and iCloud. Deleting from either keeps the other copy." = "Local copies are independent of Photos and iCloud. Deleting from either keeps the other copy.";
+"Files removed from the folder stay removed. Use Save Local Copy in a photo's menu to restore a copy." = "Files removed from the folder stay removed. Use Save Local Copy in a photo's menu to restore a copy.";
+"Deletes from Photos and, if iCloud Photos is on, all synced devices. Keeps the local copy unless selected below." = "Deletes from Photos and, if iCloud Photos is on, all synced devices. Keeps the local copy unless selected below.";
+"Also Move the Local Copy to Trash" = "Also Move the Local Copy to Trash";
+"Delete from Photos" = "Delete from Photos";
+"Deleted from Photos. Could not move the local copy to Trash. Open Folder in Settings to manage it." = "Deleted from Photos. Could not move the local copy to Trash. Open Folder in Settings to manage it.";
+"Save Local Copy" = "Save Local Copy";
+"Photo Actions" = "Photo Actions";
+"Updating photo" = "Updating photo";
+"Local copy saved." = "Local copy saved.";
+"Local copies are off. Turn on Keep Local Copies in Settings." = "Local copies are off. Turn on Keep Local Copies in Settings.";

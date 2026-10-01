@@ -97,16 +97,35 @@ final class TimelapsePhotoLoaderTests: XCTestCase {
         XCTAssertEqual(failures, 1)
     }
 
-    func testMissingLocalFileIsDownloadedAgain() async throws {
+    func testRemovedLocalFileStaysRemovedAcrossExportsAndRelaunch() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
         try await fixture.store.saveOriginal(try localTestJPEG(), source: localTestSnapshot())
         try FileManager.default.removeItem(at: XCTUnwrap(fixture.photos().first))
         let source = try TestTimelapsePhotoSource(data: localTestJPEG())
-        let loader = TimelapsePhotoLoader(store: fixture.store, source: source)
+        let loader = TimelapsePhotoLoader(store: fixture.recreateStore(), source: source)
         _ = try await loader.image(for: "asset", onDownload: { _ in })
-        XCTAssertEqual(source.originalRequests, 1)
-        XCTAssertEqual(try fixture.photos().count, 1)
+        _ = try await loader.image(for: "asset", onDownload: { _ in })
+        XCTAssertEqual(source.originalRequests, 0)
+        XCTAssertEqual(source.currentRequests, 2)
+        XCTAssertTrue(try fixture.photos().isEmpty)
+        let failures = await loader.failureCount
+        XCTAssertEqual(failures, 0)
+    }
+
+    func testRemovedLocalFileCannotSupplyOfflineExportAndIsNotRecreated() async throws {
+        let fixture = try LocalPhotoFixture()
+        defer { fixture.remove() }
+        try await fixture.store.saveOriginal(try localTestJPEG(), source: localTestSnapshot())
+        try FileManager.default.removeItem(at: XCTUnwrap(fixture.photos().first))
+        let source = try TestTimelapsePhotoSource(data: localTestJPEG())
+        source.failCurrentImage()
+        let loader = TimelapsePhotoLoader(store: fixture.store, source: source)
+        do { _ = try await loader.image(for: "asset", onDownload: { _ in }); XCTFail("Expected unavailable photo") }
+        catch { XCTAssertEqual(error as? TimelapseError, .imageUnavailable) }
+        XCTAssertEqual(source.currentRequests, 1)
+        XCTAssertEqual(source.originalRequests, 0)
+        XCTAssertTrue(try fixture.photos().isEmpty)
     }
 
     func testUnavailableFolderSkipsOriginalDownloadAndFallsBack() async throws {

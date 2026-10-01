@@ -4,7 +4,7 @@ struct LocalPhotoSettingsView: View {
     @EnvironmentObject private var localPhotos: LocalPhotoSettingsController
 
     var body: some View {
-        Toggle(L10n.string("Save Original Photos to a Folder"), isOn: Binding(
+        Toggle(L10n.string("Keep Local Copies"), isOn: Binding(
             get: { localPhotos.configuration.isEnabled },
             set: { enabled in Task { await localPhotos.setEnabled(enabled) } }
         ))
@@ -12,6 +12,14 @@ struct LocalPhotoSettingsView: View {
         .accessibilityHint(L10n.string("Saves new captures and downloads older originals during timelapse export."))
 
         Text(L10n.string("Saves new captures and downloads older originals during timelapse export."))
+            .font(.caption)
+            .foregroundStyle(.secondary)
+
+        Text(L10n.string("Local copies are independent of Photos and iCloud. Deleting from either keeps the other copy."))
+            .font(.caption)
+            .foregroundStyle(.secondary)
+
+        Text(L10n.string("Files removed from the folder stay removed. Use Save Local Copy in a photo's menu to restore a copy."))
             .font(.caption)
             .foregroundStyle(.secondary)
 

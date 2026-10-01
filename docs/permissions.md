@@ -110,7 +110,12 @@ a folder chooser. The internal index remains in Application Support.
 
 Existing copies in previously selected folders remain in place. Their
 security-scoped bookmarks are retained for reading during exports. Turning
-folder saving off keeps all saved files. A folder failure does not undo a
+folder saving off keeps all saved files. Local copies are independent of Photos
+and iCloud deletion. Removing or renaming a copy in Finder does not delete its
+Photos asset; exports remember the previous copy and use Photos without
+recreating it. **Save Local Copy** in a photo's menu explicitly restores a missing
+copy while **Keep Local Copies** is on. This feature does not automatically copy
+the entire library. A folder failure does not undo a
 successful Photos save or prevent export from using Photos.
 
 ## Library Deletion
@@ -118,6 +123,13 @@ successful Photos save or prevent export from using Photos.
 Library deletion uses PhotoKit asset deletion. Deleting a photo from Chameo removes the original asset from Photos, not just from the configured album.
 
 Photos may move deleted items to Recently Deleted according to the system Photos behavior.
+
+The inline confirmation explains the effect on synced devices when iCloud
+Photos is enabled. An unchecked **Also Move the Local Copy to Trash** option
+allows explicit local cleanup after Photos deletion succeeds. It works for
+previously saved copies even if Keep Local Copies is off. Only an intact indexed
+copy is moved to Trash; changed local files remain in place. A failure to trash
+the local copy reports partial success and does not undo the Photos deletion.
 
 ## Permission Recovery
 

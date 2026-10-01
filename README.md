@@ -38,20 +38,31 @@ The app is intentionally small: click the camera icon in the menu bar, take a ph
 
 ## Local Photo Copies
 
-**Save Original Photos to a Folder** is on by default for new installations.
+**Keep Local Copies** is on by default for new installations.
 Chameo uses the fixed `~/Pictures/Chameo` folder; the test app uses
 `~/Pictures/Chameo (test)` and has separate preferences. Settings → Photos shows
 the location and offers **Open Folder**. The folder is created when needed.
 
 Chameo saves full-resolution copies of new captures and retains older originals
 when a timelapse export needs them. Exports use matching local originals first;
-photos edited in Photos use their current Photos version. There is no separate
-resized-image cache.
+photos edited in Photos use their current Photos version. This does not copy the
+entire library automatically. There is no separate resized-image cache.
 
 Upgrading from a version with a custom destination directs future writes to the
 fixed folder and leaves earlier copies in place, available to exports. A saved
 off setting is preserved. Turning the option off or deleting a photo from Photos
-leaves the local files intact. Local folder failures show a warning without undoing a successful Photos
+or iCloud leaves the local files intact. Deleting a local file in Finder does not
+delete the Photos/iCloud asset, and exports do not recreate removed or renamed
+copies. Choose **Save Local Copy** from a photo's **Photo Actions** menu to restore
+a missing copy while Keep Local Copies is on.
+
+Chameo's inline deletion confirmation explains that Photos deletion also affects
+synced devices when iCloud Photos is on. **Also Move the Local Copy to Trash** is
+unchecked by default. If selected, Chameo moves its intact indexed copy to Trash
+after Photos deletion succeeds. Changed local files are preserved, and a local
+Trash failure shows a warning without undoing the Photos deletion.
+
+Local folder failures show a warning without undoing a successful Photos
 save or timelapse export. Offline export requires the selected photos to remain
 available locally and to match their current Photos versions.
 

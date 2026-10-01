@@ -66,17 +66,22 @@ actor LocalPhotoStore {
     private let preferences: LocalPhotoPreferences
     private let folderAccess: any LocalPhotoFolderAccess
     private let fixedFolderURL: URL?
+    private let trashItem: @Sendable (URL) throws -> Void
     private var configuration: LocalPhotoConfiguration
     private var index: Index?
 
     init(indexURL: URL = LocalPhotoStore.defaultIndexURL,
          preferences: LocalPhotoPreferences = LocalPhotoPreferences(),
          folderAccess: any LocalPhotoFolderAccess = SecurityScopedPhotoFolderAccess(),
-         fixedFolderURL: URL? = LocalPhotoDestination.defaultURL) {
+         fixedFolderURL: URL? = LocalPhotoDestination.defaultURL,
+         trashItem: @escaping @Sendable (URL) throws -> Void = {
+             try FileManager.default.trashItem(at: $0, resultingItemURL: nil)
+         }) {
         self.indexURL = indexURL
         self.preferences = preferences
         self.folderAccess = folderAccess
         self.fixedFolderURL = fixedFolderURL
+        self.trashItem = trashItem
         var loaded = preferences.load()
         // Preserve legacy folder identities so the index can still read their
         // originals. Future writes always target the entitlement-backed folder.
@@ -152,16 +157,40 @@ actor LocalPhotoStore {
         }
     }
 
+    /// Retain records after removal so exports do not recreate user-deleted copies.
+    func hasSavedOriginal(for identifier: String) throws -> Bool {
+        try loadIndex()
+        return index?.records[identifier] != nil
+    }
+
+    /// Explicit deletion works even when keeping new local copies is turned off.
+    /// Only an intact indexed copy can be moved; changed user files stay in place.
+    func trashOriginal(for identifier: String) throws {
+        try loadIndex()
+        guard let record = index?.records[identifier] else { return }
+        try withFolder(record.folderID) { folder in
+            let url = folder.appendingPathComponent(record.filename)
+            guard FileManager.default.fileExists(atPath: url.path) else { return }
+            let data = try Data(contentsOf: url)
+            guard data.count == record.fileSize, Self.digest(data) == record.digest else {
+                throw LocalPhotoError.fileChanged
+            }
+            try trashItem(url)
+        }
+    }
+
     /// The synchronous actor operation serializes writes and deduplicates each asset.
     /// Neither changed user files nor preserved originals are ever overwritten.
     @discardableResult
     func saveOriginal(_ data: Data, source: LocalPhotoSnapshot,
-                      fileExtension: String? = nil, representsCurrentOriginal: Bool = true) throws -> Bool {
+                      fileExtension: String? = nil, representsCurrentOriginal: Bool = true,
+                      restoreMissingCopy: Bool = false) throws -> Bool {
         guard configuration.isEnabled else { return false }
         try Task.checkCancellation()
         try loadIndex()
-        try prepareFixedFolder()
         if try original(for: source) != nil { return true }
+        if !restoreMissingCopy, index?.records[source.identifier] != nil { return false }
+        try prepareFixedFolder()
         guard let folder = configuration.activeFolder else { throw LocalPhotoError.folderUnavailable }
         let ext = try Self.imageExtension(data, suggested: fileExtension)
         return try withFolder(folder.id) { url in

@@ -241,7 +241,6 @@
 "%.1f seconds" = "%.1f 秒";
 "Format" = "格式";
 
-"Save Original Photos to a Folder" = "將原始照片儲存至資料夾";
 
 "Saves new captures and downloads older originals during timelapse export." = "儲存新拍攝的照片，並在匯出縮時影片時下載較早照片的原始檔案。";
 
@@ -262,3 +261,15 @@
 "Could not read the local photo index. Chameo will use Photos." = "無法讀取本機照片索引。Chameo 將使用「照片」。";
 
 "Could not read the original photo." = "無法讀取原始照片。";
+"Keep Local Copies" = "保留本機副本";
+"Local copies are independent of Photos and iCloud. Deleting from either keeps the other copy." = "本機副本獨立於「照片」和 iCloud。從任何一方刪除照片都會保留另一方的副本。";
+"Files removed from the folder stay removed. Use Save Local Copy in a photo's menu to restore a copy." = "從檔案夾移除的副本不會自動恢復。可在照片選單中選擇「儲存本機副本」來恢復。";
+"Deletes from Photos and, if iCloud Photos is on, all synced devices. Keeps the local copy unless selected below." = "將從「照片」中刪除；如已開啟 iCloud 照片，也會從所有同步裝置中刪除。除非勾選下方選項，否則保留本機副本。";
+"Also Move the Local Copy to Trash" = "同時將本機副本移到垃圾桶";
+"Delete from Photos" = "從「照片」中刪除";
+"Deleted from Photos. Could not move the local copy to Trash. Open Folder in Settings to manage it." = "已從「照片」中刪除，但未能將本機副本移到垃圾桶。請在設定中開啟檔案夾處理。";
+"Save Local Copy" = "儲存本機副本";
+"Photo Actions" = "照片操作";
+"Updating photo" = "正在處理照片";
+"Local copy saved." = "本機副本已儲存。";
+"Local copies are off. Turn on Keep Local Copies in Settings." = "本機副本已關閉。請在設定中開啟「保留本機副本」。";

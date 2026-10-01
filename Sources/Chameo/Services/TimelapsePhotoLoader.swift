@@ -85,13 +85,22 @@ actor TimelapsePhotoLoader {
         }
         let snapshot = try source.snapshot(for: identifier)
         let stored: StoredLocalPhoto?
+        let previouslySaved: Bool
         do {
             stored = try await store.original(for: snapshot)
-            if stored == nil { try await store.validateDestination() }
+            previouslySaved = try await store.hasSavedOriginal(for: identifier)
+            if stored == nil && !previouslySaved {
+                try await store.validateDestination()
+            }
         } catch is CancellationError {
             throw CancellationError()
         } catch {
             failedCopies.insert(identifier)
+            return try await source.currentImage(for: identifier, onDownload: onDownload)
+        }
+
+        if stored == nil && previouslySaved {
+            // A previously saved copy was removed or renamed by the user.
             return try await source.currentImage(for: identifier, onDownload: onDownload)
         }
 

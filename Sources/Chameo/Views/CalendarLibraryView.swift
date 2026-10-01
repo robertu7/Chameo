@@ -6,9 +6,11 @@ struct CalendarLibraryView: View {
     @Binding var selectedDay: Date?
     let isRefreshing: Bool
     let isExportingTimelapse: Bool
+    let canSaveLocalCopy: Bool
     let onTakeChameo: () -> Void
     let onExportTimelapse: () -> Void
-    let onDelete: (ChameoAsset) async -> Void
+    let onDelete: (ChameoAsset, Bool) async -> Void
+    let onSaveLocalCopy: (ChameoAsset) async -> Void
 
     @State private var displayedMonth = Calendar.current.startOfDay(for: Date())
     @FocusState private var focusedDay: Date?
@@ -89,8 +91,10 @@ struct CalendarLibraryView: View {
                     calendar: calendar
                 ),
                 assets: assetsByDay[calendar.startOfDay(for: previewDay)] ?? [],
+                canSaveLocalCopy: canSaveLocalCopy,
                 onTakeChameo: onTakeChameo,
-                onDelete: onDelete
+                onDelete: onDelete,
+                onSaveLocalCopy: onSaveLocalCopy
             )
             .frame(height: 96)
             .padding(.top, ChameoLayout.compactSpacing)
@@ -333,13 +337,17 @@ private struct CalendarDayPreview: View {
     let date: Date
     let status: DailyCaptureStatus
     let assets: [ChameoAsset]
+    let canSaveLocalCopy: Bool
     let onTakeChameo: () -> Void
-    let onDelete: (ChameoAsset) async -> Void
+    let onDelete: (ChameoAsset, Bool) async -> Void
+    let onSaveLocalCopy: (ChameoAsset) async -> Void
 
     @State private var selectedAssetID: String?
     @State private var locationName = ""
     @State private var isLoadingLocationName = false
     @State private var isConfirmingDeletion = false
+    @State private var trashLocalCopy = false
+    @State private var isPerformingAction = false
 
     private var selectedAsset: ChameoAsset? {
         assets.first { $0.id == selectedAssetID } ?? assets.first
@@ -348,10 +356,24 @@ private struct CalendarDayPreview: View {
     var body: some View {
         Group {
             if let selectedAsset {
-                populatedPreview(selectedAsset)
+                if isConfirmingDeletion {
+                    PhotoDeletionConfirmationView(trashLocalCopy: $trashLocalCopy) {
+                        delete(selectedAsset)
+                    } onCancel: {
+                        isConfirmingDeletion = false
+                        trashLocalCopy = false
+                    }
+                } else {
+                    populatedPreview(selectedAsset)
+                }
             } else {
                 emptyPreview
             }
+        }
+        .disabled(isPerformingAction)
+        .onChange(of: selectedAsset?.id) { _, _ in
+            isConfirmingDeletion = false
+            trashLocalCopy = false
         }
         .task(id: selectedAsset?.id) {
             guard let selectedAsset else {
@@ -393,13 +415,18 @@ private struct CalendarDayPreview: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
-                    deleteControls
+                    photoActions
                 }
                 .frame(height: ChameoLayout.compactControlSize)
 
                 locationRow(for: selectedAsset)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+
+                if isPerformingAction {
+                    ProgressView().controlSize(.small)
+                        .accessibilityLabel(L10n.string("Updating photo"))
+                }
 
                 if assets.count > 1 {
                     Spacer(minLength: 0)
@@ -489,39 +516,41 @@ private struct CalendarDayPreview: View {
         .frame(height: 24)
     }
 
-    @ViewBuilder
-    private var deleteControls: some View {
-        if isConfirmingDeletion {
-            HStack(spacing: 6) {
-                Button(L10n.string("Delete"), role: .destructive) {
-                    guard let selectedAsset else { return }
-                    isConfirmingDeletion = false
-                    Task {
-                        await onDelete(selectedAsset)
-                    }
+    private var photoActions: some View {
+        Menu {
+            Button(L10n.string("Save Local Copy")) {
+                guard let selectedAsset else { return }
+                isPerformingAction = true
+                Task {
+                    await onSaveLocalCopy(selectedAsset)
+                    isPerformingAction = false
                 }
-                .buttonStyle(.borderless)
+            }
+            .disabled(!canSaveLocalCopy)
 
-                Button(L10n.string("Cancel")) {
-                    isConfirmingDeletion = false
-                }
-                .buttonStyle(.borderless)
-            }
-            .font(.caption)
-        } else {
-            Button {
+            Divider()
+            Button(L10n.string("Delete Photo"), role: .destructive) {
+                trashLocalCopy = false
                 isConfirmingDeletion = true
-            } label: {
-                Label(L10n.string("Delete Photo"), systemImage: "trash")
             }
-            .labelStyle(.iconOnly)
-            .buttonStyle(.borderless)
-            .frame(
-                width: ChameoLayout.compactControlSize,
-                height: ChameoLayout.compactControlSize
-            )
-            .contentShape(Rectangle())
-            .help(L10n.string("Delete Photo"))
+        } label: {
+            Label(L10n.string("Photo Actions"), systemImage: "ellipsis")
+        }
+        .labelStyle(.iconOnly)
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .frame(width: ChameoLayout.compactControlSize, height: ChameoLayout.compactControlSize)
+        .help(L10n.string("Photo Actions"))
+    }
+
+    private func delete(_ asset: ChameoAsset) {
+        let shouldTrash = trashLocalCopy
+        trashLocalCopy = false
+        isConfirmingDeletion = false
+        isPerformingAction = true
+        Task {
+            await onDelete(asset, shouldTrash)
+            isPerformingAction = false
         }
     }
 
