@@ -2,6 +2,9 @@ import CoreGraphics
 import SwiftUI
 
 enum ChameoLayout {
+    static let utilityWindowWidth: CGFloat = 500
+    static let utilityWindowInset: CGFloat = 20
+
     static let popoverWidth: CGFloat = 448
     static let popoverHeight: CGFloat = 526
     static let contentWidth: CGFloat = 420

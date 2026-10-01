@@ -24,8 +24,8 @@ struct SettingsView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             case .window:
                 settingsContent
-                    .frame(width: 460, height: 360)
-                    .scenePadding()
+                    .frame(width: ChameoLayout.utilityWindowWidth - 2 * ChameoLayout.utilityWindowInset, height: 360)
+                    .padding(ChameoLayout.utilityWindowInset)
             }
         }
         .environment(\.locale, localizationController.displayLocale)

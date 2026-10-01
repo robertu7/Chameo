@@ -222,7 +222,7 @@ extension TimelapseExportTests {
                                                   localizationController: LocalizationController())
         let window = try XCTUnwrap(presenter.window)
         XCTAssertTrue(window.styleMask.contains(.resizable))
-        XCTAssertEqual(window.contentMinSize, NSSize(width: 560, height: 580))
+        XCTAssertEqual(window.contentMinSize, NSSize(width: ChameoLayout.utilityWindowWidth, height: 580))
         window.close()
         XCTAssertTrue(presenter.window === window)
         XCTAssertEqual(controller.state, .running)
@@ -231,6 +231,32 @@ extension TimelapseExportTests {
         probe.finish()
         await waitUntil { !controller.isBusy }
         guard case .succeeded = controller.state else { return XCTFail("Closing the window must not cancel export") }
+    }
+
+    func testClosingFinishedExportWindowResetsSummaryAndProgress() async throws {
+        let probe = ExportProbe()
+        let controller = makeController(probe: probe)
+        controller.prepare(assets: [asset()])
+        let video = try temporaryVideo()
+        defer { try? FileManager.default.removeItem(at: video.deletingLastPathComponent()) }
+        controller.destinationChosen(video)
+        await waitUntil { probe.callback != nil }
+        await probe.send(.framesWritten(1))
+        probe.finish()
+        await waitUntil { !controller.isBusy }
+        guard case .succeeded = controller.state else { return XCTFail("Expected finished export") }
+        let presenter = TimelapseWindowController(export: controller, libraryStore: LibraryStore(),
+                                                  localizationController: LocalizationController())
+        let window = try XCTUnwrap(presenter.window)
+        window.close()
+        XCTAssertEqual(controller.state, .summary)
+        XCTAssertEqual(controller.progress, .preparing)
+        XCTAssertEqual(controller.completedPhotos, 0)
+        XCTAssertFalse(controller.hasStatus)
+        XCTAssertNil(controller.resultActionError)
+        XCTAssertNil(controller.completionNote)
+        XCTAssertTrue(controller.assets.isEmpty, "Next export uses the current library snapshot")
+        XCTAssertTrue(presenter.window === window)
     }
 
     func testExportScreenRendersAtWindowSizeInEveryLanguage() async throws {

@@ -20,7 +20,7 @@ enum PermissionOnboardingWindowPlacement {
 
 @MainActor
 final class PermissionOnboardingWindowController: NSWindowController, NSWindowDelegate {
-    private static let windowSize = NSSize(width: 520, height: 560)
+    private static let windowSize = NSSize(width: ChameoLayout.utilityWindowWidth, height: 560)
 
     private let model: PermissionOnboardingModel
     private let onCompletion: () -> Void

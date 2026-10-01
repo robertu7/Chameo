@@ -53,7 +53,7 @@ struct PermissionOnboardingView: View {
             navigation
         }
         .padding(24)
-        .frame(width: 520, height: 560)
+        .frame(width: ChameoLayout.utilityWindowWidth, height: 560)
         .background(
             .regularMaterial,
             in: RoundedRectangle(cornerRadius: 16, style: .continuous)
