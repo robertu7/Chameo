@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.4.3
+
+### What’s new
+
+- Original photo copies now save to `Pictures/Chameo` by default, with an Open
+  Folder action in Photos settings.
+
+### Fixes
+
+- None.
+
+### Known testing limitations
+
+- Local photo folder access, permission persistence, and offline export still
+  need manual validation.
+- Timelapse photo and iCloud handling, notification actions, and remembered-file
+  behavior after relaunch are not covered by automated end-to-end validation.
+- Stage 1 builds are ad-hoc signed and are not notarized by Apple.
+- macOS may request Camera, Photos, Location, or Notification permission again
+  after an update.
+
 ## 0.4.2
 
 ### What’s new
