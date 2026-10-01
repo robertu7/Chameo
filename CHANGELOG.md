@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.4.2
+
+### What’s new
+
+- Added optional local copies of original photos, with folder selection and
+  reuse during timelapse export.
+
+### Fixes
+
+- Improved utility-window sizing and timelapse-window reopening behavior.
+
+### Known testing limitations
+
+- Local photo folder access, permission persistence, and offline export still
+  require manual validation.
+- Timelapse photo and iCloud handling, notification actions, and remembered-file
+  behavior after relaunch are not covered by automated end-to-end validation.
+- Stage 1 builds are ad-hoc signed and are not notarized by Apple.
+- macOS may request Camera, Photos, Location, or Notification permission again
+  after an update.
+
 ## 0.4.1
 
 ### What’s new
