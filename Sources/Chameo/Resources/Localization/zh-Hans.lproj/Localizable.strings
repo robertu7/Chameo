@@ -240,3 +240,31 @@
 "Video duration" = "视频时长";
 "%.1f seconds" = "%.1f 秒";
 "Format" = "格式";
+
+"Save Original Photos to a Folder" = "将原始照片保存到文件夹";
+
+"Saves new captures and downloads older originals during timelapse export." = "保存新拍摄的照片，并在导出延时视频时下载较早照片的原始文件。";
+
+"Choose Folder" = "选择文件夹";
+
+"Choose Folder…" = "选择文件夹…";
+
+"Choose or create a folder, such as Pictures/%@." = "选择或创建文件夹，例如“图片/%@”。";
+
+"Photo folder: %@" = "照片文件夹：%@";
+
+"Updating photo folder" = "正在更新照片文件夹";
+
+"Changing folders leaves existing copies in place. Turning this off keeps your saved files." = "更改文件夹不会移动已有副本。关闭此选项也会保留已保存的文件。";
+
+"Saved to Photos. The local copy could not be saved." = "已保存到“照片”，但未能保存本地副本。";
+
+"Timelapse saved. Some original photos could not be saved locally." = "延时视频已保存，但部分原始照片未能保存到本地。";
+
+"The photo folder is unavailable. Reconnect the drive or choose a folder in Settings." = "照片文件夹不可用。请重新连接磁盘，或在设置中选择文件夹。";
+
+"A local photo has changed. Chameo will use the version in Photos." = "本地照片已更改。Chameo 将使用“照片”中的版本。";
+
+"Could not read the local photo index. Chameo will use Photos." = "未能读取本地照片索引。Chameo 将使用“照片”。";
+
+"Could not read the original photo." = "未能读取原始照片。";

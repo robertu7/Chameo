@@ -1,6 +1,7 @@
 import AppKit
 import CoreLocation
 import OSLog
+import Photos
 import SwiftUI
 
 struct CameraView: View {
@@ -11,6 +12,7 @@ struct CameraView: View {
 
     @EnvironmentObject private var cameraService: CameraService
     @EnvironmentObject private var libraryStore: LibraryStore
+    @EnvironmentObject private var localPhotos: LocalPhotoSettingsController
     @AppStorage(AppPreferenceKey.autoAlignPhotos) private var autoAlignPhotos = true
 
     let albumName: String
@@ -398,10 +400,14 @@ struct CameraView: View {
                 statusMessage = .localized("Saving to Photos…")
             }
 
-            _ = try await PhotoLibraryService.savePhoto(
+            let saved = try await CapturePhotoSaveService.save(
                 data: capturedPreview.data,
-                albumName: albumName,
-                location: location
+                saveToPhotos: { data in
+                    try await PhotoLibraryService.savePhoto(data: data, albumName: albumName, location: location)
+                },
+                saveLocally: { data, asset in
+                    try await localPhotos.store.saveOriginal(data, source: LocalPhotoSnapshot(asset: asset.asset))
+                }
             )
             CaptureQualityHistoryStore.recordAccepted(
                 capturedPreview.qualityEvaluation
@@ -410,7 +416,9 @@ struct CameraView: View {
             photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
             await libraryStore.reload(albumName: albumName)
             self.capturedPreview = nil
-            if saveLocation && location == nil {
+            if saved.localCopyFailed {
+                statusMessage = .localized("Saved to Photos. The local copy could not be saved.")
+            } else if saveLocation && location == nil {
                 statusMessage = .localized("Saved to Photos without location")
             } else {
                 statusMessage = .formatted(

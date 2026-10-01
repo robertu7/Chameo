@@ -6,6 +6,7 @@ struct GeneralSettingsView: View {
     @Environment(\.scenePhase) private var scenePhase
     @EnvironmentObject private var localizationController: LocalizationController
     @EnvironmentObject private var updateController: UpdateController
+    @EnvironmentObject private var localPhotos: LocalPhotoSettingsController
     @AppStorage(AppPreferenceKey.albumName)
     private var albumName = AppDistribution.current.defaultAlbumName
     @AppStorage(AppPreferenceKey.handsFreeCountdown) private var handsFreeCountdown = false
@@ -117,6 +118,8 @@ struct GeneralSettingsView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+                LocalPhotoSettingsView()
+
                 Toggle(L10n.string("Add Location to Photos"), isOn: $saveLocation)
 
                 if saveLocation && isLocationPermissionDenied {
@@ -178,6 +181,7 @@ struct GeneralSettingsView: View {
 
             Task {
                 refreshPermissionStatuses()
+                await localPhotos.refresh()
                 await refreshPhotosAlbums()
             }
         }
@@ -188,6 +192,7 @@ struct GeneralSettingsView: View {
 
             Task {
                 refreshPermissionStatuses()
+                await localPhotos.refresh()
                 await refreshPhotosAlbums()
             }
         }

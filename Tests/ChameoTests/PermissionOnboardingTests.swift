@@ -199,7 +199,7 @@ final class PermissionOnboardingTests: XCTestCase {
 
         XCTAssertEqual(
             controller.window?.frame.size,
-            NSSize(width: 520, height: 560)
+            NSSize(width: ChameoLayout.utilityWindowWidth, height: 560)
         )
     }
 

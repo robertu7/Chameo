@@ -20,7 +20,9 @@ final class TimelapseExportController: ObservableObject {
     @Published private(set) var resultActionError: String?
     @Published private(set) var completionNote: String?
 
-    private let generator: Generator
+    private let generator: Generator?
+    private let localPhotos: LocalPhotoStore
+    private let photoSource: any TimelapsePhotoSource
     private let notifications: any TimelapseNotifying
     private let results: TimelapseResultStore
     private let announce: (String) -> Void
@@ -33,14 +35,16 @@ final class TimelapseExportController: ObservableObject {
     init(
         notifications: (any TimelapseNotifying)? = nil,
         results: TimelapseResultStore? = nil,
-        generator: @escaping Generator = { assets, url, progress in
-            try await TimelapseService.generate(assets: assets, to: url, onProgress: progress)
-        },
+        generator: Generator? = nil,
+        localPhotos: LocalPhotoStore = .shared,
+        photoSource: any TimelapsePhotoSource = PhotosTimelapsePhotoSource(),
         announce: @escaping (String) -> Void = { AccessibilityAnnouncement.post($0) }
     ) {
         self.notifications = notifications ?? TimelapseNotificationService()
         self.results = results ?? TimelapseResultStore()
         self.generator = generator
+        self.localPhotos = localPhotos
+        self.photoSource = photoSource
         self.announce = announce
     }
 
@@ -122,16 +126,28 @@ final class TimelapseExportController: ObservableObject {
             }
             do {
                 try Task.checkCancellation()
-                try await generator(selection, url) { [weak self] event in
+                let report: TimelapseService.ProgressHandler = { [weak self] event in
                     await self?.receive(event, runID: id)
+                }
+                var localCopyFailures = 0
+                if let generator {
+                    try await generator(selection, url, report)
+                } else {
+                    let summary = try await TimelapseService.generate(
+                        assets: selection, to: url, onProgress: report, localPhotos: localPhotos, photoSource: photoSource
+                    )
+                    localCopyFailures = summary.localCopyFailures
                 }
                 // Generation has committed the destination. Late cancellation must
                 // not relabel a valid video as cancelled or delete it.
                 let result = results.save(id: id, url: url)
                 state = .succeeded(result)
                 announce(L10n.string("Timelapse ready"))
+                if localCopyFailures > 0 {
+                    appendCompletionNote(L10n.string("Timelapse saved. Some original photos could not be saved locally."))
+                }
                 if result.bookmark == nil {
-                    completionNote = L10n.string("Video saved. Open it before quitting; its location could not be remembered.")
+                    appendCompletionNote(L10n.string("Video saved. Open it before quitting; its location could not be remembered."))
                 }
                 Task {
                     notificationStatus = await authorization.value
@@ -140,7 +156,7 @@ final class TimelapseExportController: ObservableObject {
                     do { try await notifications.deliver(exportID: id, filename: url.lastPathComponent) }
                     catch {
                         if results.latest?.id == id {
-                            completionNote = L10n.string("Video saved. The completion notification could not be sent.")
+                            appendCompletionNote(L10n.string("Video saved. The completion notification could not be sent."))
                         }
                     }
                 }
@@ -158,6 +174,11 @@ final class TimelapseExportController: ObservableObject {
                 }
             }
         }
+    }
+
+    private func appendCompletionNote(_ note: String) {
+        completionNote = [completionNote, note].compactMap { $0 }.joined(separator: "\n")
+        announce(note)
     }
 
     func receive(_ event: TimelapseProgress, runID id: UUID) {

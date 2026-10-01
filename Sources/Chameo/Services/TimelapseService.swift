@@ -33,21 +33,29 @@ enum TimelapseService {
     typealias ImageLoader = (PHAsset, @escaping @Sendable (Double) async -> Void) async throws -> CGImage
     private static let imageContext = CIContext(options: [.cacheIntermediates: false])
 
+    struct GenerationSummary { let localCopyFailures: Int }
+
+    @discardableResult
     static func generate(
         assets: [ChameoAsset], to outputURL: URL,
         onProgress: @escaping ProgressHandler = { _ in },
-        imageLoader: @escaping ImageLoader = { asset, onDownload in
-            try await image(for: asset, onDownload: onDownload)
-        }
-    ) async throws {
+        imageLoader: ImageLoader? = nil,
+        localPhotos: LocalPhotoStore = .shared,
+        photoSource: any TimelapsePhotoSource = PhotosTimelapsePhotoSource()
+    ) async throws -> GenerationSummary {
         guard !assets.isEmpty else {
             throw TimelapseError.noAssets
         }
 
+        let localLoader = TimelapsePhotoLoader(store: localPhotos, source: photoSource)
+        let loader: ImageLoader = imageLoader ?? { asset, download in
+            try await localLoader.image(for: asset.localIdentifier, onDownload: download)
+        }
         await onProgress(.preparing)
         try await generateFile(to: outputURL) { stagedURL in
-            try await write(assets: assets, to: stagedURL, onProgress: onProgress, imageLoader: imageLoader)
+            try await write(assets: assets, to: stagedURL, onProgress: onProgress, imageLoader: loader)
         }
+        return GenerationSummary(localCopyFailures: await localLoader.failureCount)
     }
 
     /// The write closure must finish before the only cancellation/commit boundary.
@@ -184,7 +192,7 @@ enum TimelapseService {
         }
     }
 
-    private static func image(
+    static func image(
         for asset: PHAsset, onDownload: @escaping @Sendable (Double) async -> Void
     ) async throws -> CGImage {
         let imageManager = PHImageManager.default()
@@ -198,6 +206,7 @@ enum TimelapseService {
 
                 let options = PHImageRequestOptions()
                 options.deliveryMode = .highQualityFormat
+                options.version = .current
                 options.resizeMode = .exact
                 options.isNetworkAccessAllowed = true
                 options.progressHandler = { fraction, _, _, _ in

@@ -6,6 +6,7 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
     let localizationController = LocalizationController()
     let updateController = UpdateController()
+    let localPhotos = LocalPhotoSettingsController()
     private let appState = AppState()
     private let cameraService = CameraService()
     private let libraryStore = LibraryStore()
@@ -250,7 +251,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
                 libraryStore: libraryStore,
                 timelapseExport: timelapseExport,
                 localizationController: localizationController,
-                updateController: updateController
+                updateController: updateController,
+                localPhotos: localPhotos
             )
             notificationOpenRequest.installHandler { [weak self] destination in
                 self?.openFromNotification(destination)
@@ -317,6 +319,7 @@ struct ChameoApp: App {
             SettingsView()
                 .environmentObject(appDelegate.localizationController)
                 .environmentObject(appDelegate.updateController)
+                .environmentObject(appDelegate.localPhotos)
                 .environment(\.locale, appDelegate.localizationController.displayLocale)
         }
     }

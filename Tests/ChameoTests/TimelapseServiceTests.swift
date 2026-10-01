@@ -32,7 +32,7 @@ final class TimelapseServiceTests: XCTestCase {
                 withUnsafeCurrentTask { $0?.cancel() }
             }
         }
-        do { try await task.value; XCTFail("Expected cancellation") }
+        do { _ = try await task.value; XCTFail("Expected cancellation") }
         catch { XCTAssertTrue(error is CancellationError) }
         XCTAssertEqual(try Data(contentsOf: url), Data("original".utf8))
     }
@@ -51,7 +51,7 @@ final class TimelapseServiceTests: XCTestCase {
         let task = Task { try await TimelapseService.waitForFinalization(isFinished: { false }) }
         await Task.yield()
         task.cancel()
-        do { try await task.value; XCTFail("Expected cancellation") }
+        do { _ = try await task.value; XCTFail("Expected cancellation") }
         catch { XCTAssertTrue(error is CancellationError) }
     }
 
@@ -110,7 +110,7 @@ extension TimelapseServiceTests {
             try await Task.sleep(for: .milliseconds(2))
         }
         task.cancel()
-        do { try await task.value; XCTFail("Expected cancellation") }
+        do { _ = try await task.value; XCTFail("Expected cancellation") }
         catch { XCTAssertTrue(error is CancellationError) }
         XCTAssertEqual(try Data(contentsOf: url), Data("original".utf8))
     }
@@ -119,7 +119,7 @@ extension TimelapseServiceTests {
         let task = Task { try await TimelapseService.waitForWriterReadiness(isReady: { false }, isWriting: { true }) }
         await Task.yield()
         task.cancel()
-        do { try await task.value; XCTFail("Expected cancellation") }
+        do { _ = try await task.value; XCTFail("Expected cancellation") }
         catch { XCTAssertTrue(error is CancellationError) }
         do {
             try await TimelapseService.waitForWriterReadiness(isReady: { false }, isWriting: { false })

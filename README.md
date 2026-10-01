@@ -36,6 +36,23 @@ The app is intentionally small: click the camera icon in the menu bar, take a ph
   General Settings.
 - Menu-bar-only app with no Dock icon.
 
+## Local Photo Copies
+
+In Settings → Photos, enable **Save Original Photos to a Folder** and choose or
+create a folder, such as Pictures/Chameo. The option is off by default. The test
+app suggests Pictures/Chameo (test) and has separate preferences.
+
+Chameo saves full-resolution copies of new captures and retains older originals
+when a timelapse export needs them. Exports use matching local originals first;
+photos edited in Photos use their current Photos version. There is no separate
+resized-image cache.
+
+Changing the destination affects future writes and preserves earlier copies.
+Turning the option off or deleting a photo from Photos leaves the local files
+intact. Local folder failures show a warning without undoing a successful Photos
+save or timelapse export. Offline export requires the selected photos to remain
+available locally and to match their current Photos versions.
+
 ## Quick Start
 
 Requirements:

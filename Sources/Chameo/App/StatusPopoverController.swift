@@ -10,6 +10,7 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
     private let libraryStore: LibraryStore
     private let localizationController: LocalizationController
     private let updateController: UpdateController
+    private let localPhotos: LocalPhotoSettingsController
     private let statusItem: NSStatusItem
     private let popover: NSPopover
     private var timelapseWindowController: TimelapseWindowController?
@@ -30,7 +31,8 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
         libraryStore: LibraryStore,
         timelapseExport: TimelapseExportController,
         localizationController: LocalizationController,
-        updateController: UpdateController
+        updateController: UpdateController,
+        localPhotos: LocalPhotoSettingsController
     ) {
         self.appState = appState
         self.cameraService = cameraService
@@ -38,6 +40,7 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
         self.timelapseExport = timelapseExport
         self.localizationController = localizationController
         self.updateController = updateController
+        self.localPhotos = localPhotos
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         self.popover = NSPopover()
 
@@ -155,6 +158,7 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
             .environmentObject(timelapseExport)
             .environmentObject(localizationController)
             .environmentObject(updateController)
+            .environmentObject(localPhotos)
             .environment(\.locale, localizationController.displayLocale)
     }
 

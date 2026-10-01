@@ -240,3 +240,31 @@
 "Video duration" = "Video duration";
 "%.1f seconds" = "%.1f seconds";
 "Format" = "Format";
+
+"Save Original Photos to a Folder" = "Save Original Photos to a Folder";
+
+"Saves new captures and downloads older originals during timelapse export." = "Saves new captures and downloads older originals during timelapse export.";
+
+"Choose Folder" = "Choose Folder";
+
+"Choose Folder…" = "Choose Folder…";
+
+"Choose or create a folder, such as Pictures/%@." = "Choose or create a folder, such as Pictures/%@.";
+
+"Photo folder: %@" = "Photo folder: %@";
+
+"Updating photo folder" = "Updating photo folder";
+
+"Changing folders leaves existing copies in place. Turning this off keeps your saved files." = "Changing folders leaves existing copies in place. Turning this off keeps your saved files.";
+
+"Saved to Photos. The local copy could not be saved." = "Saved to Photos. The local copy could not be saved.";
+
+"Timelapse saved. Some original photos could not be saved locally." = "Timelapse saved. Some original photos could not be saved locally.";
+
+"The photo folder is unavailable. Reconnect the drive or choose a folder in Settings." = "The photo folder is unavailable. Reconnect the drive or choose a folder in Settings.";
+
+"A local photo has changed. Chameo will use the version in Photos." = "A local photo has changed. Chameo will use the version in Photos.";
+
+"Could not read the local photo index. Chameo will use Photos." = "Could not read the local photo index. Chameo will use Photos.";
+
+"Could not read the original photo." = "Could not read the original photo.";
