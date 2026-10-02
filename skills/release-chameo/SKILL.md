@@ -19,8 +19,9 @@ skills/release-chameo/scripts/release.sh <command> [arguments]
 
 - Release only from a clean `main` synchronized with `origin/main`.
 - Stop for unrelated changes; never stash, discard, or include them.
-- Always propose `X.Y.Z` and receive explicit confirmation before editing,
-  including when the user supplied a version.
+- Always propose a stable `X.Y.Z` or prerelease `X.Y.Z-suffix` version and
+  receive explicit confirmation before editing, including when the user
+  supplied a version.
 - Never reuse, move, delete, retarget, or force-push a release tag.
 - Push the release commit and require CI success for its exact full SHA before
   creating the annotated tag.
@@ -36,10 +37,10 @@ skills/release-chameo/scripts/release.sh <command> [arguments]
    intentional incompatibility.
 3. Present the current and suggested versions, bump type, rationale, and draft
    changelog. Stop for explicit version confirmation without editing files.
-4. Run `release.sh preflight X.Y.Z` after confirmation.
+4. Run `release.sh preflight VERSION` after confirmation.
 5. Edit only `VERSION` and `CHANGELOG.md`. Preserve prior releases and follow
    the existing headings without inventing changes.
-6. Run `release.sh validate X.Y.Z`. It keeps successful test/build output terse
+6. Run `release.sh validate VERSION`. It keeps successful test/build output terse
    and prints diagnostic log tails on failure.
 7. Show the prepared version, changelog, validation summary, intended commit,
    and tag. Stop for publication confirmation. A reply such as `go ahead` to
@@ -49,17 +50,17 @@ skills/release-chameo/scripts/release.sh <command> [arguments]
 ## Publish
 
 1. Commit only `VERSION` and `CHANGELOG.md` as
-   `chore(release): prepare vX.Y.Z`, then push `main`.
+   `chore(release): prepare vVERSION`, then push `main`.
 2. Capture the full release commit SHA and run:
 
    ```bash
    skills/release-chameo/scripts/release.sh wait-run CI FULL_COMMIT_SHA
    ```
 
-3. After success, run `./script/verify_release_version.sh vX.Y.Z`.
-4. Create `git tag -a vX.Y.Z -m "Chameo X.Y.Z"`, prove its peeled target is
-   the release commit, and push only `vX.Y.Z`.
-5. Run `release.sh wait-run Release vX.Y.Z`. Investigate failures in place;
+3. After success, run `./script/verify_release_version.sh vVERSION`.
+4. Create `git tag -a vVERSION -m "Chameo VERSION"`, prove its peeled target is
+   the release commit, and push only `vVERSION`.
+5. Run `release.sh wait-run Release vVERSION`. Investigate failures in place;
    never replace the tag.
 
 ## Verify
@@ -67,7 +68,7 @@ skills/release-chameo/scripts/release.sh <command> [arguments]
 Run:
 
 ```bash
-skills/release-chameo/scripts/release.sh verify-publication X.Y.Z FULL_COMMIT_SHA
+skills/release-chameo/scripts/release.sh verify-publication VERSION FULL_COMMIT_SHA
 ```
 
 Report the commit, tag, CI and Release workflow results, release URL, appcast

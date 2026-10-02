@@ -6,7 +6,8 @@ struct AppVersion {
 
     static var current: AppVersion {
         let infoDictionary = Bundle.main.infoDictionary ?? [:]
-        let version = infoDictionary["CFBundleShortVersionString"] as? String
+        let version = infoDictionary["ChameoMarketingVersion"] as? String
+            ?? infoDictionary["CFBundleShortVersionString"] as? String
         let buildID = infoDictionary["ChameoBuildID"] as? String
 
         return AppVersion(

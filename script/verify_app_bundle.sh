@@ -7,9 +7,13 @@ if [[ $# -ne 1 ]]; then
 fi
 
 APP_BUNDLE="$1"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$ROOT_DIR/script/version.sh"
 INFO_PLIST="$APP_BUNDLE/Contents/Info.plist"
 APP_BINARY="$APP_BUNDLE/Contents/MacOS/Chameo"
 SPARKLE_FRAMEWORK="$APP_BUNDLE/Contents/Frameworks/Sparkle.framework"
+APP_VERSION="${CHAMEO_VERSION:-$(tr -d '[:space:]' <"$ROOT_DIR/VERSION")}"
+APP_BASE_VERSION="$(chameo_base_version "$APP_VERSION")"
 
 if [[ ! -d "$APP_BUNDLE" || ! -f "$INFO_PLIST" || ! -x "$APP_BINARY" ]]; then
   echo "invalid Chameo app bundle: $APP_BUNDLE" >&2
@@ -58,6 +62,8 @@ assert_plist_value() {
 
 assert_plist_value CFBundleIdentifier "com.robertu.Chameo"
 assert_plist_value CFBundleDisplayName "Chameo"
+assert_plist_value CFBundleShortVersionString "$APP_BASE_VERSION"
+assert_plist_value ChameoMarketingVersion "$APP_VERSION"
 assert_plist_value ChameoBuildVariant "release"
 assert_plist_value ChameoDefaultAlbumName "Chameo"
 assert_plist_value ChameoUpdatesEnabled "true"

@@ -2,20 +2,21 @@
 set -euo pipefail
 
 if [[ $# -ne 1 ]]; then
-  echo "usage: $0 <vX.Y.Z-tag>" >&2
+  echo "usage: $0 <vX.Y.Z-or-vX.Y.Z-prerelease-tag>" >&2
   exit 2
 fi
 
 TAG="$1"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$ROOT_DIR/script/version.sh"
 VERSION="$(tr -d '[:space:]' <"$ROOT_DIR/VERSION")"
 
-if [[ ! "$TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
-  echo "invalid release tag: expected vX.Y.Z" >&2
+if [[ "$TAG" != v* ]] || ! is_chameo_version "${TAG#v}"; then
+  echo "invalid release tag: expected vX.Y.Z or vX.Y.Z-prerelease" >&2
   exit 2
 fi
 
-if [[ "${BASH_REMATCH[1]}" != "$VERSION" ]]; then
+if [[ "${TAG#v}" != "$VERSION" ]]; then
   echo "release tag $TAG does not match VERSION ($VERSION)" >&2
   exit 1
 fi

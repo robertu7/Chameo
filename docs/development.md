@@ -48,7 +48,16 @@ The script is the preferred build path because SwiftPM GUI executables should be
 
 ## Versioning
 
-`VERSION` is the app version source of truth. `script/build_app.sh` writes that value to `CFBundleShortVersionString`, writes the git commit count to `CFBundleVersion`, and writes the short git SHA to `ChameoBuildID`. Local builds with uncommitted changes append `-dirty` to the build id.
+`VERSION` is the app version source of truth and accepts stable versions such as
+`1.2.0` plus semantic prereleases such as `0.5.0-rc.0`. `script/build_app.sh`
+writes the numeric `major.minor.patch` part to `CFBundleShortVersionString`
+(required by macOS), the full value to `ChameoMarketingVersion`, the git commit
+count to `CFBundleVersion`, and the short git SHA to `ChameoBuildID`. Settings
+shows the full marketing version. Local builds with uncommitted changes append
+`-dirty` to the build id.
+
+Sparkle uses the numeric bundle build for update ordering and the full marketing
+version as the update display label.
 
 Release automation can override those values:
 
@@ -111,7 +120,7 @@ Sparkle 2.9.4 is pinned in `Package.swift` and `Package.resolved`. Chameo uses:
 - Standard user-confirmed download, installation, and relaunch UI.
 
 `CHANGELOG.md` is the release-notes source of truth. A release section must
-match the three-component version in `VERSION`.
+match the version in `VERSION`, including any prerelease suffix.
 
 The CI workflow runs on pull requests and pushes to `main`. Push a matching tag
 to start a prerelease:

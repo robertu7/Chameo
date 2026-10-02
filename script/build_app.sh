@@ -7,6 +7,7 @@ BUILD_CONFIGURATION="debug"
 APP_VARIANT="release"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$ROOT_DIR/script/version.sh"
 
 for argument in "$@"; do
   case "$argument" in
@@ -67,6 +68,12 @@ VERSION_FILE="$ROOT_DIR/VERSION"
 APP_VERSION="${CHAMEO_VERSION:-$(tr -d '[:space:]' <"$VERSION_FILE")}"
 BUILD_NUMBER="${CHAMEO_BUILD_NUMBER:-$(git -C "$ROOT_DIR" rev-list --count HEAD 2>/dev/null || echo 0)}"
 
+if ! is_chameo_version "$APP_VERSION"; then
+  echo "invalid app version: expected X.Y.Z or X.Y.Z-prerelease" >&2
+  exit 2
+fi
+BUNDLE_SHORT_VERSION="$(chameo_base_version "$APP_VERSION")"
+
 if [[ -n "${CHAMEO_BUILD_ID:-}" ]]; then
   BUILD_ID="$CHAMEO_BUILD_ID"
 elif GIT_SHA="$(git -C "$ROOT_DIR" rev-parse --short HEAD 2>/dev/null)"; then
@@ -91,11 +98,6 @@ find_local_code_sign_identity() {
 
   printf '%s' "$identity"
 }
-
-if [[ ! "$APP_VERSION" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]]; then
-  echo "invalid app version: expected one to three dot-separated integers" >&2
-  exit 2
-fi
 
 if [[ ! "$BUILD_NUMBER" =~ ^[0-9]+$ ]]; then
   echo "invalid build number: expected a non-negative integer" >&2
@@ -158,6 +160,8 @@ cat >"$INFO_PLIST" <<PLIST
     <string>zh-Hant</string>
   </array>
   <key>CFBundleShortVersionString</key>
+  <string>$BUNDLE_SHORT_VERSION</string>
+  <key>ChameoMarketingVersion</key>
   <string>$APP_VERSION</string>
   <key>CFBundleVersion</key>
   <string>$BUILD_NUMBER</string>

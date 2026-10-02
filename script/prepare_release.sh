@@ -8,6 +8,7 @@ fi
 
 VERSION="$1"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$ROOT_DIR/script/version.sh"
 DIST_DIR="$ROOT_DIR/dist"
 APP_BUNDLE="$DIST_DIR/Chameo.app"
 UPDATES_DIR="$DIST_DIR/updates"
@@ -19,8 +20,8 @@ NOTES_PATH="$UPDATES_DIR/$ARCHIVE_BASENAME.md"
 APPCAST_PATH="$UPDATES_DIR/appcast.xml"
 SPARKLE_ACCOUNT="${SPARKLE_KEY_ACCOUNT:-com.robertu.Chameo}"
 
-if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  echo "invalid release version: expected major.minor.patch" >&2
+if ! is_chameo_version "$VERSION"; then
+  echo "invalid release version: expected X.Y.Z or X.Y.Z-prerelease" >&2
   exit 2
 fi
 
@@ -101,6 +102,9 @@ fi
   --maximum-versions 3 \
   --maximum-deltas 0 \
   "$UPDATES_DIR"
+
+python3 "$ROOT_DIR/script/update_appcast_display_version.py" \
+  "$APPCAST_PATH" "$ARCHIVE_BASENAME.zip" "$VERSION"
 
 if [[ ! -f "$APPCAST_PATH" ]]; then
   echo "Sparkle did not generate appcast.xml" >&2

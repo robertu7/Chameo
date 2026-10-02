@@ -4,6 +4,7 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "$0")/../../.." && pwd)"
 cd "$repo_root"
+source "$repo_root/script/version.sh"
 
 die() {
   printf 'error: %s\n' "$*" >&2
@@ -15,7 +16,7 @@ require_command() {
 }
 
 require_version() {
-  [[ "${1:-}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die "expected version X.Y.Z"
+  is_chameo_version "${1:-}" || die "expected version X.Y.Z or X.Y.Z-prerelease"
 }
 
 require_clean_main() {
@@ -90,16 +91,19 @@ validate() {
   unexpected="$(git status --porcelain | sed 's/^...//' | grep -Ev '^(CHANGELOG.md|VERSION)$' || true)"
   [[ -z "$unexpected" ]] || die "unexpected changed paths: $unexpected"
 
-  local temp_dir test_log build_log notes_file
+  local temp_dir test_log build_log notes_file release_tool_log
   temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/chameo-release.XXXXXX")"
   test_log="$temp_dir/swift-test.log"
   build_log="$temp_dir/swift-build.log"
+  release_tool_log="$temp_dir/release-tool-tests.log"
   notes_file="/tmp/chameo-$version-release-notes.md"
   trap 'rm -rf "$temp_dir"' EXIT
 
   ./script/extract_release_notes.sh "$version" "$notes_file"
   git diff --check
   printf 'release_notes=passed\ndiff_check=passed\n'
+  run_logged release_tool_tests "$release_tool_log" \
+    skills/release-chameo/scripts/test-release.sh
   run_logged swift_test "$test_log" swift test
   grep -E 'Executed [0-9]+ tests?, with 0 failures' "$test_log" | tail -n 1 || true
   run_logged strict_concurrency_build "$build_log" \
@@ -122,7 +126,8 @@ wait_run() {
       [[ "$target" =~ ^[0-9a-f]{40}$ ]] || die "CI target must be a full commit SHA"
       ;;
     Release)
-      [[ "$target" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || die "Release target must be vX.Y.Z"
+      [[ "$target" == v* ]] && is_chameo_version "${target#v}" ||
+        die "Release target must be vX.Y.Z or vX.Y.Z-prerelease"
       ;;
     *)
       die "workflow must be CI or Release"
@@ -222,11 +227,11 @@ usage() {
   printf '%s\n' \
     'usage:' \
     '  release.sh inspect' \
-    '  release.sh preflight X.Y.Z' \
-    '  release.sh validate X.Y.Z' \
+    '  release.sh preflight VERSION' \
+    '  release.sh validate VERSION' \
     '  release.sh wait-run CI FULL_COMMIT_SHA [MAX_ATTEMPTS]' \
-    '  release.sh wait-run Release vX.Y.Z [MAX_ATTEMPTS]' \
-    '  release.sh verify-publication X.Y.Z FULL_COMMIT_SHA'
+    '  release.sh wait-run Release vVERSION [MAX_ATTEMPTS]' \
+    '  release.sh verify-publication VERSION FULL_COMMIT_SHA'
 }
 
 command_name="${1:-}"
@@ -240,11 +245,11 @@ case "$command_name" in
     inspect
     ;;
   preflight)
-    [[ $# -eq 2 ]] || die "preflight requires X.Y.Z"
+    [[ $# -eq 2 ]] || die "preflight requires VERSION"
     preflight "$2"
     ;;
   validate)
-    [[ $# -eq 2 ]] || die "validate requires X.Y.Z"
+    [[ $# -eq 2 ]] || die "validate requires VERSION"
     validate "$2"
     ;;
   wait-run)
@@ -252,7 +257,7 @@ case "$command_name" in
     wait_run "$2" "$3" "${4:-60}"
     ;;
   verify-publication)
-    [[ $# -eq 3 ]] || die "verify-publication requires X.Y.Z and full commit SHA"
+    [[ $# -eq 3 ]] || die "verify-publication requires VERSION and full commit SHA"
     verify_publication "$2" "$3"
     ;;
   -h|--help|help|'')

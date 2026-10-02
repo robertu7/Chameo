@@ -9,10 +9,11 @@ fi
 VERSION="$1"
 OUTPUT_PATH="$2"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$ROOT_DIR/script/version.sh"
 CHANGELOG="$ROOT_DIR/CHANGELOG.md"
 
-if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  echo "invalid release version: expected major.minor.patch" >&2
+if ! is_chameo_version "$VERSION"; then
+  echo "invalid release version: expected X.Y.Z or X.Y.Z-prerelease" >&2
   exit 2
 fi
 
