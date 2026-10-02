@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.5.0-rc.2
+
+### What’s new
+
+- Refined the compact Timelapse panel with phase-specific progress, a clear
+  empty-album path back to Camera, and a fixed footer for cancel, retry, and
+  result actions.
+
+### Fixes
+
+- None.
+
+### Known testing limitations
+
+- Native Timelapse routing, live thumbnails, Photos/iCloud progress, and result
+  actions still need validation with a populated test library.
+- Keyboard focus, VoiceOver, native glass, and permission recovery need live
+  checks; fixture renders do not verify native hit targets or chrome.
+- Stage 1 builds are ad-hoc signed and are not notarized by Apple.
+- macOS may request Camera, Photos, Location, or Notification permission again
+  after an update.
+
 ## 0.5.0-rc.1
 
 ### What’s new
