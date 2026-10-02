@@ -22,7 +22,6 @@ struct TimelapseExportView: View {
             .frame(maxWidth: 760)
             .frame(maxWidth: .infinity)
         }
-        .background(Color(nsColor: .windowBackgroundColor))
         .environment(\.locale, localizationController.displayLocale)
         .task { await export.refreshNotificationStatus() }
     }
@@ -76,7 +75,7 @@ struct TimelapseExportView: View {
         }
         .padding(12)
         .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(.primary.opacity(0.06)))
+        .chameoImageOutline(cornerRadius: 14)
     }
 
     private var dateSpan: String {
@@ -125,7 +124,7 @@ struct TimelapseExportView: View {
                 Button(L10n.string(isFailure ? "Retry" : "Create Timelapse")) {
                     if let onCreate { onCreate() } else { export.chooseDestination() }
                 }
-                    .buttonStyle(.borderedProminent).controlSize(.large)
+                    .buttonStyle(.glassProminent).controlSize(.large)
                     .keyboardShortcut(.defaultAction)
                     .disabled(export.isBusy || export.assets.isEmpty)
             }
@@ -171,7 +170,7 @@ struct TimelapseExportView: View {
                     .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
                 Button(L10n.string("Cancel"), action: export.cancel)
-                    .buttonStyle(.bordered).controlSize(.large).disabled(export.state == .cancelling)
+                    .buttonStyle(.glass).controlSize(.large).disabled(export.state == .cancelling)
             }
         }
     }
@@ -197,9 +196,9 @@ struct TimelapseExportView: View {
                     .buttonStyle(.borderless)
                 Spacer()
                 Button(L10n.string("Open Video"), systemImage: "play") { export.openResult(id: result.id, play: true) }
-                    .buttonStyle(.bordered).controlSize(.large)
+                    .buttonStyle(.glass).controlSize(.large)
                 Button(L10n.string("Open Folder"), systemImage: "folder") { export.openResult(id: result.id) }
-                    .buttonStyle(.borderedProminent).controlSize(.large).keyboardShortcut(.defaultAction)
+                    .buttonStyle(.glassProminent).controlSize(.large).keyboardShortcut(.defaultAction)
             }
         }
     }

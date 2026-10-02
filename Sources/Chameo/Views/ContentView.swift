@@ -2,203 +2,108 @@ import AppKit
 import SwiftUI
 
 struct ContentView: View {
+    let surface: ChameoMainSurface
     let onOpenTimelapse: () -> Void
+    let onOpenSettings: () -> Void
 
     @EnvironmentObject private var timelapseExport: TimelapseExportController
     @EnvironmentObject private var appState: AppState
-    @EnvironmentObject private var cameraService: CameraService
     @EnvironmentObject private var libraryStore: LibraryStore
     @EnvironmentObject private var localizationController: LocalizationController
-
     @AppStorage(AppPreferenceKey.albumName)
     private var albumName = AppDistribution.current.defaultAlbumName
     @AppStorage(AppPreferenceKey.handsFreeCountdown) private var handsFreeCountdown = false
     @AppStorage(AppPreferenceKey.showFaceGuide) private var showFaceGuide = true
     @AppStorage(AppPreferenceKey.saveLocation) private var saveLocation = false
-
     @State private var statusMessage: LocalizedMessage?
 
     var body: some View {
-        Group {
-            switch appState.destination {
-            case .main:
-                mainContent
-            case .settings:
-                settingsContent
-            }
-        }
-        .frame(
-            width: ChameoLayout.popoverWidth,
-            height: ChameoLayout.popoverHeight
-        )
-        .environment(\.locale, localizationController.displayLocale)
-        .task {
-            syncCameraLifecycle()
-            await reloadLibraryIfAuthorized(albumName: albumName)
-        }
-        .onDisappear {
-            cameraService.stop()
-        }
-        .onChange(of: appState.destination) { _, _ in
-            syncCameraLifecycle()
-        }
-        .onChange(of: appState.selectedTab) { _, _ in
-            syncCameraLifecycle()
-        }
-        .onChange(of: statusMessage?.text) { _, newValue in
-            guard let newValue else {
-                return
-            }
-
-            AccessibilityAnnouncement.post(newValue)
-        }
-        .onChange(of: albumName) { _, newValue in
-            Task {
-                await reloadLibraryIfAuthorized(albumName: newValue)
-            }
-        }
-    }
-
-    private var mainContent: some View {
         VStack(spacing: 0) {
-            TabPicker(selection: $appState.selectedTab)
-                .frame(height: 24)
-                .fixedSize(horizontal: true, vertical: false)
-                .padding([.top, .horizontal], ChameoLayout.outerInset)
-                .padding(.bottom, 28)
-
+            navigation
+                .frame(height: 66)
             Group {
                 switch appState.selectedTab {
                 case .camera:
-                    CameraView(
-                        albumName: albumName,
-                        handsFreeCountdown: handsFreeCountdown,
-                        showFaceGuide: showFaceGuide,
-                        saveLocation: saveLocation,
-                        statusMessage: $statusMessage
-                    )
+                    CameraView(surface: surface, albumName: albumName, handsFreeCountdown: handsFreeCountdown,
+                               showFaceGuide: showFaceGuide, saveLocation: saveLocation,
+                               statusMessage: $statusMessage)
                 case .library:
                     LibraryView(albumName: albumName, onOpenTimelapse: onOpenTimelapse)
                 }
             }
-            .frame(
-                width: ChameoLayout.contentWidth,
-                height: ChameoLayout.contentHeight,
-                alignment: .top
-            )
-
-            Divider()
-
-            HStack {
-                Button {
-                    appState.destination = .settings
-                } label: {
-                    Label(L10n.string("Settings"), systemImage: "gearshape")
-                }
-                .labelStyle(.iconOnly)
-                .frame(
-                    width: ChameoLayout.compactControlSize,
-                    height: ChameoLayout.compactControlSize
-                )
-                .help(L10n.string("Settings"))
-
-                Spacer()
-
-                VStack(spacing: 2) {
-                    if timelapseExport.hasStatus {
-                        Button {
-                            onOpenTimelapse()
-                        } label: {
-                            Text(timelapseExport.footerText)
-                                .lineLimit(1)
-                                .truncationMode(.middle)
-                        }
-                        .buttonStyle(.borderless)
-                        .help(L10n.string("Show timelapse export"))
-                    }
-                    if let statusMessage {
-                        Text(statusMessage.text)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(timelapseExport.hasStatus ? 1 : 2)
-                            .multilineTextAlignment(.center)
-                            .help(statusMessage.text)
-                            .accessibilityLabel(statusMessage.text)
-                    }
-                }
-                .font(.caption)
-                .frame(maxWidth: 260)
-
-                Spacer()
-
-                Button(role: .destructive) {
-                    NSApplication.shared.terminate(nil)
-                } label: {
-                    Label(L10n.string("Quit"), systemImage: "power")
-                }
-                .labelStyle(.iconOnly)
-                .frame(
-                    width: ChameoLayout.compactControlSize,
-                    height: ChameoLayout.compactControlSize
-                )
-                .help(L10n.string("Quit Chameo"))
-            }
-            .padding(ChameoLayout.sectionSpacing)
+            .frame(width: ChameoLayout.contentWidth, height: ChameoLayout.contentHeight, alignment: .top)
+            feedback
+                .frame(height: 53)
+        }
+        .frame(width: ChameoLayout.popoverWidth, height: ChameoLayout.popoverHeight)
+        .environment(\.locale, localizationController.displayLocale)
+        .task { await reloadLibraryIfAuthorized(albumName: albumName) }
+        .onChange(of: statusMessage?.text) { _, text in
+            if let text { AccessibilityAnnouncement.post(text) }
+        }
+        .onChange(of: albumName) { _, name in
+            Task { await reloadLibraryIfAuthorized(albumName: name) }
         }
     }
 
-    private var settingsContent: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: ChameoLayout.compactSpacing) {
-                Button {
-                    appState.destination = .main
-                } label: {
-                    Label(L10n.string("Back"), systemImage: "chevron.left")
+    private var navigation: some View {
+        HStack(spacing: 12) {
+            Color.clear.frame(width: ChameoLayout.compactControlSize)
+                .accessibilityHidden(true)
+            Spacer(minLength: 0)
+            TabPicker(selection: $appState.selectedTab)
+                .frame(width: 248)
+            Spacer(minLength: 0)
+            Menu {
+                Button(L10n.string("Settings…"), systemImage: "gearshape", action: onOpenSettings)
+                    .keyboardShortcut(",", modifiers: .command)
+                Divider()
+                Button(L10n.string("Quit Chameo"), systemImage: "power") {
+                    NSApplication.shared.terminate(nil)
                 }
-                .labelStyle(.iconOnly)
-                .frame(
-                    width: ChameoLayout.compactControlSize,
-                    height: ChameoLayout.compactControlSize
-                )
-                .help(L10n.string("Back"))
-
-                Text(L10n.string("Settings"))
-                    .font(.headline)
-
-                Spacer()
+                .keyboardShortcut("q", modifiers: .command)
+            } label: {
+                Label(L10n.string("App Menu"), systemImage: "ellipsis.circle")
             }
-            .padding(.horizontal, ChameoLayout.outerInset)
-            .frame(height: 52)
+            .labelStyle(.iconOnly)
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .frame(width: ChameoLayout.compactControlSize, height: ChameoLayout.compactControlSize)
+            .help(L10n.string("App Menu"))
+        }
+        .padding(.horizontal, ChameoLayout.outerInset)
+    }
 
-            Divider()
-
-            SettingsView(layout: .embedded)
+    private var feedback: some View {
+        VStack(spacing: 3) {
+            if appState.selectedTab == .camera, let statusMessage {
+                Text(statusMessage.text)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                    .help(statusMessage.text)
+                    .accessibilityLabel(statusMessage.text)
+            }
             if timelapseExport.hasStatus {
-                Button(timelapseExport.footerText) {
-                    onOpenTimelapse()
+                Button(action: onOpenTimelapse) {
+                    Label(timelapseExport.footerText, systemImage: "film")
+                        .lineLimit(1)
+                        .truncationMode(.middle)
                 }
                 .buttonStyle(.borderless)
-                .font(.caption)
-                .lineLimit(1)
-                .padding(.bottom, 8)
+                .help(timelapseExport.footerText)
+                .accessibilityHint(L10n.string("Show timelapse export"))
             }
         }
-    }
-
-    private func syncCameraLifecycle() {
-        if appState.destination == .main, appState.selectedTab == .camera {
-            cameraService.start()
-        } else {
-            cameraService.stop()
-        }
+        .font(.caption)
+        .frame(maxWidth: ChameoLayout.previewWidth)
     }
 
     private func reloadLibraryIfAuthorized(albumName: String) async {
         switch PhotoLibraryService.authorizationStatus() {
         case .authorized, .limited:
             await libraryStore.reload(albumName: albumName)
-        case .notDetermined, .denied, .restricted:
-            return
-        @unknown default:
+        default:
             return
         }
     }

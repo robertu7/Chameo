@@ -123,7 +123,7 @@ git push origin v0.3.6
 
 The tag commit must be reachable from `origin/main`. The release workflow:
 
-1. Repeats tests and bundle validation on an Apple Silicon `macos-14` runner.
+1. Repeats tests and bundle validation on an Apple Silicon `macos-26` runner.
 2. Builds an ad-hoc-signed app bundle and packages it as a ZIP and DMG.
 3. Signs and verifies the ZIP, release notes, and appcast.
 4. Validates that the DMG contains Chameo and an `/Applications` shortcut.
@@ -203,3 +203,19 @@ plutil -p dist/Chameo.app/Contents/Info.plist
 - If reminder settings do not change, saving Settings should not request notification permission.
 - Add durable preference keys through `AppPreferenceKey`; background code should read reminder preferences through `StoredReminderSettings`.
 - Keep reminder recurrence rules in `ReminderSchedule` so UI previews and scheduled notifications cannot diverge.
+
+## Native UI Layout Previews
+
+Run `./script/render_ui_previews.sh` on macOS 26+ with Xcode 26+ to export
+Camera idle, a six-row calendar, Settings categories at their minimum size,
+and overlay content in all three languages and native light/dark/high-contrast
+appearances. The output defaults to `/tmp/chameo-ui-previews`; override it with
+`CHAMEO_UI_PREVIEW_DIR`. The fixture uses isolated preferences and local storage,
+does not start camera capture, and does not change system appearance settings.
+
+These are content-layout previews. Cached AppKit drawing does not reliably
+capture composited Liquid Glass or native tab/toolbar chrome, so they are not
+release screenshots or proof of final contrast. The normal test suite skips
+this opt-in export. Verify the signed test `.app` with pointer, keyboard,
+VoiceOver, Reduce Transparency, and Reduce Motion before replacing onboarding
+screenshots with new Camera and Library captures.

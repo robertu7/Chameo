@@ -16,6 +16,7 @@ struct CameraGuideView: View {
                 Ellipse()
                     .stroke(guideColor.opacity(0.82), lineWidth: guideLineWidth)
                     .frame(width: faceRect.width, height: faceRect.height)
+                    .shadow(color: .black.opacity(0.8), radius: 1)
                     .position(x: faceRect.midX, y: faceRect.midY)
 
                 Path { path in
@@ -29,6 +30,7 @@ struct CameraGuideView: View {
                     guideColor.opacity(0.76),
                     style: StrokeStyle(lineWidth: 1, dash: [5, 5])
                 )
+                .shadow(color: .black.opacity(0.8), radius: 1)
 
                 if let title = guidanceState.title {
                     Text(title)
@@ -37,10 +39,7 @@ struct CameraGuideView: View {
                         .lineLimit(1)
                         .padding(.horizontal, 10)
                         .frame(height: ChameoLayout.compactControlSize)
-                        .background(
-                            .regularMaterial,
-                            in: Capsule()
-                        )
+                        .chameoReadableSurface(in: Capsule())
                         .overlay {
                             Capsule()
                                 .stroke(guideColor.opacity(0.5), lineWidth: 1)

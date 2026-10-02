@@ -11,10 +11,12 @@ struct CameraView: View {
     )
 
     @EnvironmentObject private var cameraService: CameraService
+    @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var libraryStore: LibraryStore
     @EnvironmentObject private var localPhotos: LocalPhotoSettingsController
     @AppStorage(AppPreferenceKey.autoAlignPhotos) private var autoAlignPhotos = true
 
+    let surface: ChameoMainSurface
     let albumName: String
     let handsFreeCountdown: Bool
     let showFaceGuide: Bool
@@ -45,29 +47,33 @@ struct CameraView: View {
                     }
                 )
             } else {
-                ZStack {
-                    CameraPreviewView(
-                        session: cameraService.session,
-                        mirrored: cameraService.isPreviewMirrored
-                    )
-                        .overlay {
-                            if shouldShowFaceGuide {
-                                CameraGuideView(
-                                    guidanceState: cameraService.liveFramingGuidanceState
-                                )
+                GlassEffectContainer(spacing: 12) {
+                    ZStack {
+                        CameraPreviewView(
+                            session: cameraService.session,
+                            mirrored: cameraService.isPreviewMirrored
+                        )
+                            .overlay {
+                                if shouldShowFaceGuide {
+                                    CameraGuideView(
+                                        guidanceState: cameraService.liveFramingGuidanceState
+                                    )
+                                }
                             }
+                            .clipShape(RoundedRectangle(cornerRadius: ChameoLayout.cornerRadius))
+
+                        cameraOverlay
+
+                        cameraSelectionOverlay
+
+                        if let count = handsFreeCountdownMachine.phase.displayedCount {
+                            HandsFreeCountdownOverlay(count: count)
                         }
-                        .clipShape(RoundedRectangle(cornerRadius: ChameoLayout.cornerRadius))
-
-                    cameraOverlay
-
-                    cameraSelectionOverlay
-
-                    if let count = handsFreeCountdownMachine.phase.displayedCount {
-                        HandsFreeCountdownOverlay(count: count)
                     }
+                    .frame(width: ChameoLayout.previewWidth, height: livePreviewHeight)
+                    .clipShape(RoundedRectangle(cornerRadius: ChameoLayout.cornerRadius))
+                    .chameoImageOutline(cornerRadius: ChameoLayout.cornerRadius)
                 }
-                .frame(width: ChameoLayout.previewWidth, height: livePreviewHeight)
 
                 Button {
                     beginCapture(trigger: .manual)
@@ -80,7 +86,7 @@ struct CameraView: View {
                     )
                         .frame(minWidth: 104)
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.glassProminent)
                 .controlSize(.large)
                 .keyboardShortcut(.defaultAction)
                 .disabled(!canCapture || isSaving)
@@ -111,11 +117,15 @@ struct CameraView: View {
             photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
         }
         .onAppear {
-            cameraService.setLiveFramingGuidanceEnabled(showFaceGuide)
+            if isVisible { cameraService.setLiveFramingGuidanceEnabled(showFaceGuide) }
+            syncHandsFreeCountdown()
+        }
+        .onChange(of: isVisible) { _, visible in
+            if visible { cameraService.setLiveFramingGuidanceEnabled(showFaceGuide) }
             syncHandsFreeCountdown()
         }
         .onChange(of: showFaceGuide) { _, isEnabled in
-            cameraService.setLiveFramingGuidanceEnabled(isEnabled)
+            if isVisible { cameraService.setLiveFramingGuidanceEnabled(isEnabled) }
             syncHandsFreeCountdown()
         }
         .onChange(of: handsFreeCountdown) { _, _ in
@@ -132,8 +142,11 @@ struct CameraView: View {
         }
         .onDisappear {
             handleHandsFreeCountdown(.setVisible(false))
-            cameraService.setLiveFramingGuidanceEnabled(false)
         }
+    }
+
+    private var isVisible: Bool {
+        appState.isCameraVisible(on: surface)
     }
 
     private var livePreviewHeight: CGFloat {
@@ -167,11 +180,11 @@ struct CameraView: View {
         case .capturing:
             ProgressView(L10n.string("Taking photo…"))
                 .padding(12)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+                .chameoReadableSurface(in: RoundedRectangle(cornerRadius: 8))
         case .switchingCamera:
             ProgressView(L10n.string("Switching camera"))
                 .padding(12)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+                .chameoReadableSurface(in: RoundedRectangle(cornerRadius: 8))
         case .ready:
             EmptyView()
         }
@@ -242,12 +255,8 @@ struct CameraView: View {
         .foregroundStyle(.primary)
         .padding(.horizontal, 10)
         .frame(width: 220, height: ChameoLayout.compactControlSize)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 7))
-        .overlay {
-            RoundedRectangle(cornerRadius: 7)
-                .stroke(.primary.opacity(0.12), lineWidth: 0.5)
-        }
-        .contentShape(RoundedRectangle(cornerRadius: 7))
+        .chameoGlassControl(in: Capsule())
+        .contentShape(Capsule())
     }
 
     private var canCapture: Bool {
@@ -271,7 +280,7 @@ struct CameraView: View {
     }
 
     private func beginCapture(trigger: CaptureTrigger) {
-        guard !isSaving else { return }
+        guard isVisible, !isSaving else { return }
         if trigger == .manual {
             handleHandsFreeCountdown(.manualCapture)
         }
@@ -373,7 +382,7 @@ struct CameraView: View {
     }
 
     private func beginSavingCapturedPreview() {
-        guard capturedPreview != nil, !isSaving else { return }
+        guard isVisible, capturedPreview != nil, !isSaving else { return }
         isSaving = true
         Task {
             await keepCapturedPreview()
@@ -444,7 +453,7 @@ struct CameraView: View {
     }
 
     private var isHandsFreeCountdownVisible: Bool {
-        capturedPreview == nil && canCapture
+        isVisible && capturedPreview == nil && canCapture
     }
 
     private func syncHandsFreeCountdown() {
@@ -491,6 +500,10 @@ struct CameraView: View {
             do {
                 for _ in 0..<3 {
                     try await Task.sleep(for: .seconds(1))
+                    guard isHandsFreeCountdownVisible else {
+                        handleHandsFreeCountdown(.setVisible(false))
+                        return
+                    }
                     handleHandsFreeCountdown(.tick)
                 }
             } catch {
@@ -528,7 +541,7 @@ private struct HandsFreeCountdownOverlay: View {
             .monospacedDigit()
             .foregroundStyle(.primary)
             .frame(width: 108, height: 108)
-            .background(.regularMaterial, in: Circle())
+            .chameoReadableSurface(in: Circle())
             .overlay {
                 Circle()
                     .stroke(.green.opacity(0.65), lineWidth: 2)
@@ -648,7 +661,7 @@ private struct CapturedPreviewView: View {
                 .padding(.horizontal, 10)
                 .padding(.vertical, 8)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(.regularMaterial)
+                .chameoReadableSurface(in: Rectangle())
                 .accessibilityLabel(L10n.format("Retake suggested. %@", suggestion.message))
         }
     }
@@ -665,26 +678,27 @@ private struct CapturedPreviewView: View {
     @ViewBuilder
     private var actionButtons: some View {
         if preview.qualitySuggestion != nil {
-            Button(L10n.string("Retake"), role: .destructive, action: onRetake)
-                .buttonStyle(.borderedProminent)
+            Button(L10n.string("Retake"), action: onRetake)
+                .buttonStyle(.glassProminent)
                 .keyboardShortcut(.cancelAction)
                 .disabled(isSaving)
 
             Spacer()
 
             Button(keepButtonTitle, action: onKeep)
-                .buttonStyle(.bordered)
+                .buttonStyle(.glass)
                 .keyboardShortcut("s", modifiers: .command)
                 .disabled(isSaving)
         } else {
-            Button(L10n.string("Retake"), role: .destructive, action: onRetake)
+            Button(L10n.string("Retake"), action: onRetake)
+                .buttonStyle(.glass)
                 .keyboardShortcut(.cancelAction)
                 .disabled(isSaving)
 
             Spacer()
 
             Button(keepButtonTitle, action: onKeep)
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.glassProminent)
                 .keyboardShortcut(.defaultAction)
                 .disabled(isSaving)
         }
@@ -713,7 +727,7 @@ private struct StatusOverlay: View {
         }
         .foregroundStyle(.secondary)
         .padding(14)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .chameoReadableSurface(in: RoundedRectangle(cornerRadius: 8, style: .continuous))
         .padding()
     }
 }

@@ -273,3 +273,23 @@
 "Updating photo" = "正在处理照片";
 "Local copy saved." = "本地副本已保存。";
 "Local copies are off. Turn on Keep Local Copies in Settings." = "本地副本已关闭。请在设置中开启“保留本地副本”。";
+
+"Settings…" = "设置…";
+
+"App Menu" = "应用菜单";
+
+"Edit" = "编辑";
+
+"Undo" = "撤销";
+
+"Redo" = "重做";
+
+"Cut" = "剪切";
+
+"Copy" = "复制";
+
+"Paste" = "粘贴";
+
+"Select All" = "全选";
+
+"Local Copies" = "本机副本";

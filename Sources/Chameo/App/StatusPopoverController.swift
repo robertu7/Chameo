@@ -15,6 +15,9 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
     private let popover: NSPopover
     private var timelapseWindowController: TimelapseWindowController?
     private var standaloneWindowController: StandaloneChameoWindowController?
+    private var settingsWindowController: SettingsWindowController?
+    private var cameraLifecycle: MainCameraLifecycle?
+    private var applicationVisibilityObservations: Set<AnyCancellable> = []
     private var localEventMonitor: Any?
     private var globalEventMonitor: Any?
     private var libraryStatusObservation: AnyCancellable?
@@ -46,6 +49,14 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
 
         super.init()
 
+        cameraLifecycle = MainCameraLifecycle(
+            appState: appState,
+            start: { [weak cameraService] in cameraService?.start() },
+            stop: { [weak cameraService] in cameraService?.stop() }
+        )
+        installAppMenu()
+        observeApplicationVisibility()
+
         statusItem.autosaveName = "ChameoStatusItem"
 
         if let button = statusItem.button {
@@ -73,39 +84,29 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
             width: ChameoLayout.popoverWidth,
             height: ChameoLayout.popoverHeight
         )
-        popover.contentViewController = NSHostingController(rootView: makeContentView())
+        popover.contentViewController = NSHostingController(rootView: makeContentView(surface: .popover))
     }
 
     @objc private func togglePopover(_ sender: AnyObject?) {
         if popover.isShown {
             close()
         } else {
-            appState.destination = .main
-            switch libraryStore.dailyStatus() {
-            case .captured:
-                appState.selectedLibraryDay = Calendar.current.startOfDay(for: Date())
-                appState.selectedTab = .library
-            default:
-                appState.selectedTab = .camera
-            }
+            appState.prepareForMenuBarOpen(status: libraryStore.dailyStatus())
             showPopover()
         }
     }
 
     func showCamera() {
-        appState.destination = .main
         appState.selectedTab = .camera
         showStandaloneWindow()
     }
 
     func showCameraPopover() {
-        appState.destination = .main
         appState.selectedTab = .camera
         showPopover()
     }
 
     func showLibraryToday() {
-        appState.destination = .main
         appState.selectedLibraryDay = Calendar.current.startOfDay(for: Date())
         appState.selectedTab = .library
         showStandaloneWindow()
@@ -118,7 +119,7 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         popover.contentViewController?.view.window?.makeKey()
         startOutsideClickMonitoring()
-        syncCameraLifecycle()
+        appState.visibleMainSurface = .popover
     }
 
     private func showStandaloneWindow() {
@@ -128,14 +129,76 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
 
         if standaloneWindowController == nil {
             standaloneWindowController = StandaloneChameoWindowController(
-                rootView: makeContentView(),
-                onClose: { [weak self] in
-                    self?.cameraService.stop()
+                rootView: makeContentView(surface: .standalone),
+                onVisibilityChange: { [weak self] visible in
+                    guard let self else { return }
+                    if visible {
+                        self.appState.visibleMainSurface = .standalone
+                    } else {
+                        self.appState.dismiss(.standalone)
+                    }
                 }
             )
         }
         standaloneWindowController?.present()
-        syncCameraLifecycle()
+        appState.visibleMainSurface = .standalone
+    }
+
+    @objc func showSettings() {
+        if popover.isShown { close() }
+        standaloneWindowController?.window?.orderOut(nil)
+        appState.prepareForSettings()
+        if settingsWindowController == nil {
+            settingsWindowController = SettingsWindowController(
+                localizationController: localizationController,
+                updateController: updateController, localPhotos: localPhotos
+            )
+        }
+        settingsWindowController?.present()
+    }
+
+    private func installAppMenu() {
+        let menu = NSMenu()
+        let appItem = NSMenuItem()
+        let appMenu = NSMenu(title: "Chameo")
+        let settings = NSMenuItem(title: L10n.string("Settings…"), action: #selector(showSettings), keyEquivalent: ",")
+        settings.target = self
+        appMenu.addItem(settings)
+        appMenu.addItem(.separator())
+        appMenu.addItem(NSMenuItem(title: L10n.string("Quit Chameo"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        appItem.submenu = appMenu
+        menu.addItem(appItem)
+        let editItem = NSMenuItem()
+        let editMenu = NSMenu(title: L10n.string("Edit"))
+        for (title, action, key, shift) in [
+            ("Undo", "undo:", "z", false), ("Redo", "redo:", "z", true),
+            ("Cut", "cut:", "x", false), ("Copy", "copy:", "c", false),
+            ("Paste", "paste:", "v", false), ("Select All", "selectAll:", "a", false),
+        ] {
+            let item = NSMenuItem(title: L10n.string(title), action: Selector(action), keyEquivalent: key)
+            item.keyEquivalentModifierMask = shift ? [.command, .shift] : [.command]
+            editMenu.addItem(item)
+        }
+        editItem.submenu = editMenu
+        menu.addItem(editItem)
+        NSApp.mainMenu = menu
+    }
+
+    private func observeApplicationVisibility() {
+        NotificationCenter.default.publisher(for: NSApplication.didHideNotification)
+            .sink { [weak self] _ in self?.appState.visibleMainSurface = nil }
+            .store(in: &applicationVisibilityObservations)
+        NotificationCenter.default.publisher(for: NSApplication.didUnhideNotification)
+            .sink { [weak self] _ in
+                guard let self else { return }
+                if self.popover.isShown {
+                    self.appState.visibleMainSurface = .popover
+                } else if let window = self.standaloneWindowController?.window,
+                          window.isVisible, !window.isMiniaturized {
+                    self.appState.visibleMainSurface = .standalone
+                }
+            }
+            .store(in: &applicationVisibilityObservations)
     }
 
     private func showTimelapse() {
@@ -150,8 +213,9 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
         timelapseWindowController?.present()
     }
 
-    private func makeContentView() -> some View {
-        ContentView(onOpenTimelapse: { [weak self] in self?.showTimelapse() })
+    private func makeContentView(surface: ChameoMainSurface) -> some View {
+        ContentView(surface: surface, onOpenTimelapse: { [weak self] in self?.showTimelapse() },
+                    onOpenSettings: { [weak self] in self?.showSettings() })
             .environmentObject(appState)
             .environmentObject(cameraService)
             .environmentObject(libraryStore)
@@ -164,21 +228,13 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
 
     func close() {
         stopOutsideClickMonitoring()
-        cameraService.stop()
+        appState.dismiss(.popover)
         popover.performClose(nil)
     }
 
     func popoverDidClose(_ notification: Notification) {
         stopOutsideClickMonitoring()
-        cameraService.stop()
-    }
-
-    private func syncCameraLifecycle() {
-        if appState.selectedTab == .camera {
-            cameraService.start()
-        } else {
-            cameraService.stop()
-        }
+        appState.dismiss(.popover)
     }
 
     private func observeDailyStatus() {
@@ -217,6 +273,7 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
                 Task { @MainActor [weak self] in
                     guard let self else { return }
                     self.updateStatusItem(for: self.libraryStore.dailyStatus())
+                    self.installAppMenu()
                 }
             }
     }
@@ -304,13 +361,13 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
 
 @MainActor
 private final class StandaloneChameoWindowController: NSWindowController, NSWindowDelegate {
-    private let onClose: () -> Void
+    private let onVisibilityChange: (Bool) -> Void
 
     init<Content: View>(
         rootView: Content,
-        onClose: @escaping () -> Void
+        onVisibilityChange: @escaping (Bool) -> Void
     ) {
-        self.onClose = onClose
+        self.onVisibilityChange = onVisibilityChange
 
         let window = NSWindow(
             contentRect: NSRect(
@@ -350,13 +407,22 @@ private final class StandaloneChameoWindowController: NSWindowController, NSWind
 
         NSApp.unhide(nil)
         NSApp.activate(ignoringOtherApps: true)
+        if window.isMiniaturized { window.deminiaturize(nil) }
         showWindow(nil)
         window.makeKeyAndOrderFront(nil)
         window.orderFrontRegardless()
     }
 
     func windowWillClose(_ notification: Notification) {
-        onClose()
+        onVisibilityChange(false)
+    }
+
+    func windowDidMiniaturize(_ notification: Notification) {
+        onVisibilityChange(false)
+    }
+
+    func windowDidDeminiaturize(_ notification: Notification) {
+        onVisibilityChange(true)
     }
 }
 

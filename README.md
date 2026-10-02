@@ -34,6 +34,8 @@ The app is intentionally small: click the camera icon in the menu bar, take a ph
 - Optional launch-at-login support.
 - Daily user-approved update checks through Sparkle, with a manual check in
   General Settings.
+- Native Liquid Glass controls on macOS 26+, with Reduce Transparency, Increase Contrast, and Reduce Motion support.
+- Dedicated Settings window with General, Capture, Reminders, and Photos categories (⌘,).
 - Menu-bar-only app with no Dock icon.
 
 ## Local Photo Copies
@@ -70,9 +72,9 @@ available locally and to match their current Photos versions.
 
 Requirements:
 
-- macOS 14 or newer.
+- macOS 26 or newer.
 - Apple Silicon Mac.
-- Xcode command line tools or Xcode with SwiftPM support.
+- Xcode 26 or newer with the macOS 26 SDK and Swift 6.2 or newer.
 
 Build and launch the isolated local test app:
 

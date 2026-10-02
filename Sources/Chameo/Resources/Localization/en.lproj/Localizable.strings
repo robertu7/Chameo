@@ -273,3 +273,23 @@
 "Updating photo" = "Updating photo";
 "Local copy saved." = "Local copy saved.";
 "Local copies are off. Turn on Keep Local Copies in Settings." = "Local copies are off. Turn on Keep Local Copies in Settings.";
+
+"Settings…" = "Settings…";
+
+"App Menu" = "App Menu";
+
+"Edit" = "Edit";
+
+"Undo" = "Undo";
+
+"Redo" = "Redo";
+
+"Cut" = "Cut";
+
+"Copy" = "Copy";
+
+"Paste" = "Paste";
+
+"Select All" = "Select All";
+
+"Local Copies" = "Local Copies";

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 EXECUTABLE_NAME="Chameo"
-MIN_SYSTEM_VERSION="14.0"
+MIN_SYSTEM_VERSION="26.0"
 BUILD_CONFIGURATION="debug"
 APP_VARIANT="release"
 

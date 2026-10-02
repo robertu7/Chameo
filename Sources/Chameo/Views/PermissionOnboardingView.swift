@@ -54,10 +54,7 @@ struct PermissionOnboardingView: View {
         }
         .padding(24)
         .frame(width: ChameoLayout.utilityWindowWidth, height: 560)
-        .background(
-            .regularMaterial,
-            in: RoundedRectangle(cornerRadius: 16, style: .continuous)
-        )
+        .chameoReadableSurface(in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private func featureIntroduction(
@@ -201,7 +198,7 @@ struct PermissionOnboardingView: View {
 
             if step == .permissions {
                 Button(L10n.string("Continue"), action: onContinue)
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.glassProminent)
                     .keyboardShortcut(.defaultAction)
                     .disabled(!model.canContinue || model.permissionBeingRequested != nil)
             } else {
@@ -210,10 +207,12 @@ struct PermissionOnboardingView: View {
                         step = next
                     }
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.glassProminent)
                 .keyboardShortcut(.defaultAction)
             }
         }
+        .buttonStyle(.glass)
+        .controlSize(.large)
     }
 
     private func permissionRow(
@@ -277,7 +276,7 @@ struct PermissionOnboardingView: View {
                         onPermissionRequestFinished()
                     }
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.glass)
                 .controlSize(.regular)
                 .frame(minWidth: 84)
                 .disabled(model.permissionBeingRequested != nil)
@@ -292,7 +291,7 @@ struct PermissionOnboardingView: View {
                 Button(L10n.string("Open System Settings")) {
                     PermissionRecoveryService.open(recoveryDestination)
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.glass)
                 .controlSize(.regular)
                 .frame(minWidth: 84)
 

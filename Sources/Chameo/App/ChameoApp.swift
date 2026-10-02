@@ -317,7 +317,7 @@ enum ChameoApp {
         let delegate = AppDelegate()
         application.delegate = delegate
 
-        // AppDelegate owns every window; Settings is presented inside ContentView.
+        // AppDelegate owns the menu bar experience and its auxiliary windows.
         // Keep the delegate alive because NSApplication holds it weakly.
         withExtendedLifetime(delegate) {
             application.run()

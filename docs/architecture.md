@@ -8,8 +8,8 @@ Chameo is a SwiftPM macOS app using a small AppKit shell and SwiftUI feature vie
 - `StatusPopoverController.swift` creates the `NSStatusItem` and hosts both the SwiftUI popover and the standalone recovery window. Direct menu-bar clicks use the popover; programmatic entry points such as notification clicks and app reopen use the window so they remain reachable when the menu bar is full.
   It also maps the shared daily capture status onto the menu-bar symbol and
   routes status-item clicks to Camera or today's Library entry.
-- `ContentView.swift` coordinates the Camera, Library, in-popover Settings destination, bottom status area, and camera lifecycle.
-- `SettingsView.swift` hosts the compact grouped settings form; each settings section owns only its feature state and operations.
+- `ContentView.swift` coordinates Camera, Library, the app menu, and the feedback footer.
+- `SettingsWindowController.swift` owns one reusable Settings window. `SettingsView.swift` presents native General, Capture, Reminders, and Photos tabs with grouped forms.
 
 The app uses `NSStatusItem` plus `NSPopover` instead of SwiftUI `MenuBarExtra` because it needs AppKit-controlled presentation. Direct status-item clicks open the popover, while notification taps and Finder or Spotlight reopen events open a standalone window that does not depend on the status item being visible.
 
@@ -18,6 +18,8 @@ The app uses `NSStatusItem` plus `NSPopover` instead of SwiftUI `MenuBarExtra` b
 - `AppState` stores popover-level UI state:
   - selected tab
   - selected Library day
+  - visible main surface (popover or standalone window)
+- `SettingsState` retains the selected Settings category across window closure.
 - `@AppStorage` stores durable preferences:
   - album name
   - camera face guide
@@ -37,7 +39,7 @@ The app uses `NSStatusItem` plus `NSPopover` instead of SwiftUI `MenuBarExtra` b
 - `CameraSessionController` serializes blocking `AVCaptureSession` configuration and lifecycle work.
 - `LocationService` coalesces overlapping authorization/location requests and bounds both with a timeout.
 
-Camera hardware starts only when the Camera tab is visible. It stops when the user switches to Library or closes the popover. Permission callbacks re-check that lifecycle intent before starting hardware.
+`MainCameraLifecycle` is the single owner of camera visibility intent. Camera hardware starts only when a main surface is visible and Camera is selected. Opening Settings, closing the main surface, or minimizing the standalone window stops it. A late close callback from a different surface cannot stop the active one. Permission callbacks re-check lifecycle intent before starting hardware.
 
 ## Services
 
@@ -131,10 +133,19 @@ Camera hardware starts only when the Camera tab is visible. It stops when the us
   - Dedicated timelapse summary/progress/result screen, standard Save panel, and persistent export footer.
 
 - `SettingsView`
-  - Opens inside the existing Chameo popover with a contextual back action.
-  - Grouped settings sections for Capture, Reminders, Photos, and App.
+  - Opens in a reusable native window from the app menu or Command-comma.
+  - General, Capture, Reminders, and Photos categories retain their preference keys.
+  - Opening Settings stops capture and preserves the main tab/day selection for return.
   - Saves notification changes only when reminder fields changed.
 
 ## Bundle and Signing
 
 The project is SwiftPM-based, so `script/build_app.sh` stages the app bundle manually under `dist/Chameo.app`. The script writes bundle metadata, applies `Chameo.entitlements`, and prefers an installed Apple Development or Developer ID Application identity. It warns before falling back to ad-hoc signing because that identity changes with every rebuilt binary and causes macOS protected-resource grants to reset.
+
+## macOS Design
+
+Chameo requires macOS 26 and Swift tools 6.2 or newer. Native glass button styles
+carry primary and secondary actions; the custom camera selector uses regular
+interactive Liquid Glass. Photos, calendar cells, and informational overlays stay
+in the content layer. Custom surfaces honor Reduce Transparency and Increase
+Contrast, and framing/countdown transitions honor Reduce Motion.

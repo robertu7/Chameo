@@ -11,17 +11,13 @@ struct LocalPhotoSettingsView: View {
         .disabled(localPhotos.isBusy)
         .accessibilityHint(L10n.string("Saves new captures and downloads older originals during timelapse export."))
 
-        Text(L10n.string("Saves new captures and downloads older originals during timelapse export."))
-            .font(.caption)
-            .foregroundStyle(.secondary)
-
-        Text(L10n.string("Local copies are independent of Photos and iCloud. Deleting from either keeps the other copy."))
-            .font(.caption)
-            .foregroundStyle(.secondary)
-
-        Text(L10n.string("Files removed from the folder stay removed. Use Save Local Copy in a photo's menu to restore a copy."))
-            .font(.caption)
-            .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 6) {
+            Text(L10n.string("Saves new captures and downloads older originals during timelapse export."))
+            Text(L10n.string("Local copies are independent of Photos and iCloud. Deleting from either keeps the other copy."))
+            Text(L10n.string("Files removed from the folder stay removed. Use Save Local Copy in a photo's menu to restore a copy."))
+        }
+        .font(.caption)
+        .foregroundStyle(.secondary)
 
         if let folder = localPhotos.configuration.activeFolder {
             Text(folder.displayPath)

@@ -25,6 +25,7 @@ struct ChameoImageOutlineModifier: ViewModifier {
     let cornerRadius: CGFloat
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.colorSchemeContrast) private var contrast
 
     func body(content: Content) -> some View {
         content
@@ -36,8 +37,8 @@ struct ChameoImageOutlineModifier: ViewModifier {
 
     private var outlineColor: Color {
         colorScheme == .dark
-            ? Color.white.opacity(0.1)
-            : Color.black.opacity(0.1)
+            ? Color.white.opacity(contrast == .increased ? 0.5 : 0.1)
+            : Color.black.opacity(contrast == .increased ? 0.5 : 0.1)
     }
 }
 

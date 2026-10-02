@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 6.2
 
 import PackageDescription
 
@@ -6,7 +6,7 @@ let package = Package(
     name: "Chameo",
     defaultLocalization: "en",
     platforms: [
-        .macOS(.v14)
+        .macOS(.v26)
     ],
     products: [
         .executable(name: "Chameo", targets: ["Chameo"])
@@ -44,5 +44,5 @@ let package = Package(
             path: "Tests/ChameoTests"
         )
     ],
-    swiftLanguageVersions: [.v5]
+    swiftLanguageModes: [.v5]
 )

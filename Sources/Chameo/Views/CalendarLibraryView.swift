@@ -47,10 +47,10 @@ struct CalendarLibraryView: View {
     }
 
     var body: some View {
-        VStack(spacing: ChameoLayout.compactSpacing) {
+        VStack(spacing: 4) {
             calendarHeader
             weekdayHeader
-                .padding(.top, 12)
+                .padding(.top, 4)
 
             LazyVGrid(
                 columns: Array(repeating: GridItem(.flexible(), spacing: 3), count: 7),
@@ -97,17 +97,14 @@ struct CalendarLibraryView: View {
                 onSaveLocalCopy: onSaveLocalCopy
             )
             .frame(height: 96)
-            .padding(.top, ChameoLayout.compactSpacing)
+            .padding(.top, 4)
         }
         .padding(ChameoLayout.sectionSpacing)
         .background(
             Color(nsColor: .controlBackgroundColor),
             in: RoundedRectangle(cornerRadius: ChameoLayout.cornerRadius)
         )
-        .overlay {
-            RoundedRectangle(cornerRadius: ChameoLayout.cornerRadius)
-                .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
-        }
+        .chameoImageOutline(cornerRadius: ChameoLayout.cornerRadius)
         .padding(.horizontal, ChameoLayout.outerInset)
         .padding(.bottom, ChameoLayout.sectionSpacing)
         .task {
@@ -122,75 +119,52 @@ struct CalendarLibraryView: View {
     }
 
     private var calendarHeader: some View {
-        HStack(spacing: ChameoLayout.compactSpacing) {
-            HStack(spacing: 0) {
-                Button {
-                    changeMonth(by: -1)
-                } label: {
-                    Label(L10n.string("Previous Month"), systemImage: "chevron.left")
-                }
-                .labelStyle(.iconOnly)
-                .buttonStyle(.borderless)
-                .frame(
-                    width: ChameoLayout.compactControlSize,
-                    height: ChameoLayout.compactControlSize
-                )
-                .contentShape(Rectangle())
-                .help(L10n.string("Previous Month"))
-
-                Button {
-                    changeMonth(by: 1)
-                } label: {
-                    Label(L10n.string("Next Month"), systemImage: "chevron.right")
-                }
-                .labelStyle(.iconOnly)
-                .buttonStyle(.borderless)
-                .frame(
-                    width: ChameoLayout.compactControlSize,
-                    height: ChameoLayout.compactControlSize
-                )
-                .contentShape(Rectangle())
-                .help(L10n.string("Next Month"))
-            }
-
-            HStack(spacing: ChameoLayout.compactSpacing) {
+        VStack(spacing: 4) {
+            HStack(spacing: 6) {
                 Text(DateFormatters.monthAndYear.string(from: displayedMonth))
                     .font(.headline)
-
                 if isRefreshing {
-                    ProgressView()
-                        .controlSize(.small)
+                    ProgressView().controlSize(.small)
                         .accessibilityLabel(L10n.string("Refreshing Library"))
                 }
+                Spacer(minLength: 0)
+                monthNavigationControl(L10n.string("Previous Month"), symbol: "chevron.left", offset: -1)
+                monthNavigationControl(L10n.string("Next Month"), symbol: "chevron.right", offset: 1)
             }
-                .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(height: 24)
 
-            Button(L10n.string("Today")) {
-                select(Date())
-            }
-            .buttonStyle(.bordered)
-
-            Button(action: onExportTimelapse) {
-                HStack(spacing: ChameoLayout.compactSpacing) {
-                    if isExportingTimelapse {
-                        ProgressView()
-                            .controlSize(.small)
-                            .accessibilityHidden(true)
+            HStack(spacing: 8) {
+                Spacer(minLength: 0)
+                Button(L10n.string("Today")) { select(Date()) }
+                    .buttonStyle(.glass)
+                Button(action: onExportTimelapse) {
+                    HStack(spacing: ChameoLayout.compactSpacing) {
+                        if isExportingTimelapse {
+                            ProgressView().controlSize(.small).accessibilityHidden(true)
+                        }
+                        Label(L10n.string("Timelapse"), systemImage: "film")
                     }
-
-                    Label(L10n.string("Timelapse"), systemImage: "film")
                 }
+                .buttonStyle(.glass)
+                .frame(width: ChameoLayout.timelapseButtonWidth)
+                .disabled(!isExportingTimelapse && assets.isEmpty)
+                .help(L10n.string("Create Timelapse"))
+                .accessibilityLabel(L10n.string(isExportingTimelapse ? "Creating timelapse" : "Timelapse"))
             }
-            .buttonStyle(.bordered)
-            .frame(width: ChameoLayout.timelapseButtonWidth)
-            .disabled(!isExportingTimelapse && assets.isEmpty)
-            .help(L10n.string("Create Timelapse"))
-            .accessibilityLabel(
-                isExportingTimelapse
-                    ? L10n.string("Creating timelapse")
-                    : L10n.string("Timelapse")
-            )
+            .controlSize(.small)
+            .frame(height: 24)
         }
+    }
+
+    private func monthNavigationControl(_ title: String, symbol: String, offset: Int) -> some View {
+        Button { changeMonth(by: offset) } label: {
+            Label(title, systemImage: symbol)
+        }
+        .labelStyle(.iconOnly)
+        .buttonStyle(.borderless)
+        .frame(width: 28, height: 24)
+        .contentShape(Rectangle())
+        .help(title)
     }
 
     private var weekdayHeader: some View {
@@ -249,6 +223,7 @@ private struct CalendarDayCell: View {
     let focusedDay: FocusState<Date?>.Binding
     let onSelect: () -> Void
 
+    @Environment(\.colorSchemeContrast) private var contrast
     @State private var isHovered = false
 
     var body: some View {
@@ -256,11 +231,11 @@ private struct CalendarDayCell: View {
             ZStack {
                 Circle()
                     .fill(backgroundColor)
-                    .frame(width: 29, height: 29)
+                    .frame(width: 28, height: 28)
 
                 Circle()
                     .stroke(isFocused ? Color.accentColor : Color.clear, lineWidth: 1)
-                    .frame(width: 29, height: 29)
+                    .frame(width: 28, height: 28)
 
                 VStack(spacing: 1) {
                     Text(date.formatted(.dateTime.day()))
@@ -271,7 +246,7 @@ private struct CalendarDayCell: View {
                 }
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 29)
+            .frame(height: 28)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -280,7 +255,7 @@ private struct CalendarDayCell: View {
         .onHover { isHovering in
             isHovered = isHovering
         }
-        .opacity(isInDisplayedMonth ? 1 : 0.35)
+        .opacity(isInDisplayedMonth ? 1 : contrast == .increased ? 0.65 : 0.35)
         .help(status.accessibilityDescription)
         .accessibilityLabel(DateFormatters.completeDate.string(from: date))
         .accessibilityValue(status.accessibilityDescription)
@@ -289,7 +264,7 @@ private struct CalendarDayCell: View {
 
     private var backgroundColor: Color {
         if isSelected {
-            return Color.accentColor.opacity(0.16)
+            return Color.accentColor.opacity(contrast == .increased ? 0.3 : 0.16)
         }
         if isHovered {
             return Color.secondary.opacity(0.08)

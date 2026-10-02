@@ -2,14 +2,45 @@ import Foundation
 
 @MainActor
 final class AppState: ObservableObject {
-    @Published var destination = ChameoDestination.main
     @Published var selectedTab = ChameoTab.camera
     @Published var selectedLibraryDay: Date?
+    @Published var visibleMainSurface: ChameoMainSurface?
+    private var preservesSelectionOnNextOpen = false
+
+    var shouldRunCamera: Bool {
+        visibleMainSurface != nil && selectedTab == .camera
+    }
+
+    func isCameraVisible(on surface: ChameoMainSurface) -> Bool {
+        shouldRunCamera && visibleMainSurface == surface
+    }
+
+    func dismiss(_ surface: ChameoMainSurface) {
+        if visibleMainSurface == surface { visibleMainSurface = nil }
+    }
+
+    func prepareForSettings() {
+        preservesSelectionOnNextOpen = true
+        visibleMainSurface = nil
+    }
+
+    func prepareForMenuBarOpen(status: DailyCaptureStatus, now: Date = Date()) {
+        if preservesSelectionOnNextOpen {
+            preservesSelectionOnNextOpen = false
+            return
+        }
+        if status == .captured {
+            selectedLibraryDay = Calendar.current.startOfDay(for: now)
+            selectedTab = .library
+        } else {
+            selectedTab = .camera
+        }
+    }
 }
 
-enum ChameoDestination {
-    case main
-    case settings
+enum ChameoMainSurface {
+    case popover
+    case standalone
 }
 
 enum ChameoTab: String, CaseIterable, Identifiable {

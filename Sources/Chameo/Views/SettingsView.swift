@@ -1,41 +1,25 @@
 import SwiftUI
 
 struct SettingsView: View {
-    enum Layout {
-        case embedded
-        case window
-    }
-
+    @ObservedObject var state: SettingsState
     @EnvironmentObject private var localizationController: LocalizationController
     @AppStorage(AppPreferenceKey.hasCompletedPermissionOnboarding)
     private var hasCompletedPermissionOnboarding = false
 
-    let layout: Layout
-
-    init(layout: Layout = .window) {
-        self.layout = layout
-    }
-
     var body: some View {
         Group {
-            switch layout {
-            case .embedded:
-                settingsContent
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            case .window:
-                settingsContent
-                    .frame(width: ChameoLayout.utilityWindowWidth - 2 * ChameoLayout.utilityWindowInset, height: 360)
-                    .padding(ChameoLayout.utilityWindowInset)
-            }
-        }
-        .environment(\.locale, localizationController.displayLocale)
-    }
-
-    @ViewBuilder
-    private var settingsContent: some View {
-        Group {
             if hasCompletedPermissionOnboarding {
-                GeneralSettingsView()
+                TabView(selection: $state.category) {
+                    GeneralSettingsView()
+                        .tabItem { categoryLabel(.general) }.tag(SettingsCategory.general)
+                    CaptureSettingsView()
+                        .tabItem { categoryLabel(.capture) }.tag(SettingsCategory.capture)
+                    Form { ReminderSettingsView() }
+                        .formStyle(.grouped)
+                        .tabItem { categoryLabel(.reminders) }.tag(SettingsCategory.reminders)
+                    PhotosSettingsView()
+                        .tabItem { categoryLabel(.photos) }.tag(SettingsCategory.photos)
+                }
             } else {
                 ContentUnavailableView {
                     Label(L10n.string("Finish Chameo Setup"), systemImage: "lock.fill")
@@ -44,5 +28,10 @@ struct SettingsView: View {
                 }
             }
         }
+        .environment(\.locale, localizationController.displayLocale)
+    }
+
+    private func categoryLabel(_ category: SettingsCategory) -> some View {
+        Label(category.title, systemImage: category.systemImage)
     }
 }

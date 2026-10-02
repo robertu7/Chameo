@@ -1,7 +1,7 @@
 # Production Readiness
 
 Chameo is production-ready for its documented scope: a locally built, sandboxed,
-menu-bar app for personal use on macOS 14 or newer.
+menu-bar app for personal use on macOS 26 or newer.
 
 ## Automated Gates
 
