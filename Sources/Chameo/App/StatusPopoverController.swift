@@ -207,7 +207,8 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
             timelapseWindowController = TimelapseWindowController(
                 export: timelapseExport,
                 libraryStore: libraryStore,
-                localizationController: localizationController
+                localizationController: localizationController,
+                onTakeChameo: { [weak self] in self?.showCamera() }
             )
         }
         timelapseWindowController?.present()

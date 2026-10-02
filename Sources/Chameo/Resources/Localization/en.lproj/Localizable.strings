@@ -290,3 +290,10 @@
 "Select All" = "Select All";
 
 "Local Copies" = "Local Copies";
+"Take your first Chameo to create a timelapse." = "Take your first Chameo to create a timelapse.";
+"Loading photos…" = "Loading photos…";
+"Encoding video…" = "Encoding video…";
+"Saved in %@" = "Saved in %@";
+"You can close this window. Generation continues." = "You can close this window. Generation continues.";
+"Retry…" = "Retry…";
+"Create Timelapse…" = "Create Timelapse…";

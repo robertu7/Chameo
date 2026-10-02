@@ -250,32 +250,49 @@ extension TimelapseExportTests {
             UserDefaults.standard.set(language.rawValue, forKey: AppPreferenceKey.language)
             let probe = ExportProbe()
             let controller = makeController(probe: probe)
+            controller.prepare(assets: [])
+            try render(controller, to: directory.appendingPathComponent(language.rawValue + "-empty.png"),
+                       size: TimelapseWindowController.minimumContentSize)
             controller.prepare(assets: [asset(), asset(), asset()])
             try render(controller, to: directory.appendingPathComponent(language.rawValue + "-summary.png"))
+            try render(controller, to: directory.appendingPathComponent(language.rawValue + "-summary-minimum.png"),
+                       size: TimelapseWindowController.minimumContentSize)
             let video = try temporaryVideo()
             defer { try? FileManager.default.removeItem(at: video.deletingLastPathComponent()) }
             controller.destinationChosen(video)
             await waitUntil { probe.callback != nil }
             await probe.send(.downloadingPhoto(0, 0.45))
             try render(controller, to: directory.appendingPathComponent(language.rawValue + "-progress.png"))
+            try render(controller, to: directory.appendingPathComponent(language.rawValue + "-progress-minimum.png"),
+                       size: TimelapseWindowController.minimumContentSize)
+            await probe.send(.framesWritten(1))
+            try render(controller, to: directory.appendingPathComponent(language.rawValue + "-encoding.png"),
+                       size: TimelapseWindowController.minimumContentSize)
+            await probe.send(.saving)
+            try render(controller, to: directory.appendingPathComponent(language.rawValue + "-saving.png"),
+                       size: TimelapseWindowController.minimumContentSize)
             probe.finish()
             await waitUntil { !controller.isBusy }
             try render(controller, to: directory.appendingPathComponent(language.rawValue + "-result.png"))
+            try render(controller, to: directory.appendingPathComponent(language.rawValue + "-result-minimum.png"),
+                       size: TimelapseWindowController.minimumContentSize)
         }
     }
 
-    private func render(_ controller: TimelapseExportController, to url: URL) throws {
+    private func render(_ controller: TimelapseExportController, to url: URL,
+                        size: NSSize? = nil) throws {
+        let renderSize = size ?? TimelapseWindowController.contentSize
         let view = TimelapseExportView(thumbnailLoader: { _ in nil })
             .environmentObject(LocalizationController())
             .environmentObject(AppState())
             .environmentObject(LibraryStore())
             .environmentObject(controller)
             .environment(\.locale, L10n.currentLocalization.displayLocale)
-            .frame(width: TimelapseWindowController.contentSize.width, height: TimelapseWindowController.contentSize.height)
+            .frame(width: renderSize.width, height: renderSize.height)
             .background(Color(nsColor: .windowBackgroundColor))
         // ImageRenderer cannot draw AppKit-backed scroll views and controls.
         // Render a real hosting view in an offscreen window instead.
-        let rect = NSRect(x: 0, y: 0, width: TimelapseWindowController.contentSize.width, height: TimelapseWindowController.contentSize.height)
+        let rect = NSRect(x: 0, y: 0, width: renderSize.width, height: renderSize.height)
         let hosting = NSHostingView(rootView: view)
         let window = NSWindow(contentRect: rect, styleMask: .borderless, backing: .buffered, defer: false)
         window.contentView = hosting
@@ -284,8 +301,8 @@ extension TimelapseExportTests {
         hosting.displayIfNeeded()
         let bitmap = try XCTUnwrap(hosting.bitmapImageRepForCachingDisplay(in: rect))
         hosting.cacheDisplay(in: rect, to: bitmap)
-        XCTAssertGreaterThanOrEqual(bitmap.pixelsWide, Int(TimelapseWindowController.contentSize.width))
-        XCTAssertGreaterThanOrEqual(bitmap.pixelsHigh, Int(TimelapseWindowController.contentSize.height))
+        XCTAssertGreaterThanOrEqual(bitmap.pixelsWide, Int(renderSize.width))
+        XCTAssertGreaterThanOrEqual(bitmap.pixelsHigh, Int(renderSize.height))
         let png = try XCTUnwrap(bitmap.representation(using: .png, properties: [:]))
         try png.write(to: url)
     }

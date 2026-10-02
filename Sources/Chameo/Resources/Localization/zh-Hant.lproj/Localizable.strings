@@ -290,3 +290,10 @@
 "Select All" = "全選";
 
 "Local Copies" = "本機副本";
+"Take your first Chameo to create a timelapse." = "先拍攝第一張 Chameo，再建立縮時影片。";
+"Loading photos…" = "正在載入照片…";
+"Encoding video…" = "正在編碼影片…";
+"Saved in %@" = "已儲存至 %@";
+"You can close this window. Generation continues." = "關閉此視窗後，影片仍會繼續生成。";
+"Retry…" = "重試…";
+"Create Timelapse…" = "建立縮時影片…";

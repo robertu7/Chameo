@@ -12,7 +12,8 @@ final class TimelapseWindowController: NSWindowController, NSWindowDelegate {
     private var localizationObservation: AnyCancellable?
 
     init(export: TimelapseExportController, libraryStore: LibraryStore,
-         localizationController: LocalizationController) {
+         localizationController: LocalizationController,
+         onTakeChameo: @escaping () -> Void = {}) {
         self.export = export
         self.libraryStore = libraryStore
         let window = NSWindow(
@@ -24,7 +25,13 @@ final class TimelapseWindowController: NSWindowController, NSWindowDelegate {
         window.isReleasedWhenClosed = false
         window.isRestorable = false
         window.contentViewController = NSHostingController(rootView:
-            TimelapseExportView(onCreate: { [weak window] in export.chooseDestination(in: window) })
+            TimelapseExportView(
+                onCreate: { [weak window] in export.chooseDestination(in: window) },
+                onTakeChameo: { [weak window] in
+                    window?.close()
+                    onTakeChameo()
+                }
+            )
                 .environmentObject(export)
                 .environmentObject(libraryStore)
                 .environmentObject(localizationController)

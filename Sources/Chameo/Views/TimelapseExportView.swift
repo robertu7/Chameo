@@ -5,43 +5,67 @@ struct TimelapseExportView: View {
     @EnvironmentObject private var export: TimelapseExportController
     @EnvironmentObject private var localizationController: LocalizationController
     var onCreate: (() -> Void)?
+    var onTakeChameo: () -> Void = {}
     var thumbnailLoader: (ChameoAsset) async -> NSImage? = TimelapsePreview.thumbnail
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                header
-                filmstrip
-                switch export.state {
-                case .succeeded(let result): resultContent(result)
-                case .running, .cancelling: progressContent
-                case .summary, .choosingDestination, .cancelled, .failed: summaryContent
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    header
+                    switch export.state {
+                    case .succeeded(let result): resultContent(result)
+                    case .running, .cancelling: progressContent
+                    case .summary, .choosingDestination, .cancelled, .failed: summaryContent
+                    }
                 }
+                .padding(20)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(20)
-            .frame(maxWidth: 760)
-            .frame(maxWidth: .infinity)
+            .defaultScrollAnchor(export.isGenerating || isComplete ? .center : .top, for: .alignment)
+            Divider()
+            footer
+                .padding(.horizontal, 20)
+                .padding(.vertical, 14)
         }
         .environment(\.locale, localizationController.displayLocale)
     }
 
     private var header: some View {
-        HStack(spacing: 14) {
-            Image(systemName: isComplete ? "checkmark.circle.fill" : "film.stack")
-                .font(.system(size: 28, weight: .medium))
+        HStack(spacing: 10) {
+            Image(systemName: headerSymbol)
+                .font(.title2)
                 .foregroundStyle(isComplete ? Color.green : Color.accentColor)
-                .frame(width: 52, height: 52)
-                .background((isComplete ? Color.green : Color.accentColor).opacity(0.1),
-                            in: RoundedRectangle(cornerRadius: 14))
                 .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(L10n.string(isComplete ? "Timelapse ready" : "Create Timelapse"))
-                    .font(.title2.bold())
-                Text(L10n.string("Your Chameos, brought together."))
-                    .foregroundStyle(.secondary)
-            }
-            Spacer(minLength: 0)
+            Text(headerTitle).font(.title2.weight(.semibold))
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityAddTraits(.isHeader)
         }
+    }
+
+    private var headerTitle: String {
+        switch export.state {
+        case .succeeded: return L10n.string("Timelapse ready")
+        case .cancelling: return L10n.string("Cancelling…")
+        case .running: return L10n.string(export.progress.phaseTitleKey)
+        case .cancelled: return L10n.string("Export cancelled")
+        case .failed: return L10n.string("Timelapse export failed")
+        case .summary, .choosingDestination: return L10n.string("Create Timelapse")
+        }
+    }
+
+    private var headerSymbol: String {
+        switch export.state {
+        case .succeeded: return "checkmark.circle.fill"
+        case .running, .cancelling: return "film"
+        case .failed: return "exclamationmark.triangle"
+        default: return "film.stack"
+        }
+    }
+
+    private var isComplete: Bool {
+        if case .succeeded = export.state { return true }
+        return false
     }
 
     private var previewAssets: [ChameoAsset] {
@@ -50,31 +74,20 @@ struct TimelapseExportView: View {
     }
 
     private var filmstrip: some View {
-        VStack(spacing: 10) {
-            HStack(spacing: 10) {
-                if previewAssets.isEmpty {
-                    Image(systemName: "photo.on.rectangle.angled")
-                        .font(.system(size: 36)).foregroundStyle(.tertiary)
-                        .frame(maxWidth: .infinity).frame(height: 112)
-                } else {
-                    ForEach(previewAssets) { asset in
-                        TimelapsePhotoPreview(asset: asset, loader: thumbnailLoader)
-                            .frame(maxWidth: .infinity).frame(height: 112)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                    }
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                ForEach(previewAssets) { asset in
+                    TimelapsePhotoPreview(asset: asset, loader: thumbnailLoader)
+                        .frame(width: 72, height: 72)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityHidden(true)
-            HStack {
-                Label(L10n.string("All album photos"), systemImage: "photo.stack")
-                Spacer()
-                Text(dateSpan).multilineTextAlignment(.trailing)
+            if !dateSpan.isEmpty {
+                Text(dateSpan).font(.caption).foregroundStyle(.secondary)
             }
-            .font(.caption).foregroundStyle(.secondary)
         }
-        .padding(12)
-        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 14))
-        .chameoImageOutline(cornerRadius: 14)
     }
 
     private var dateSpan: String {
@@ -85,122 +98,128 @@ struct TimelapseExportView: View {
     }
 
     private var videoDetails: some View {
-        HStack(spacing: 0) {
-            metric("Photos", value: export.assets.count == 1 ? L10n.string("1 photo") : L10n.format("%lld photos", Int64(export.assets.count)), icon: "photo")
-            Divider().frame(height: 34)
-            metric("Video duration", value: L10n.format("%.1f seconds", export.duration), icon: "clock")
-            Divider().frame(height: 34)
-            metric("Format", value: "1080p · MP4", icon: "square")
+        VStack(alignment: .leading, spacing: 6) {
+            Text(photoCount + " · " + L10n.format("%.1f seconds", export.duration))
+                .font(.headline).monospacedDigit()
+            Text(verbatim: "1080p · MP4").font(.caption).foregroundStyle(.secondary)
         }
-    }
-
-    private func metric(_ title: String, value: String, icon: String) -> some View {
-        VStack(spacing: 6) {
-            Label(L10n.string(title), systemImage: icon).font(.caption).foregroundStyle(.secondary)
-            Text(value).font(.headline).monospacedDigit()
-        }
-        .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)
     }
 
-    private var summaryContent: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            videoDetails
-            VStack(alignment: .leading, spacing: 5) {
-                Text(L10n.string("Includes every Chameo in this album, across all months."))
-                Text(L10n.string("10 photos per second, oldest to newest."))
-            }
-            .font(.callout).foregroundStyle(.secondary)
-            if case .failed(let message) = export.state { messagePanel(message, icon: "exclamationmark.triangle", color: .orange) }
-            if export.state == .cancelled { messagePanel(L10n.string("Export cancelled"), icon: "xmark.circle", color: .secondary) }
-            if export.assets.isEmpty {
-                messagePanel(L10n.string("No Chameos are available for a timelapse."), icon: "photo", color: .secondary)
-            }
-            Divider()
-            HStack(alignment: .center, spacing: 20) {
-                Spacer(minLength: 0)
-                Button(L10n.string(isFailure ? "Retry" : "Create Timelapse")) {
-                    if let onCreate { onCreate() } else { export.chooseDestination() }
-                }
-                    .buttonStyle(.glassProminent).controlSize(.large)
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(export.isBusy || export.assets.isEmpty)
-            }
-        }
+    private var photoCount: String {
+        export.assets.count == 1 ? L10n.string("1 photo") : L10n.format("%lld photos", Int64(export.assets.count))
     }
 
-    private var isComplete: Bool {
-        if case .succeeded = export.state { return true }; return false
-    }
-    private var isFailure: Bool {
-        if case .failed = export.state { return true }; return false
-    }
-    private var isDeterminate: Bool {
-        export.state == .running && export.progress != .saving && export.completedPhotos < export.assets.count
+    @ViewBuilder
+    private var summaryContent: some View {
+        if export.assets.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(L10n.string("No Chameos are available for a timelapse.")).font(.headline)
+                Text(L10n.string("Take your first Chameo to create a timelapse."))
+                    .foregroundStyle(.secondary)
+            }
+            .fixedSize(horizontal: false, vertical: true)
+        } else {
+            filmstrip
+            videoDetails
+            VStack(alignment: .leading, spacing: 6) {
+                Text(L10n.string("Includes every Chameo in this album, across all months."))
+                Text(L10n.string("10 photos per second, oldest to newest.")).font(.caption)
+            }
+            .font(.callout).foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+            if case .failed(let message) = export.state {
+                messagePanel(message, icon: "exclamationmark.triangle", color: .orange)
+            }
+        }
     }
 
     private var progressContent: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(L10n.string(export.state == .cancelling ? "Cancelling…" : export.progress == .saving ? "Saving video…" : "Creating timelapse"))
-                        .font(.title3.bold())
-                    Text(export.footerText).font(.callout).foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer()
-                if isDeterminate {
-                    Text(Double(export.completedPhotos) / Double(max(1, export.assets.count)), format: .percent.precision(.fractionLength(0)))
-                        .font(.system(size: 30, weight: .semibold, design: .rounded)).monospacedDigit()
-                        .foregroundStyle(Color.accentColor).accessibilityHidden(true)
-                } else { ProgressView().controlSize(.small).accessibilityLabel(export.footerText) }
+        VStack(alignment: .leading, spacing: 12) {
+            if export.state == .running, let fraction = export.progress.phaseFraction(total: export.assets.count) {
+                ProgressView(value: fraction, total: 1)
+                    .progressViewStyle(.linear)
+                    .accessibilityLabel(headerTitle)
+                    .accessibilityValue(export.footerText)
+            } else {
+                ProgressView().progressViewStyle(.linear)
+                    .accessibilityLabel(headerTitle)
             }
-            if isDeterminate {
-                ProgressView(value: Double(export.completedPhotos), total: Double(max(1, export.assets.count)))
-                    .accessibilityLabel(L10n.string("Creating timelapse"))
-                    .accessibilityValue(L10n.format("Photos completed: %lld of %lld", Int64(export.completedPhotos), Int64(export.assets.count)))
-                Text(L10n.format("Photos completed: %lld of %lld", Int64(export.completedPhotos), Int64(export.assets.count)))
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-            Divider()
-            HStack(spacing: 20) {
-                Label(L10n.string("You can browse Chameo or close this window while it generates."), systemImage: "arrow.up.forward.app")
-                    .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                Spacer(minLength: 0)
-                Button(L10n.string("Cancel"), action: export.cancel)
-                    .buttonStyle(.glass).controlSize(.large).disabled(export.state == .cancelling)
+            if export.footerText != headerTitle {
+                Text(export.footerText)
+                    .font(.callout).foregroundStyle(.secondary).monospacedDigit()
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
+        .padding(.top, 8)
     }
 
     private func resultContent(_ result: TimelapseResult) -> some View {
         VStack(alignment: .leading, spacing: 18) {
-            HStack(spacing: 14) {
-                Image(systemName: "video.fill").font(.title).foregroundStyle(Color.accentColor).accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 5) {
-                    Text(result.url.lastPathComponent).font(.headline).textSelection(.enabled)
-                        .lineLimit(2).truncationMode(.middle).help(result.url.lastPathComponent)
-                    Text(result.url.deletingLastPathComponent().path)
-                        .font(.callout).foregroundStyle(.secondary).textSelection(.enabled)
-                        .lineLimit(2).truncationMode(.middle).help(result.url.deletingLastPathComponent().path)
-                }
+            VStack(alignment: .leading, spacing: 8) {
+                Text(result.url.lastPathComponent).font(.headline).textSelection(.enabled)
+                    .lineLimit(2).truncationMode(.middle).help(result.url.lastPathComponent)
+                Label(L10n.format("Saved in %@", result.url.deletingLastPathComponent().lastPathComponent), systemImage: "folder")
+                    .font(.callout).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                    .help(result.url.deletingLastPathComponent().path)
+                    .accessibilityLabel(L10n.format("Saved in %@", result.url.deletingLastPathComponent().path))
             }
             videoDetails
             if let error = export.resultActionError { messagePanel(error, icon: "exclamationmark.triangle", color: .orange) }
-            if let note = export.completionNote { Text(note).font(.callout).foregroundStyle(.secondary) }
-            Divider()
-            VStack(alignment: .trailing, spacing: 12) {
-                HStack(spacing: 10) {
-                    Spacer(minLength: 0)
-                    Button(L10n.string("Open Video"), systemImage: "play") { export.openResult(id: result.id, play: true) }
-                        .buttonStyle(.glass).controlSize(.large)
-                    Button(L10n.string("Open Folder"), systemImage: "folder") { export.openResult(id: result.id) }
-                        .buttonStyle(.glassProminent).controlSize(.large).keyboardShortcut(.defaultAction)
-                }
-                Button(L10n.string("Create Another")) { export.prepare(assets: libraryStore.timelapseAssets()) }
-                    .buttonStyle(.borderless)
+            if let note = export.completionNote {
+                Text(note).font(.callout).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
+    }
+
+    @ViewBuilder
+    private var footer: some View {
+        switch export.state {
+        case .running, .cancelling:
+            VStack(alignment: .leading, spacing: 12) {
+                Text(L10n.string("You can close this window. Generation continues."))
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                HStack {
+                    Spacer(minLength: 0)
+                    Button(L10n.string("Cancel"), action: export.cancel)
+                        .buttonStyle(.glass).disabled(export.state == .cancelling)
+                        .keyboardShortcut(.cancelAction)
+                }
+            }
+        case .succeeded(let result):
+            GlassEffectContainer(spacing: 8) {
+                HStack(spacing: 8) {
+                    Button(L10n.string("Create Another")) { export.prepare(assets: libraryStore.timelapseAssets()) }
+                        .buttonStyle(.borderless).font(.caption)
+                    Spacer(minLength: 0)
+                    Button(L10n.string("Open Video"), systemImage: "play") { export.openResult(id: result.id, play: true) }
+                        .buttonStyle(.glass)
+                    Button(L10n.string("Open Folder"), systemImage: "folder") { export.openResult(id: result.id) }
+                        .buttonStyle(.glassProminent).keyboardShortcut(.defaultAction)
+                }
+            }
+        case .summary, .choosingDestination, .cancelled, .failed:
+            HStack {
+                Spacer(minLength: 0)
+                if export.assets.isEmpty {
+                    Button(L10n.string("Take Chameo"), systemImage: "camera", action: onTakeChameo)
+                        .buttonStyle(.glassProminent).keyboardShortcut(.defaultAction)
+                } else {
+                    Button(L10n.string(isFailure ? "Retry…" : "Create Timelapse…")) {
+                        if let onCreate { onCreate() } else { export.chooseDestination() }
+                    }
+                    .buttonStyle(.glassProminent).keyboardShortcut(.defaultAction)
+                    .disabled(export.isBusy)
+                }
+            }
+        }
+    }
+
+    private var isFailure: Bool {
+        if case .failed = export.state { return true }
+        return false
     }
 
     private func messagePanel(_ text: String, icon: String, color: Color) -> some View {
@@ -209,7 +228,6 @@ struct TimelapseExportView: View {
             .padding(12).frame(maxWidth: .infinity, alignment: .leading)
             .background(color.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
     }
-
 }
 
 private struct TimelapsePhotoPreview: View {

@@ -145,7 +145,6 @@ struct CalendarLibraryView: View {
                     }
                 }
                 .buttonStyle(.glass)
-                .disabled(!isExportingTimelapse && assets.isEmpty)
                 .help(L10n.string("Create Timelapse"))
                 .accessibilityLabel(L10n.string(isExportingTimelapse ? "Creating timelapse" : "Timelapse"))
             }
