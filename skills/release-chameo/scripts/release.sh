@@ -76,9 +76,9 @@ run_logged() {
 
 parse_run_row() {
   local row="$1"
-  IFS='|' read -r run_id status conclusion head_sha head_branch url <<<"$row"
+  IFS='|' read -r run_id status conclusion head_sha head_branch url event display_title <<<"$row"
   [[ -n "$conclusion" ]] || conclusion="pending"
-  [[ -n "$run_id" && -n "$status" && -n "$conclusion" && -n "$head_sha" && -n "$head_branch" && -n "$url" ]] ||
+  [[ -n "$run_id" && -n "$status" && -n "$conclusion" && -n "$head_sha" && -n "$head_branch" && -n "$url" && -n "$event" && -n "$display_title" ]] ||
     die "malformed GitHub Actions run data"
 }
 
@@ -119,8 +119,10 @@ wait_run() {
   local max_attempts="${3:-60}"
   local attempt=1 state="" previous_state="" row=""
   local run_id="" status="" conclusion="" head_sha="" head_branch="" url=""
+  local event="" display_title=""
 
   require_command gh
+  require_command jq
   case "$workflow" in
     CI)
       [[ "$target" =~ ^[0-9a-f]{40}$ ]] || die "CI target must be a full commit SHA"
@@ -137,20 +139,25 @@ wait_run() {
   while (( attempt <= max_attempts )); do
     if [[ "$workflow" == "CI" ]]; then
       row="$(gh run list --workflow "$workflow" --commit "$target" --limit 1 \
-        --json databaseId,status,conclusion,headSha,headBranch,url \
-        --jq '.[0] | select(. != null) | [.databaseId,.status,(.conclusion // "pending"),.headSha,.headBranch,.url] | map(tostring) | join("|")')"
+        --json databaseId,status,conclusion,headSha,headBranch,url,event,displayTitle \
+        --jq '.[0] | select(. != null) | [.databaseId,.status,(.conclusion // "pending"),.headSha,.headBranch,.url,.event,.displayTitle] | map(tostring) | join("|")')"
     else
-      row="$(gh run list --workflow "$workflow" --branch "$target" --limit 1 \
-        --json databaseId,status,conclusion,headSha,headBranch,url \
-        --jq '.[0] | select(. != null) | [.databaseId,.status,(.conclusion // "pending"),.headSha,.headBranch,.url] | map(tostring) | join("|")')"
+      row="$(gh run list --workflow "$workflow" --limit 100 \
+        --json databaseId,status,conclusion,headSha,headBranch,url,event,displayTitle | \
+        jq -r --arg target "$target" \
+          '[.[] | select((.headBranch == $target and .event == "push") or (.event == "workflow_dispatch" and .displayTitle == ("Release " + $target)))] | .[0] | select(. != null) | [.databaseId,.status,(.conclusion // "pending"),.headSha,.headBranch,.url,.event,.displayTitle] | map(tostring) | join("|")')"
     fi
 
     if [[ -z "$row" ]]; then
       state="not_found"
     else
       parse_run_row "$row"
-      [[ "$workflow" != "CI" || "$head_sha" == "$target" ]] || die "CI run SHA mismatch"
-      [[ "$workflow" != "Release" || "$head_branch" == "$target" ]] || die "Release run tag mismatch"
+      if [[ "$workflow" == "CI" ]]; then
+        [[ "$head_sha" == "$target" ]] || die "CI run SHA mismatch"
+      else
+        [[ "$head_branch" == "$target" || ( "$event" == "workflow_dispatch" && "$display_title" == "Release $target" ) ]] ||
+          die "Release run tag mismatch"
+      fi
       state="${status}:${conclusion:-pending}"
 
       if [[ "$status" == "completed" ]]; then

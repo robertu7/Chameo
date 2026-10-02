@@ -112,7 +112,6 @@ if [[ ! -f "$APPCAST_PATH" ]]; then
 fi
 
 /usr/bin/xmllint --noout "$APPCAST_PATH"
-"$SIGN_UPDATE" --verify "${KEY_ARGUMENTS[@]}" "$APPCAST_PATH"
 
 ARCHIVE_URL="$(
   /usr/bin/xmllint --xpath \

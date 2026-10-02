@@ -1,16 +1,23 @@
 name: Release
+run-name: Release ${{ inputs.release_tag || github.ref_name }}
 
 on:
   push:
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+"
       - "v[0-9]+.[0-9]+.[0-9]+-*"
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing immutable release tag to publish or recover
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ inputs.release_tag || github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -23,26 +30,59 @@ jobs:
       pages: write
       id-token: write
     steps:
-      - name: Check out tagged commit
+      - name: Select release tag
+        id: release
+        env:
+          INPUT_RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            release_tag="$INPUT_RELEASE_TAG"
+          else
+            release_tag="$GITHUB_REF_NAME"
+          fi
+          if [[ "$release_tag" != v* ]]; then
+            echo "Release tag must start with v." >&2
+            exit 1
+          fi
+          echo "tag=$release_tag" >>"$GITHUB_OUTPUT"
+
+      - name: Check out workflow tooling
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
+          ref: ${{ github.sha }}
+          path: tooling
+
+      - name: Check out tagged release source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          ref: ${{ steps.release.outputs.tag }}
+          path: release-source
 
       - name: Verify release version and source branch
+        working-directory: release-source
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
         run: |
           git fetch origin main
-          ./script/verify_release_version.sh "${GITHUB_REF_NAME}"
+          ./script/verify_release_version.sh "$RELEASE_TAG"
+          test "$(git rev-parse HEAD)" = "$(git rev-parse "$RELEASE_TAG^{commit}")"
 
       - name: Resolve pinned dependencies
+        working-directory: release-source
         run: swift package resolve
 
       - name: Run tests
+        working-directory: release-source
         run: swift test
 
       - name: Run strict concurrency build
+        working-directory: release-source
         run: swift build -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency
 
       - name: Build ad-hoc release bundle
+        working-directory: release-source
         env:
           CHAMEO_CODE_SIGN_IDENTITY: "-"
         run: |
@@ -64,10 +104,10 @@ jobs:
 
       - name: Fetch existing appcast
         run: |
-          mkdir -p dist/updates
+          mkdir -p release-source/dist/updates
           status="$(
             curl -sS -L \
-              -o dist/updates/appcast.xml \
+              -o release-source/dist/updates/appcast.xml \
               -w '%{http_code}' \
               https://robertu7.github.io/Chameo/appcast.xml
           )"
@@ -76,18 +116,25 @@ jobs:
             exit 1
           fi
           if [[ "$status" == "404" ]]; then
-            rm -f dist/updates/appcast.xml
+            rm -f release-source/dist/updates/appcast.xml
           fi
 
       - name: Sign and validate release artifacts
+        working-directory: release-source
         env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
           SPARKLE_PRIVATE_KEY_FILE: ${{ runner.temp }}/sparkle-private-key
-        run: ./script/prepare_release.sh "${GITHUB_REF_NAME#v}"
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            cp "$GITHUB_WORKSPACE/tooling/script/prepare_release.sh" script/prepare_release.sh
+          fi
+          ./script/prepare_release.sh "${RELEASE_TAG#v}"
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
 
       - name: Stage Pages content
+        working-directory: release-source
         run: |
           mkdir -p dist/pages
           cp dist/updates/appcast.xml dist/pages/appcast.xml
@@ -95,17 +142,19 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
         with:
-          path: dist/pages
+          path: release-source/dist/pages
 
       - name: Publish GitHub prerelease
+        working-directory: tooling
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
         run: |
-          version="${GITHUB_REF_NAME#v}"
-          archive="dist/updates/Chameo-$version-arm64.zip"
-          disk_image="dist/releases/Chameo-$version-arm64.dmg"
-          notes_asset="dist/updates/Chameo-$version-arm64.md"
-          gh release create "$GITHUB_REF_NAME" \
+          version="${RELEASE_TAG#v}"
+          archive="../release-source/dist/updates/Chameo-$version-arm64.zip"
+          disk_image="../release-source/dist/releases/Chameo-$version-arm64.dmg"
+          notes_asset="../release-source/dist/updates/Chameo-$version-arm64.md"
+          gh release create "$RELEASE_TAG" \
             "$archive" \
             "$disk_image" \
             "$notes_asset" \
@@ -115,9 +164,11 @@ jobs:
             --verify-tag
 
       - name: Validate published release URLs
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
         run: |
-          version="${GITHUB_REF_NAME#v}"
-          base="https://github.com/robertu7/Chameo/releases/download/$GITHUB_REF_NAME"
+          version="${RELEASE_TAG#v}"
+          base="https://github.com/robertu7/Chameo/releases/download/$RELEASE_TAG"
           curl --fail --silent --show-error --location \
             --retry 5 --retry-delay 2 \
             --output /dev/null "$base/Chameo-$version-arm64.zip"

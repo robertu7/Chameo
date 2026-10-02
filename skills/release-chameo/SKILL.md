@@ -61,7 +61,12 @@ skills/release-chameo/scripts/release.sh <command> [arguments]
 4. Create `git tag -a vVERSION -m "Chameo VERSION"`, prove its peeled target is
    the release commit, and push only `vVERSION`.
 5. Run `release.sh wait-run Release vVERSION`. Investigate failures in place;
-   never replace the tag.
+   never replace the tag. For a packaging or workflow failure, repair the
+   tooling on `main`, push it, and require CI success for that exact commit.
+   Recover with the existing tag using
+   `gh workflow run release.yml --ref main -f release_tag=vVERSION`; this
+   checks out and builds the immutable tagged source while using the repaired
+   workflow tooling from `main`. Then wait for the Release workflow again.
 
 ## Verify
 
