@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.5.0-rc.0
+
+### What’s new
+
+- Added **Save Local Copy** to Photo Actions to restore a missing original, and
+  an option to move an intact local copy to Trash when deleting its Photos asset.
+- Added a dedicated Settings window with General, Capture, Reminders, and Photos
+  categories, plus macOS 26 Liquid Glass controls and accessibility support.
+- Requires macOS 26 or newer.
+
+### Fixes
+
+- None.
+
+### Known testing limitations
+
+- Local-copy restoration, Photos/iCloud deletion, and optional local-copy
+  trashing still need live-library and permission-persistence validation.
+- Timelapse photo and iCloud handling, notification actions, and remembered-file
+  behavior after relaunch are not covered by automated end-to-end validation.
+- Stage 1 builds are ad-hoc signed and are not notarized by Apple.
+- macOS may request Camera, Photos, Location, or Notification permission again
+  after an update.
+
 ## 0.4.3
 
 ### What’s new
