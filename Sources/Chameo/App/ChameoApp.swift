@@ -9,8 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     private let appState = AppState()
     private let cameraService = CameraService()
     private let libraryStore = LibraryStore()
-    private let timelapseNotifications = TimelapseNotificationService()
-    private lazy var timelapseExport = TimelapseExportController(notifications: timelapseNotifications)
+    private let timelapseExport = TimelapseExportController()
     private let timelapseOpenRequest = DeferredTimelapseOpenRequest()
     private let notificationOpenRequest = DeferredOpenRequest()
     private var statusPopoverController: StatusPopoverController?
@@ -66,7 +65,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
                 alert.runModal()
             }
         }
-        Task { await timelapseNotifications.registerCategory() }
 
         let requiredPermissions = SystemRequiredPermissionService()
         switch AppStartupPolicy.destination(
@@ -114,7 +112,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {
         if notification.request.identifier == TimelapseNotificationPolicy.requestIdentifier {
-            return [.banner]
+            return []
         }
         guard ReminderService.shouldPresentReminderNotification(
             identifier: notification.request.identifier
@@ -216,7 +214,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     }
 
     @objc private func languageDidChange(_ notification: Notification) {
-        Task { await timelapseNotifications.registerCategory() }
         refreshReminderNotifications()
     }
 

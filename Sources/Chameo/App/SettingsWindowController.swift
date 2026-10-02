@@ -4,8 +4,8 @@ import SwiftUI
 
 @MainActor
 final class SettingsWindowController: NSWindowController {
-    static let contentSize = NSSize(width: 620, height: 560)
-    static let minimumContentSize = NSSize(width: 560, height: 480)
+    static let contentSize = NSSize(width: 500, height: 460)
+    static let minimumContentSize = NSSize(width: 480, height: 420)
     let state = SettingsState()
     private var localizationObservation: AnyCancellable?
 
@@ -30,7 +30,7 @@ final class SettingsWindowController: NSWindowController {
         window.setContentSize(Self.contentSize)
         window.center()
         super.init(window: window)
-        window.setFrameAutosaveName("ChameoSettings")
+        window.setFrameAutosaveName("ChameoSettingsCompact")
         localizationObservation = localizationController.objectWillChange.sink { [weak self] _ in
             Task { @MainActor [weak self] in self?.window?.title = L10n.string("Settings") }
         }

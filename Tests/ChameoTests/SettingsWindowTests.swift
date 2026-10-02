@@ -30,12 +30,12 @@ final class SettingsWindowTests: XCTestCase {
             localPhotos: LocalPhotoSettingsController()
         )
         let window = try XCTUnwrap(controller.window)
-        XCTAssertEqual(window.contentMinSize, NSSize(width: 560, height: 480))
+        XCTAssertEqual(window.contentMinSize, NSSize(width: 480, height: 420))
         XCTAssertTrue(window.styleMask.contains(.resizable))
         XCTAssertFalse(window.isReleasedWhenClosed)
         // Saved geometry can restore a different size; the initial size contract is explicit.
-        XCTAssertEqual(SettingsWindowController.contentSize, NSSize(width: 620, height: 560))
-        XCTAssertGreaterThanOrEqual(window.contentLayoutRect.width, 560)
-        XCTAssertGreaterThanOrEqual(window.contentLayoutRect.height, 480)
+        XCTAssertEqual(SettingsWindowController.contentSize, NSSize(width: 500, height: 460))
+        XCTAssertGreaterThanOrEqual(window.contentLayoutRect.width, 480)
+        XCTAssertGreaterThanOrEqual(window.contentLayoutRect.height, 420)
     }
 }

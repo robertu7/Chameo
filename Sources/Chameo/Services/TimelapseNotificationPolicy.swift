@@ -2,14 +2,11 @@ import Foundation
 @preconcurrency import UserNotifications
 
 enum TimelapseNotificationPolicy {
+    // Continue resolving actions from completion notifications sent by older builds.
     static let requestIdentifier = "chameo.timelapse.completed"
     static let categoryIdentifier = "chameo.timelapse.completion"
     static let openFolderAction = "chameo.timelapse.openFolder"
     static let exportIDKey = "timelapseExportID"
-
-    static func canDeliver(_ status: UNAuthorizationStatus) -> Bool {
-        status == .authorized || status == .provisional
-    }
 
     static func exportID(identifier: String, action: String, userInfo: [AnyHashable: Any]) -> UUID? {
         guard identifier == requestIdentifier,

@@ -1,7 +1,6 @@
 import AppKit
 import SwiftUI
 import XCTest
-@preconcurrency import UserNotifications
 @testable import Chameo
 
 /// Opt-in native layout previews; never starts a camera or changes system appearance.
@@ -51,7 +50,7 @@ final class ModernUIRenderTests: XCTestCase {
                 state.selectedLibraryDay = day
                 let library = LibraryStore(assetLoader: { _ in [] })
                 await library.reload(albumName: "Preview")
-                let export = TimelapseExportController(notifications: PreviewNotifications())
+                let export = TimelapseExportController(announce: { _ in })
                 let camera = CameraService()
                 let main = ContentView(surface: .popover, onOpenTimelapse: {}, onOpenSettings: {})
                     .environmentObject(state)
@@ -75,7 +74,7 @@ final class ModernUIRenderTests: XCTestCase {
                         .environmentObject(updates)
                         .environmentObject(localPhotos)
                         .defaultAppStorage(defaults)
-                    try await render(settings, size: NSSize(width: 560, height: 480), appearance: appearance,
+                    try await render(settings, size: SettingsWindowController.minimumContentSize, appearance: appearance,
                         to: directory.appendingPathComponent(name + "-settings-" + category.rawValue + ".png"))
                 }
                 let overlay = HStack(spacing: 12) {
@@ -126,11 +125,4 @@ final class ModernUIRenderTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(bitmap.pixelsHigh, Int(size.height))
         try XCTUnwrap(bitmap.representation(using: .png, properties: [:])).write(to: url)
     }
-}
-
-@MainActor
-private final class PreviewNotifications: TimelapseNotifying {
-    func authorizationStatus() async -> UNAuthorizationStatus { .denied }
-    func prepareAuthorization() async -> UNAuthorizationStatus { .denied }
-    func deliver(exportID: UUID, filename: String) async throws {}
 }

@@ -9,7 +9,7 @@ struct TimelapseExportView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 22) {
+            VStack(alignment: .leading, spacing: 18) {
                 header
                 filmstrip
                 switch export.state {
@@ -18,12 +18,11 @@ struct TimelapseExportView: View {
                 case .summary, .choosingDestination, .cancelled, .failed: summaryContent
                 }
             }
-            .padding(28)
+            .padding(20)
             .frame(maxWidth: 760)
             .frame(maxWidth: .infinity)
         }
         .environment(\.locale, localizationController.displayLocale)
-        .task { await export.refreshNotificationStatus() }
     }
 
     private var header: some View {
@@ -56,11 +55,11 @@ struct TimelapseExportView: View {
                 if previewAssets.isEmpty {
                     Image(systemName: "photo.on.rectangle.angled")
                         .font(.system(size: 36)).foregroundStyle(.tertiary)
-                        .frame(maxWidth: .infinity).frame(height: 132)
+                        .frame(maxWidth: .infinity).frame(height: 112)
                 } else {
                     ForEach(previewAssets) { asset in
                         TimelapsePhotoPreview(asset: asset, loader: thumbnailLoader)
-                            .frame(maxWidth: .infinity).frame(height: 132)
+                            .frame(maxWidth: .infinity).frame(height: 112)
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                 }
@@ -119,7 +118,6 @@ struct TimelapseExportView: View {
             }
             Divider()
             HStack(alignment: .center, spacing: 20) {
-                notificationInfo
                 Spacer(minLength: 0)
                 Button(L10n.string(isFailure ? "Retry" : "Create Timelapse")) {
                     if let onCreate { onCreate() } else { export.chooseDestination() }
@@ -181,6 +179,7 @@ struct TimelapseExportView: View {
                 Image(systemName: "video.fill").font(.title).foregroundStyle(Color.accentColor).accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 5) {
                     Text(result.url.lastPathComponent).font(.headline).textSelection(.enabled)
+                        .lineLimit(2).truncationMode(.middle).help(result.url.lastPathComponent)
                     Text(result.url.deletingLastPathComponent().path)
                         .font(.callout).foregroundStyle(.secondary).textSelection(.enabled)
                         .lineLimit(2).truncationMode(.middle).help(result.url.deletingLastPathComponent().path)
@@ -189,16 +188,17 @@ struct TimelapseExportView: View {
             videoDetails
             if let error = export.resultActionError { messagePanel(error, icon: "exclamationmark.triangle", color: .orange) }
             if let note = export.completionNote { Text(note).font(.callout).foregroundStyle(.secondary) }
-            if export.notificationStatus == .denied { notificationInfo }
             Divider()
-            HStack(spacing: 10) {
+            VStack(alignment: .trailing, spacing: 12) {
+                HStack(spacing: 10) {
+                    Spacer(minLength: 0)
+                    Button(L10n.string("Open Video"), systemImage: "play") { export.openResult(id: result.id, play: true) }
+                        .buttonStyle(.glass).controlSize(.large)
+                    Button(L10n.string("Open Folder"), systemImage: "folder") { export.openResult(id: result.id) }
+                        .buttonStyle(.glassProminent).controlSize(.large).keyboardShortcut(.defaultAction)
+                }
                 Button(L10n.string("Create Another")) { export.prepare(assets: libraryStore.timelapseAssets()) }
                     .buttonStyle(.borderless)
-                Spacer()
-                Button(L10n.string("Open Video"), systemImage: "play") { export.openResult(id: result.id, play: true) }
-                    .buttonStyle(.glass).controlSize(.large)
-                Button(L10n.string("Open Folder"), systemImage: "folder") { export.openResult(id: result.id) }
-                    .buttonStyle(.glassProminent).controlSize(.large).keyboardShortcut(.defaultAction)
             }
         }
     }
@@ -210,18 +210,6 @@ struct TimelapseExportView: View {
             .background(color.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
     }
 
-    private var notificationInfo: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Label(L10n.string(export.notificationStatus == .denied
-                              ? "Notifications are off. Your video will still appear here when ready."
-                              : "Chameo can notify you when your timelapse is ready."), systemImage: "bell")
-                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            if export.notificationStatus == .denied {
-                Button(PermissionRecoveryDestination.notifications.title) { PermissionRecoveryService.open(.notifications) }
-                    .buttonStyle(.borderless).font(.caption)
-            }
-        }
-    }
 }
 
 private struct TimelapsePhotoPreview: View {

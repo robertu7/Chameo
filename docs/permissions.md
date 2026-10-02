@@ -78,7 +78,7 @@ Behavior:
 - Updating reminder settings reconciles pending requests, and saving a Chameo cancels remaining reminders and clears delivered reminder banners for that completed day.
 - Clicking a reminder notification opens the app to the Camera tab.
 - Timelapse export requests authorization after Save if permission is undetermined. Declining does not prevent export.
-- Silent completion notifications offer Open Folder; their actions resolve the saved export independently of reminder routing.
+- Timelapse exports do not request notification access or send completion notifications; completion and Open Folder/Open Video actions appear in the app.
 
 ## User-Selected Files
 

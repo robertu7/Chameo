@@ -5,13 +5,13 @@ moves Settings into a reusable native window with General, Capture, Reminders,
 and Photos categories. Existing preference keys and photo/export services remain
 compatible with stored data.
 
-## Automated Results
+## Automated Results (October 2, 2026)
 
-- Full suite: 198 tests, zero failures; the optional layout-preview export is skipped.
+- Full suite: 196 tests, zero failures; the optional layout-preview export is skipped.
 - Strict-concurrency compilation: passed. Existing concurrency and reverse-geocoding deprecation warnings are outside this UI change.
-- Release app: built, signed, and passed `script/verify_app_bundle.sh`.
+- Test and release apps: rebuilt and signed. The release app passed `script/verify_app_bundle.sh`.
 - Bundle metadata and executable both require macOS 26.0.
-- Native content-layout fixture: passed, generating 84 previews across three languages and four native appearances.
+- Native content-layout fixture: passed, generating 84 previews at the compact sizes across three languages and four native appearances. The existing offscreen tab/glass rendering limitation remains; these verify content layout, not native chrome.
 - Regression coverage includes Settings window reuse and minimum sizing, retained category/tab/day selection, camera routing, and visibility belonging only to the active hosting surface.
 
 ## Live Review Still Required
@@ -27,10 +27,12 @@ desktop session. Check the test build, which uses separate preferences and a
 separate album/local folder:
 
 - Camera and Library navigation, app-menu Settings, Command-comma, Command-Q, and text-field copy/paste work with pointer and keyboard.
-- Settings retains its selected category after closing/reopening; all controls remain reachable by scrolling at 560 × 480. New Album supports Return and Escape.
+- Settings retains its selected category after closing/reopening; all controls remain reachable by scrolling at 480 × 420. New Album supports Return and Escape.
 - Closing, minimizing, hiding, or opening Settings stops the camera. Returning restores the appropriate tab/day; only the visible hosting surface can capture or count down.
 - Camera controls and framing guidance remain readable over bright/dark scenes. Verify switching cameras, preview mirroring, manual/hands-free capture, retake, save, and permission-recovery states.
-- Library handles six-row months, focus/selection, multiple thumbnails, local-copy actions, and deletion confirmation.
+- Library aligns Today and Timelapse to the right with extra vertical spacing, and keeps six-row months, focus/selection, multiple thumbnails, local-copy actions, and deletion confirmation usable. The popover app-menu icon is 18 points.
+- Settings opens at 500 × 460 and Timelapse at 460 × 480; both support scrolling at their minimum heights.
+- Timelapse never requests notification permission or sends a completion notification.
 - Timelapse continues while its window is closed; reopening shows current progress and completion offers explicit Open Folder/Open Video actions.
 - Repeat in English, Simplified Chinese, Traditional Chinese, light/dark appearance, Increase Contrast, Reduce Transparency, Reduce Motion, and VoiceOver.
 

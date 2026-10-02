@@ -2,7 +2,6 @@ import AVFoundation
 import CoreGraphics
 import ImageIO
 import Photos
-import UserNotifications
 import XCTest
 @testable import Chameo
 
@@ -62,25 +61,24 @@ final class LocalPhotoEncodingTests: XCTestCase {
         XCTAssertEqual(duration.seconds, 0.1, accuracy: 0.02)
     }
 
-    func testExportCombinesLocalAndNotificationWarnings() async throws {
+    func testExportRetainsLocalCopyWarningWithoutNotificationWarning() async throws {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
         try FileManager.default.removeItem(at: fixture.folder)
         try Data("blocked destination".utf8).write(to: fixture.folder)
         let source = try TestTimelapsePhotoSource(data: localTestJPEG())
-        let notices = LocalPhotoFailingNotifications()
-        let controller = TimelapseExportController(notifications: notices, localPhotos: fixture.store,
+        let controller = TimelapseExportController(localPhotos: fixture.store,
                                                    photoSource: source, announce: { _ in })
         controller.prepare(assets: [ChameoAsset(asset: PHAsset())])
         controller.destinationChosen(fixture.root.appendingPathComponent("video.mp4"))
         for _ in 0..<500 {
-            if notices.attempted { break }
+            if !controller.isBusy { break }
             try await Task.sleep(for: .milliseconds(10))
         }
         guard case .succeeded = controller.state else { return XCTFail("Expected successful export") }
         let note = try XCTUnwrap(controller.completionNote)
         XCTAssertTrue(note.contains("Some original photos"))
-        XCTAssertTrue(note.contains("notification could not be sent"))
+        XCTAssertFalse(note.contains("notification"))
     }
 
     private func stripedJPEG() throws -> Data {
@@ -112,16 +110,5 @@ final class LocalPhotoEncodingTests: XCTestCase {
         }
         let start = (y * image.width + x) * 4
         return Array(pixels[start..<(start + 4)])
-    }
-}
-
-@MainActor
-private final class LocalPhotoFailingNotifications: TimelapseNotifying {
-    private(set) var attempted = false
-    func authorizationStatus() async -> UNAuthorizationStatus { .authorized }
-    func prepareAuthorization() async -> UNAuthorizationStatus { .authorized }
-    func deliver(exportID: UUID, filename: String) async throws {
-        attempted = true
-        throw LocalPhotoError.folderUnavailable
     }
 }

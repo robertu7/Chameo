@@ -209,7 +209,6 @@
 "Cancelling…" = "正在取消…";
 "Export cancelled" = "已取消匯出";
 "Video saved. Open it before quitting; its location could not be remembered." = "影片已儲存，但無法記住其位置。請在結束前打開。";
-"Video saved. The completion notification could not be sent." = "影片已儲存，但無法傳送完成通知。";
 "Not enough disk space. Free some space or choose another destination, then retry." = "磁碟空間不足。請釋放空間或選擇其他儲存位置後重試。";
 "Could not load a photo. Check your connection and Photos access, then retry." = "無法載入照片。請檢查網路連線和照片存取權限後重試。";
 "Check Photos access and the save destination, then retry." = "請檢查照片存取權限和儲存位置後重試。";
@@ -223,8 +222,6 @@
 "Retry" = "重試";
 "You can browse Chameo or close this window while it generates." = "製作過程中，你可以繼續瀏覽 Chameo 或關閉此視窗。";
 "Create Another" = "再製作一個";
-"Notifications are off. Your video will still appear here when ready." = "通知已關閉。影片完成後仍會顯示在這裡。";
-"Chameo can notify you when your timelapse is ready." = "縮時影片完成時，Chameo 可以通知你。";
 "Show timelapse export" = "查看縮時影片匯出";
 "Cancel timelapse and quit?" = "取消縮時影片並結束？";
 "The unfinished export will be discarded. Any existing video at the destination will be kept." = "未完成的匯出將被捨棄。儲存位置的現有影片將保留。";

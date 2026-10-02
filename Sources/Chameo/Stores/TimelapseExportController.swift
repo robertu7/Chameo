@@ -1,7 +1,6 @@
 import AppKit
 import Combine
 import UniformTypeIdentifiers
-@preconcurrency import UserNotifications
 
 @MainActor
 final class TimelapseExportController: ObservableObject {
@@ -16,14 +15,12 @@ final class TimelapseExportController: ObservableObject {
     @Published private(set) var assets: [ChameoAsset] = []
     @Published private(set) var progress: TimelapseProgress = .preparing
     @Published private(set) var completedPhotos = 0
-    @Published private(set) var notificationStatus: UNAuthorizationStatus = .notDetermined
     @Published private(set) var resultActionError: String?
     @Published private(set) var completionNote: String?
 
     private let generator: Generator?
     private let localPhotos: LocalPhotoStore
     private let photoSource: any TimelapsePhotoSource
-    private let notifications: any TimelapseNotifying
     private let results: TimelapseResultStore
     private let announce: (String) -> Void
     private var task: Task<Void, Never>?
@@ -33,14 +30,12 @@ final class TimelapseExportController: ObservableObject {
     private var announcedPhases: Set<String> = []
 
     init(
-        notifications: (any TimelapseNotifying)? = nil,
         results: TimelapseResultStore? = nil,
         generator: Generator? = nil,
         localPhotos: LocalPhotoStore = .shared,
         photoSource: any TimelapsePhotoSource = PhotosTimelapsePhotoSource(),
         announce: @escaping (String) -> Void = { AccessibilityAnnouncement.post($0) }
     ) {
-        self.notifications = notifications ?? TimelapseNotificationService()
         self.results = results ?? TimelapseResultStore()
         self.generator = generator
         self.localPhotos = localPhotos
@@ -70,10 +65,6 @@ final class TimelapseExportController: ObservableObject {
         completedPhotos = 0
         completionNote = nil
         resultActionError = nil
-    }
-
-    func refreshNotificationStatus() async {
-        notificationStatus = await notifications.authorizationStatus()
     }
 
     func chooseDestination(in window: NSWindow? = nil) {
@@ -113,11 +104,6 @@ final class TimelapseExportController: ObservableObject {
         state = .running
         announcedPhases = [TimelapseProgress.preparing.announcementKey]
         announce(L10n.string("Preparing timelapse…"))
-        let authorization = Task {
-            let status = await notifications.prepareAuthorization()
-            notificationStatus = status
-            return status
-        }
         task = Task { [self] in
             let accessing = url.startAccessingSecurityScopedResource()
             defer {
@@ -148,17 +134,6 @@ final class TimelapseExportController: ObservableObject {
                 }
                 if result.bookmark == nil {
                     appendCompletionNote(L10n.string("Video saved. Open it before quitting; its location could not be remembered."))
-                }
-                Task {
-                    notificationStatus = await authorization.value
-                    // Another export may have completed while permission was pending.
-                    guard results.latest?.id == id else { return }
-                    do { try await notifications.deliver(exportID: id, filename: url.lastPathComponent) }
-                    catch {
-                        if results.latest?.id == id {
-                            appendCompletionNote(L10n.string("Video saved. The completion notification could not be sent."))
-                        }
-                    }
                 }
             } catch is CancellationError {
                 state = .cancelled

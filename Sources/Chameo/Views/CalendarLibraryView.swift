@@ -50,11 +50,11 @@ struct CalendarLibraryView: View {
         VStack(spacing: 4) {
             calendarHeader
             weekdayHeader
-                .padding(.top, 4)
+                .padding(.top, 8)
 
             LazyVGrid(
                 columns: Array(repeating: GridItem(.flexible(), spacing: 3), count: 7),
-                spacing: 3
+                spacing: 2
             ) {
                 ForEach(dates, id: \.self) { date in
                     let status = DailyCaptureHistory.status(
@@ -106,7 +106,7 @@ struct CalendarLibraryView: View {
         )
         .chameoImageOutline(cornerRadius: ChameoLayout.cornerRadius)
         .padding(.horizontal, ChameoLayout.outerInset)
-        .padding(.bottom, ChameoLayout.sectionSpacing)
+        .padding(.bottom, 4)
         .task {
             let initialDay = selectedDay ?? calendar.startOfDay(for: Date())
             selectedDay = initialDay
@@ -119,7 +119,7 @@ struct CalendarLibraryView: View {
     }
 
     private var calendarHeader: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 8) {
             HStack(spacing: 6) {
                 Text(DateFormatters.monthAndYear.string(from: displayedMonth))
                     .font(.headline)
@@ -134,7 +134,6 @@ struct CalendarLibraryView: View {
             .frame(height: 24)
 
             HStack(spacing: 8) {
-                Spacer(minLength: 0)
                 Button(L10n.string("Today")) { select(Date()) }
                     .buttonStyle(.glass)
                 Button(action: onExportTimelapse) {
@@ -146,13 +145,13 @@ struct CalendarLibraryView: View {
                     }
                 }
                 .buttonStyle(.glass)
-                .frame(width: ChameoLayout.timelapseButtonWidth)
                 .disabled(!isExportingTimelapse && assets.isEmpty)
                 .help(L10n.string("Create Timelapse"))
                 .accessibilityLabel(L10n.string(isExportingTimelapse ? "Creating timelapse" : "Timelapse"))
             }
             .controlSize(.small)
-            .frame(height: 24)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .frame(height: 28)
         }
     }
 

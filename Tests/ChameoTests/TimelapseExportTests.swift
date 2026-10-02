@@ -2,7 +2,6 @@ import AppKit
 import Photos
 import SwiftUI
 import XCTest
-@preconcurrency import UserNotifications
 @testable import Chameo
 
 @MainActor
@@ -25,8 +24,7 @@ final class TimelapseExportTests: XCTestCase {
 
     func testSnapshotDuplicateStartsProgressAndLateCallbacks() async throws {
         let probe = ExportProbe()
-        let notifications = FakeTimelapseNotifications()
-        let controller = makeController(notifications: notifications, probe: probe)
+        let controller = makeController(probe: probe)
         controller.prepare(assets: [asset(), asset()])
         let url = try temporaryVideo()
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
@@ -52,17 +50,15 @@ final class TimelapseExportTests: XCTestCase {
         await probe.send(.framesWritten(2))
         XCTAssertEqual(controller.progress, .saving)
         probe.finish()
-        await waitUntil { !controller.isBusy && notifications.delivered.count == 1 }
+        await waitUntil { !controller.isBusy }
         guard case .succeeded = controller.state else { return XCTFail("Expected successful export") }
         await probe.send(.preparing)
         XCTAssertEqual(controller.progress, .saving)
-        XCTAssertEqual(notifications.delivered.count, 1)
     }
 
     func testCancellationHasNoCompletionAndIgnoresProgress() async throws {
         let probe = ExportProbe()
-        let notifications = FakeTimelapseNotifications()
-        let controller = makeController(notifications: notifications, probe: probe)
+        let controller = makeController(probe: probe)
         controller.prepare(assets: [asset()])
         let url = try temporaryVideo()
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
@@ -74,7 +70,6 @@ final class TimelapseExportTests: XCTestCase {
         XCTAssertEqual(controller.completedPhotos, 0)
         await controller.cancelAndWait()
         XCTAssertEqual(controller.state, .cancelled)
-        XCTAssertTrue(notifications.delivered.isEmpty)
     }
 
     func testFailedExportRetainsSelectionForRetry() async throws {
@@ -99,11 +94,9 @@ final class TimelapseExportTests: XCTestCase {
         guard case .succeeded = controller.state else { return XCTFail("Expected retry to succeed") }
     }
 
-    func testLateCancellationAfterCommitStillReportsSuccessAndNotificationFailureIsNonfatal() async throws {
-        let notifications = FakeTimelapseNotifications()
-        notifications.failDelivery = true
+    func testLateCancellationAfterCommitStillReportsSuccess() async throws {
         let controller = TimelapseExportController(
-            notifications: notifications, results: testResultStore(),
+            results: testResultStore(),
             generator: { _, url, _ in
                 try Data("video".utf8).write(to: url)
                 withUnsafeCurrentTask { $0?.cancel() }
@@ -113,16 +106,20 @@ final class TimelapseExportTests: XCTestCase {
         let url = try temporaryVideo()
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
         controller.destinationChosen(url)
-        await waitUntil { controller.completionNote != nil && !controller.isBusy }
+        await waitUntil { !controller.isBusy }
         guard case .succeeded = controller.state else { return XCTFail("Committed video must be successful") }
         XCTAssertEqual(try Data(contentsOf: url), Data("video".utf8))
     }
 
-    func testDeniedAuthorizationDoesNotPreventGeneration() async throws {
-        let notifications = FakeTimelapseNotifications()
-        notifications.status = .denied
+    func testSuccessPersistsResultAndAnnouncesReadyInApp() async throws {
         let probe = ExportProbe()
-        let controller = makeController(notifications: notifications, probe: probe)
+        let results = testResultStore()
+        var announcements: [String] = []
+        let controller = TimelapseExportController(
+            results: results,
+            generator: { assets, url, callback in try await probe.generate(assets, url, callback) },
+            announce: { announcements.append($0) }
+        )
         controller.prepare(assets: [asset()])
         let url = try temporaryVideo()
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
@@ -130,16 +127,19 @@ final class TimelapseExportTests: XCTestCase {
         await waitUntil { probe.callback != nil }
         probe.finish()
         await waitUntil { !controller.isBusy }
-        guard case .succeeded = controller.state else { return XCTFail("Permission must not block export") }
+        guard case .succeeded(let result) = controller.state else { return XCTFail("Expected success") }
+        XCTAssertEqual(results.latest?.id, result.id)
+        XCTAssertEqual(result.url, url)
+        XCTAssertEqual(announcements.filter { $0 == L10n.string("Timelapse ready") }.count, 1)
+        XCTAssertNil(controller.completionNote)
     }
 
     private func makeController(
-        notifications: FakeTimelapseNotifications? = nil,
         probe: ExportProbe? = nil
     ) -> TimelapseExportController {
         let probe = probe ?? ExportProbe()
         return TimelapseExportController(
-            notifications: notifications ?? FakeTimelapseNotifications(), results: testResultStore(),
+            results: testResultStore(),
             generator: { assets, url, callback in try await probe.generate(assets, url, callback) },
             announce: { _ in }
         )
@@ -187,28 +187,6 @@ private final class ExportProbe {
     func finish() { finished = true }
 }
 
-@MainActor
-private final class FakeTimelapseNotifications: TimelapseNotifying {
-    var status: UNAuthorizationStatus = .authorized
-    var delivered: [UUID] = []
-    var failDelivery = false
-    var shouldWaitForAuthorization = false
-    var authorizationGate: CheckedContinuation<Void, Never>?
-    func authorizationStatus() async -> UNAuthorizationStatus { status }
-    func prepareAuthorization() async -> UNAuthorizationStatus {
-        if shouldWaitForAuthorization {
-            await withCheckedContinuation { authorizationGate = $0 }
-        }
-        return status
-    }
-    func deliver(exportID: UUID, filename: String) async throws {
-        guard TimelapseNotificationPolicy.canDeliver(status) else { return }
-        if failDelivery { throw TimelapseError.writingFailed }
-        delivered.append(exportID)
-    }
-}
-
-
 extension TimelapseExportTests {
     func testClosingExportWindowKeepsTaskAndReusesWindow() async throws {
         let probe = ExportProbe()
@@ -222,7 +200,8 @@ extension TimelapseExportTests {
                                                   localizationController: LocalizationController())
         let window = try XCTUnwrap(presenter.window)
         XCTAssertTrue(window.styleMask.contains(.resizable))
-        XCTAssertEqual(window.contentMinSize, NSSize(width: ChameoLayout.utilityWindowWidth, height: 580))
+        XCTAssertEqual(window.contentMinSize, NSSize(width: 460, height: 420))
+        XCTAssertEqual(TimelapseWindowController.contentSize, NSSize(width: 460, height: 480))
         window.close()
         XCTAssertTrue(presenter.window === window)
         XCTAssertEqual(controller.state, .running)
@@ -317,25 +296,4 @@ private final class TimelapseTestPhoto: PHAsset, @unchecked Sendable {
     private let fixtureID = UUID().uuidString
     override var localIdentifier: String { fixtureID }
     override var creationDate: Date? { Date(timeIntervalSince1970: 1740787200) }
-}
-
-extension TimelapseExportTests {
-    func testPendingNotificationPermissionCannotDelayExportCancellation() async throws {
-        let notifications = FakeTimelapseNotifications()
-        notifications.shouldWaitForAuthorization = true
-        let probe = ExportProbe()
-        let controller = makeController(notifications: notifications, probe: probe)
-        controller.prepare(assets: [asset()])
-        let url = try temporaryVideo()
-        defer {
-            notifications.authorizationGate?.resume()
-            try? FileManager.default.removeItem(at: url.deletingLastPathComponent())
-        }
-        controller.destinationChosen(url)
-        await waitUntil { notifications.authorizationGate != nil && probe.callback != nil }
-        await controller.cancelAndWait()
-        XCTAssertEqual(controller.state, .cancelled)
-        XCTAssertFalse(controller.isBusy)
-        XCTAssertTrue(notifications.delivered.isEmpty)
-    }
 }

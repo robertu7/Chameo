@@ -96,9 +96,9 @@ The app uses `NSStatusItem` plus `NSPopover` instead of SwiftUI `MenuBarExtra` b
 - `TimelapseExportController`
   - Owns one export independently of Library view, tab, popover, and standalone-window lifetimes.
   - Presents an all-album summary, progress/cancellation, retry, and explicit result actions.
-- `TimelapseNotificationService` / `TimelapseResultStore`
-  - Sends silent completion notifications with an Open Folder action, separate from reminders.
-  - Persists the latest completed export and a read-only security-scoped file bookmark for notification clicks after relaunch.
+- `TimelapseResultStore`
+  - Persists the latest completed export and a read-only security-scoped file bookmark for explicit Open Folder/Open Video actions.
+  - Export completion stays in the app and never requests notification permission or sends a notification. Legacy notification actions from older builds can still resolve saved results.
 
 - `ReminderService`
   - Schedules dated primary notifications.

@@ -5,7 +5,8 @@ import SwiftUI
 /// A reusable window for the app-owned export; closing it never cancels generation.
 @MainActor
 final class TimelapseWindowController: NSWindowController, NSWindowDelegate {
-    static let contentSize = NSSize(width: ChameoLayout.utilityWindowWidth, height: 620)
+    static let contentSize = NSSize(width: 460, height: 480)
+    static let minimumContentSize = NSSize(width: 460, height: 420)
     private let export: TimelapseExportController
     private let libraryStore: LibraryStore
     private var localizationObservation: AnyCancellable?
@@ -29,14 +30,14 @@ final class TimelapseWindowController: NSWindowController, NSWindowDelegate {
                 .environmentObject(localizationController)
         )
         // Installing the content controller can resize the window, so constrain it afterward.
-        window.contentMinSize = NSSize(width: ChameoLayout.utilityWindowWidth, height: 580)
-        window.contentMaxSize = NSSize(width: ChameoLayout.utilityWindowWidth, height: .greatestFiniteMagnitude)
+        window.contentMinSize = Self.minimumContentSize
+        window.contentMaxSize = NSSize(width: Self.contentSize.width, height: .greatestFiniteMagnitude)
         window.setContentSize(Self.contentSize)
         window.center()
         super.init(window: window)
         window.delegate = self
-        window.setFrameAutosaveName("ChameoTimelapse")
-        // Preserve the saved height and position while migrating older, wider windows.
+        window.setFrameAutosaveName("ChameoTimelapseCompact")
+        // Keep the compact width when restoring the user's resized height.
         window.setContentSize(NSSize(width: Self.contentSize.width, height: window.contentLayoutRect.height))
         localizationObservation = localizationController.objectWillChange.sink { [weak self] _ in
             Task { @MainActor [weak self] in self?.window?.title = L10n.string("Timelapse") }

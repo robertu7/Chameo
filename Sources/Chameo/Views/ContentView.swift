@@ -63,7 +63,13 @@ struct ContentView: View {
                 }
                 .keyboardShortcut("q", modifiers: .command)
             } label: {
-                Label(L10n.string("App Menu"), systemImage: "ellipsis.circle")
+                Label {
+                    Text(L10n.string("App Menu"))
+                } icon: {
+                    Image(systemName: "ellipsis.circle")
+                        .resizable().scaledToFit()
+                        .frame(width: 18, height: 18)
+                }
             }
             .labelStyle(.iconOnly)
             .menuStyle(.borderlessButton)

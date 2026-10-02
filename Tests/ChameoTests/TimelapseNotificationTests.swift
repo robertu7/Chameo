@@ -24,13 +24,6 @@ final class TimelapseNotificationTests: XCTestCase {
             actionIdentifier: UNNotificationDefaultActionIdentifier, isCompletedToday: false))
     }
 
-    func testAuthorizationPolicy() {
-        XCTAssertFalse(TimelapseNotificationPolicy.canDeliver(.notDetermined))
-        XCTAssertFalse(TimelapseNotificationPolicy.canDeliver(.denied))
-        XCTAssertTrue(TimelapseNotificationPolicy.canDeliver(.authorized))
-        XCTAssertTrue(TimelapseNotificationPolicy.canDeliver(.provisional))
-    }
-
     @MainActor
     func testColdLaunchActionWaitsForHandler() {
         let request = DeferredTimelapseOpenRequest()
