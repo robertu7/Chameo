@@ -297,3 +297,12 @@
 "You can close this window. Generation continues." = "You can close this window. Generation continues.";
 "Retry…" = "Retry…";
 "Create Timelapse…" = "Create Timelapse…";
+"Creating Timelapse…" = "Creating Timelapse…";
+"Timelapse Created" = "Timelapse Created";
+"See how far you've come." = "See how far you've come.";
+"Bringing your Chameos together." = "Bringing your Chameos together.";
+"Saved and ready to watch." = "Saved and ready to watch.";
+"Every photo in your Chameo album." = "Every photo in your Chameo album.";
+"10 photos/sec" = "10 photos/sec";
+"Encoding video · %lld of %lld photos" = "Encoding video · %lld of %lld photos";
+"You can close this window. Creation continues." = "You can close this window. Creation continues.";

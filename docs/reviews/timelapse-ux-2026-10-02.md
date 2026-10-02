@@ -182,3 +182,15 @@ come from the fixture, and composited glass/window chrome remain unverified.
 - Live Photos/iCloud progress, permission recovery, native glass, keyboard focus,
   VoiceOver behavior, and accessibility settings remain manual checks. Run the
   updated test app with a populated test album to complete them.
+
+## Approved photo-stack revision
+
+The user rejected the first implemented layout, selected the second visual draft, and approved matching Creating and Created states before implementation. This revision supersedes the earlier setup-only strip and separate progress/result compositions.
+
+- One centered photo stack, date range and video summary remain throughout the flow.
+- Status changes beneath the summary; primary actions remain in the fixed footer.
+- Setup uses Create Timelapse. Creating uses phase progress and Cancel. Created uses Open Video as primary, Open Folder as secondary and Create Another as tertiary.
+- The window keeps its 460 × 480 default and 460 × 420 minimum. At minimum height, the photo stack shrinks to keep status and actions readable.
+- Existing controller ownership, safe cancellation, local-only thumbnails and absence of completion notifications remain intact.
+
+See [current design QA and comparisons](../../design-qa.md) for the approved sources, current native fixture captures, fixed issues and validation boundaries. The earlier fixtures and source review above describe the rejected iteration.

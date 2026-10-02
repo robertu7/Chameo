@@ -15,7 +15,7 @@ enum TimelapsePreview {
                     options.resizeMode = .fast
                     options.isNetworkAccessAllowed = false
                     let id = manager.requestImage(for: asset.asset,
-                        targetSize: CGSize(width: 280, height: 280), contentMode: .aspectFill,
+                        targetSize: CGSize(width: 360, height: 360), contentMode: .aspectFill,
                         options: options) { image, info in
                             if (info?[PHImageResultIsDegradedKey] as? Bool) == true { return }
                             if let image = image?.cgImage(forProposedRect: nil, context: nil, hints: nil) {

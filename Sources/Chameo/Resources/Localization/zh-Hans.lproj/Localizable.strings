@@ -297,3 +297,12 @@
 "You can close this window. Generation continues." = "关闭此窗口后，视频仍会继续生成。";
 "Retry…" = "重试…";
 "Create Timelapse…" = "创建延时视频…";
+"Creating Timelapse…" = "正在创建延时摄影…";
+"Timelapse Created" = "延时摄影已创建";
+"See how far you've come." = "看看一路走来的变化。";
+"Bringing your Chameos together." = "将你的 Chameo 照片串联起来。";
+"Saved and ready to watch." = "已保存，随时可以观看。";
+"Every photo in your Chameo album." = "包含 Chameo 相簿中的所有照片。";
+"10 photos/sec" = "每秒 10 张照片";
+"Encoding video · %lld of %lld photos" = "正在编码视频 · 已处理 %lld 张，共 %lld 张照片";
+"You can close this window. Creation continues." = "关闭此窗口后，仍会继续创建。";

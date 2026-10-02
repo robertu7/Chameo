@@ -188,6 +188,43 @@ private final class ExportProbe {
 }
 
 extension TimelapseExportTests {
+    func testPhotoStackKeepsLoadedThumbnailsAcrossCreationAndCompletion() async throws {
+        let probe = ExportProbe()
+        let controller = makeController(probe: probe)
+        let photos = [asset(), asset(), asset()]
+        controller.prepare(assets: photos)
+        var requests: [String: Int] = [:]
+        let view = TimelapseExportView(thumbnailLoader: { photo in
+            requests[photo.id, default: 0] += 1
+            return NSImage(size: NSSize(width: 32, height: 32))
+        })
+        .environmentObject(controller)
+        .environmentObject(LibraryStore())
+        .environmentObject(LocalizationController())
+        let hosting = NSHostingView(rootView: view)
+        let rect = NSRect(origin: .zero, size: TimelapseWindowController.contentSize)
+        let window = NSWindow(contentRect: rect, styleMask: .borderless, backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        window.contentView = hosting
+        hosting.frame = rect
+        hosting.layoutSubtreeIfNeeded()
+        defer { window.close() }
+        await waitUntil { requests.count == 3 }
+        let video = try temporaryVideo()
+        defer { try? FileManager.default.removeItem(at: video.deletingLastPathComponent()) }
+        controller.destinationChosen(video)
+        await waitUntil { probe.callback != nil }
+        await probe.send(.framesWritten(2))
+        hosting.layoutSubtreeIfNeeded()
+        try await Task.sleep(for: .milliseconds(30))
+        probe.finish()
+        await waitUntil { !controller.isBusy }
+        hosting.layoutSubtreeIfNeeded()
+        try await Task.sleep(for: .milliseconds(30))
+        XCTAssertEqual(requests, Dictionary(uniqueKeysWithValues: photos.map { ($0.id, 1) }),
+                       "State changes must preserve the thumbnail views rather than reload or replace the stack")
+    }
+
     func testClosingExportWindowKeepsTaskAndReusesWindow() async throws {
         let probe = ExportProbe()
         let controller = makeController(probe: probe)
@@ -251,43 +288,60 @@ extension TimelapseExportTests {
             let probe = ExportProbe()
             let controller = makeController(probe: probe)
             controller.prepare(assets: [])
-            try render(controller, to: directory.appendingPathComponent(language.rawValue + "-empty.png"),
+            try await render(controller, to: directory.appendingPathComponent(language.rawValue + "-empty.png"),
                        size: TimelapseWindowController.minimumContentSize)
-            controller.prepare(assets: [asset(), asset(), asset()])
-            try render(controller, to: directory.appendingPathComponent(language.rawValue + "-summary.png"))
-            try render(controller, to: directory.appendingPathComponent(language.rawValue + "-summary-minimum.png"),
+            let first = Date(timeIntervalSince1970: 1772323200) // March 1, 2026
+            let last = Date(timeIntervalSince1970: 1790899200) // October 2, 2026
+            controller.prepare(assets: (0..<184).map { index in
+                ChameoAsset(asset: TimelapseTestPhoto(date: first.addingTimeInterval(
+                    last.timeIntervalSince(first) * Double(index) / 183)))
+            })
+            try await render(controller, to: directory.appendingPathComponent(language.rawValue + "-summary.png"))
+            try await render(controller, to: directory.appendingPathComponent(language.rawValue + "-summary-minimum.png"),
                        size: TimelapseWindowController.minimumContentSize)
-            let video = try temporaryVideo()
-            defer { try? FileManager.default.removeItem(at: video.deletingLastPathComponent()) }
+            let temporary = try temporaryVideo().deletingLastPathComponent()
+            let movies = temporary.appendingPathComponent("Movies", isDirectory: true)
+            try FileManager.default.createDirectory(at: movies, withIntermediateDirectories: true)
+            let video = movies.appendingPathComponent("Chameo Timelapse.mp4")
+            defer { try? FileManager.default.removeItem(at: temporary) }
             controller.destinationChosen(video)
             await waitUntil { probe.callback != nil }
             await probe.send(.downloadingPhoto(0, 0.45))
-            try render(controller, to: directory.appendingPathComponent(language.rawValue + "-progress.png"))
-            try render(controller, to: directory.appendingPathComponent(language.rawValue + "-progress-minimum.png"),
+            try await render(controller, to: directory.appendingPathComponent(language.rawValue + "-progress.png"))
+            try await render(controller, to: directory.appendingPathComponent(language.rawValue + "-progress-minimum.png"),
                        size: TimelapseWindowController.minimumContentSize)
-            await probe.send(.framesWritten(1))
-            try render(controller, to: directory.appendingPathComponent(language.rawValue + "-encoding.png"),
+            await probe.send(.framesWritten(132))
+            try await render(controller, to: directory.appendingPathComponent(language.rawValue + "-encoding.png"))
+            try await render(controller, to: directory.appendingPathComponent(language.rawValue + "-encoding-minimum.png"),
                        size: TimelapseWindowController.minimumContentSize)
             await probe.send(.saving)
-            try render(controller, to: directory.appendingPathComponent(language.rawValue + "-saving.png"),
+            try await render(controller, to: directory.appendingPathComponent(language.rawValue + "-saving.png"),
                        size: TimelapseWindowController.minimumContentSize)
             probe.finish()
             await waitUntil { !controller.isBusy }
-            try render(controller, to: directory.appendingPathComponent(language.rawValue + "-result.png"))
-            try render(controller, to: directory.appendingPathComponent(language.rawValue + "-result-minimum.png"),
+            try await render(controller, to: directory.appendingPathComponent(language.rawValue + "-result.png"))
+            try await render(controller, to: directory.appendingPathComponent(language.rawValue + "-result-minimum.png"),
                        size: TimelapseWindowController.minimumContentSize)
+            for appearance in [NSAppearance.Name.darkAqua, .accessibilityHighContrastAqua] {
+                try await render(controller, to: directory.appendingPathComponent(language.rawValue + "-result-" + appearance.rawValue + ".png"),
+                                 size: TimelapseWindowController.minimumContentSize, appearance: appearance)
+            }
         }
     }
 
     private func render(_ controller: TimelapseExportController, to url: URL,
-                        size: NSSize? = nil) throws {
+                        size: NSSize? = nil, appearance: NSAppearance.Name = .aqua) async throws {
         let renderSize = size ?? TimelapseWindowController.contentSize
-        let view = TimelapseExportView(thumbnailLoader: { _ in nil })
+        let fixtureImage = ProcessInfo.processInfo.environment["CHAMEO_TIMELAPSE_PREVIEW_IMAGE"].flatMap {
+            NSImage(contentsOfFile: $0)
+        }
+        let view = TimelapseExportView(thumbnailLoader: { _ in fixtureImage })
             .environmentObject(LocalizationController())
             .environmentObject(AppState())
             .environmentObject(LibraryStore())
             .environmentObject(controller)
             .environment(\.locale, L10n.currentLocalization.displayLocale)
+            .environment(\.colorScheme, appearance == .darkAqua ? .dark : .light)
             .frame(width: renderSize.width, height: renderSize.height)
             .background(Color(nsColor: .windowBackgroundColor))
         // ImageRenderer cannot draw AppKit-backed scroll views and controls.
@@ -295,8 +349,13 @@ extension TimelapseExportTests {
         let rect = NSRect(x: 0, y: 0, width: renderSize.width, height: renderSize.height)
         let hosting = NSHostingView(rootView: view)
         let window = NSWindow(contentRect: rect, styleMask: .borderless, backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        defer { window.close() }
+        window.appearance = NSAppearance(named: appearance)
         window.contentView = hosting
         hosting.frame = rect
+        hosting.layoutSubtreeIfNeeded()
+        try await Task.sleep(for: .milliseconds(80))
         hosting.layoutSubtreeIfNeeded()
         hosting.displayIfNeeded()
         let bitmap = try XCTUnwrap(hosting.bitmapImageRepForCachingDisplay(in: rect))
@@ -311,6 +370,11 @@ extension TimelapseExportTests {
 
 private final class TimelapseTestPhoto: PHAsset, @unchecked Sendable {
     private let fixtureID = UUID().uuidString
+    private let date: Date
+    init(date: Date = Date(timeIntervalSince1970: 1740787200)) {
+        self.date = date
+        super.init()
+    }
     override var localIdentifier: String { fixtureID }
-    override var creationDate: Date? { Date(timeIntervalSince1970: 1740787200) }
+    override var creationDate: Date? { date }
 }
