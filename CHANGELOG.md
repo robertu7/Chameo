@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.5.0-rc.1
+
+### What’s new
+
+- Timelapse completion now stays in Chameo with explicit Open Folder and Open
+  Video actions. Exports no longer request notification permission or send
+  completion notifications.
+- Reduced the default Settings and Timelapse window sizes and refined Library
+  header alignment.
+
+### Fixes
+
+- None.
+
+### Known testing limitations
+
+- Timelapse photo/iCloud handling, the Open Folder/Open Video actions, and
+  remembered export behavior after relaunch still need live validation.
+- Stage 1 builds are ad-hoc signed and are not notarized by Apple.
+- macOS may request Camera, Photos, Location, or Notification permission again
+  after an update.
+
 ## 0.5.0-rc.0
 
 ### What’s new
