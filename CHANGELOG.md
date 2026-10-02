@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.5.0-rc.3
+
+### What’s new
+
+- Redesigned the Timelapse export flow around a shared photo stack and video
+  summary, with phase-specific progress and clear completion actions.
+- Localized the updated setup, creating, and created states in English,
+  Simplified Chinese, and Traditional Chinese.
+
+### Fixes
+
+- None.
+
+### Known testing limitations
+
+- Real Photos/iCloud downloads, playable exported video, and Open Video/Open
+  Folder actions still need validation with a populated test library.
+- Keyboard focus, VoiceOver, permission recovery, and system accessibility
+  settings need live checks; fixture renders do not verify all native behavior.
+- Stage 1 builds are ad-hoc signed and are not notarized by Apple.
+- macOS may request Camera, Photos, Location, or Notification permission again
+  after an update.
+
 ## 0.5.0-rc.2
 
 ### What’s new
