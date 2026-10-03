@@ -62,7 +62,8 @@ final class SettingsWindowTests: XCTestCase {
         // Fixed geometry must also override saved frames from older resizable builds.
         XCTAssertEqual(SettingsWindowController.contentSize, NSSize(width: 500, height: 460))
         XCTAssertEqual(window.contentLayoutRect.size, ChameoLayout.utilityWindowSize)
-        XCTAssertEqual(TimelapseWindowController.contentSize, SettingsWindowController.contentSize)
+        XCTAssertEqual(TimelapseWindowController.contentSize.width, SettingsWindowController.contentSize.width)
+        XCTAssertEqual(TimelapseWindowController.contentSize.height, 430)
     }
 }
 
