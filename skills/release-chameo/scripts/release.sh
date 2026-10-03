@@ -222,6 +222,7 @@ verify_publication() {
   trap 'rm -f "$appcast_file"' EXIT
   curl --fail --silent --show-error --location \
     https://robertu7.github.io/Chameo/appcast.xml >"$appcast_file"
+  swift "$repo_root/script/verify_appcast.swift" "$appcast_file"
   grep -Fq "<sparkle:shortVersionString>$version</sparkle:shortVersionString>" "$appcast_file" ||
     die "appcast does not contain version $version"
   grep -Fq "releases/download/$tag/Chameo-$version-arm64.zip" "$appcast_file" ||

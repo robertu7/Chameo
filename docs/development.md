@@ -166,6 +166,21 @@ gh secret set SPARKLE_PRIVATE_KEY \
 Treat the exported file like a password. Never commit it or attach it to a
 release.
 
+The release script finalizes display-version edits before re-signing and
+verifying the complete appcast. CI exercises stable and prerelease feeds with
+temporary test keys. Public feed verification uses the public key embedded in
+Chameo and does not need access to the private key:
+
+```bash
+swift script/verify_appcast.swift /path/to/appcast.xml
+```
+
+To repair only an existing feed's signature, use the **Repair update feed**
+workflow on `main` with the SHA-256 of the diagnosed public `appcast.xml`.
+It refuses to overwrite a feed that changed since diagnosis, signs it using
+the `release` environment's key, deploys it, and verifies its public signature
+and exact bytes. This leaves release tags and downloads untouched.
+
 ## Codex Run Button
 
 `.codex/environments/environment.toml` wires the Codex app Run action to:

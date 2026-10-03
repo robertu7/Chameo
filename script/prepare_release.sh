@@ -103,8 +103,9 @@ fi
   --maximum-deltas 0 \
   "$UPDATES_DIR"
 
-python3 "$ROOT_DIR/script/update_appcast_display_version.py" \
-  "$APPCAST_PATH" "$ARCHIVE_BASENAME.zip" "$VERSION"
+bash "$ROOT_DIR/script/finalize_appcast.sh" \
+  "$APPCAST_PATH" "$ARCHIVE_BASENAME.zip" "$VERSION" \
+  "$SIGN_UPDATE" "${KEY_ARGUMENTS[@]}"
 
 if [[ ! -f "$APPCAST_PATH" ]]; then
   echo "Sparkle did not generate appcast.xml" >&2

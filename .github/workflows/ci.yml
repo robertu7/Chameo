@@ -20,6 +20,9 @@ jobs:
       - name: Resolve pinned dependencies
         run: swift package resolve
 
+      - name: Test release tooling and feed signatures
+        run: skills/release-chameo/scripts/test-release.sh
+
       - name: Run tests
         run: swift test
 

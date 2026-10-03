@@ -46,6 +46,10 @@ grep -Fq '<title>Version 0.5.0-rc.0</title>' "$appcast_fixture" ||
 rm -f "$appcast_fixture"
 trap - EXIT
 
+sign_update="$repo_root/.build/artifacts/sparkle/Sparkle/bin/sign_update"
+[[ -x "$sign_update" ]] || die "resolve dependencies before testing appcast signing"
+python3 "$repo_root/script/test_appcast_signing.py" "$sign_update"
+
 run_id=""
 status=""
 conclusion=""
