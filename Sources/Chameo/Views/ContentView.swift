@@ -68,6 +68,7 @@ struct ContentView: View {
                         .truncationMode(.middle)
                 }
                 .buttonStyle(.borderless)
+                .foregroundStyle(Color.accentColor)
                 .help(timelapseExport.footerText)
                 .accessibilityHint(L10n.string("Show timelapse export"))
             }

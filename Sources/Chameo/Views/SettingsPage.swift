@@ -13,7 +13,7 @@ struct SettingsPage<Content: View>: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(title).font(.system(size: 22, weight: .semibold))
                         .accessibilityAddTraits(.isHeader)
-                    Text(subtitle).foregroundStyle(.secondary)
+                    Text(subtitle).font(.callout).foregroundStyle(.secondary)
                 }
                 .padding(.bottom, 16)
                 content

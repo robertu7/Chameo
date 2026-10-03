@@ -10,11 +10,13 @@ struct SettingsView: View {
         Group {
             if hasCompletedPermissionOnboarding {
                 VStack(spacing: 0) {
-                    ChameoSegmentedControl(options: SettingsCategory.allCases, selection: $state.category,
-                        title: { $0.title }, cornerRadius: 16,
-                        accessibilityTitle: L10n.string("Settings"))
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 8)
+                    GlassEffectContainer {
+                        ChameoSegmentedControl(options: SettingsCategory.allCases, selection: $state.category,
+                            title: { $0.title }, cornerRadius: 16,
+                            accessibilityTitle: L10n.string("Settings"))
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 8)
                     RetainedSettingsPages(selection: $state.category) { category in
                         switch category {
                         case .general: GeneralSettingsView()

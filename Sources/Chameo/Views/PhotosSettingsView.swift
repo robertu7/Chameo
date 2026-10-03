@@ -24,19 +24,16 @@ struct PhotosSettingsView: View {
                     SettingsLabel(title: L10n.string("Album"),
                                   description: L10n.string("Used for new captures and Library."))
                         .frame(maxWidth: .infinity, alignment: .leading)
+                        .accessibilityHidden(true)
                     Picker(L10n.string("Album"), selection: $albumName) {
                         ForEach(albumChoices, id: \.self) { albumName in Text(albumName).tag(albumName) }
                     }
                     .labelsHidden().fixedSize()
+                    .accessibilityLabel(L10n.string("Album"))
+                    .accessibilityValue(albumName)
+                    .accessibilityHint(L10n.string("Saves new photos here and shows them in Library."))
                 }
                 .disabled(albumChoices.isEmpty || isLoadingPhotosAlbums)
-                .accessibilityLabel(L10n.string("Album"))
-                .accessibilityValue(albumName)
-                .accessibilityHint(
-                    L10n.string(
-                        "Saves new photos here and shows them in Library."
-                    )
-                )
 
                 HStack {
                     if isLoadingPhotosAlbums {
@@ -131,33 +128,38 @@ struct PhotosSettingsView: View {
                     .foregroundStyle(.red)
             }
 
-            HStack {
-                if isCreatingPhotosAlbum {
-                    ProgressView()
-                        .controlSize(.small)
-                        .accessibilityLabel(L10n.string("Creating Photos album"))
-                }
-
-                Spacer()
-
-                Button(L10n.string("Cancel")) {
-                    isShowingNewAlbumSheet = false
-                    newAlbumName = ""
-                }
-                .disabled(isCreatingPhotosAlbum)
-                .keyboardShortcut(.cancelAction)
-
-                Button(L10n.string("Create")) {
-                    Task {
-                        await createPhotosAlbum()
+            GlassEffectContainer(spacing: 12) {
+                HStack(spacing: 12) {
+                    if isCreatingPhotosAlbum {
+                        ProgressView()
+                            .controlSize(.small)
+                            .accessibilityLabel(L10n.string("Creating Photos album"))
                     }
+
+                    Spacer()
+
+                    Button(L10n.string("Cancel")) {
+                        isShowingNewAlbumSheet = false
+                        newAlbumName = ""
+                    }
+                    .buttonStyle(.glass)
+                    .disabled(isCreatingPhotosAlbum)
+                    .keyboardShortcut(.cancelAction)
+
+                    Button(L10n.string("Create")) {
+                        Task {
+                            await createPhotosAlbum()
+                        }
+                    }
+                    .buttonStyle(.glassProminent)
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(!canCreatePhotosAlbum)
                 }
-                .keyboardShortcut(.defaultAction)
-                .disabled(!canCreatePhotosAlbum)
             }
         }
         .padding()
         .frame(width: 340)
+        .buttonBorderShape(.roundedRectangle(radius: ChameoLayout.cornerRadius))
     }
 
     private var albumChoices: [String] {

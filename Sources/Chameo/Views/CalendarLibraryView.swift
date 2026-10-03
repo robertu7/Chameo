@@ -495,7 +495,7 @@ private struct CalendarDayPreview: View {
     }
 
     private var photoActions: some View {
-        Menu {
+        ChameoMoreMenu(title: L10n.string("Photo Actions")) {
             Button(L10n.string("Save Local Copy")) {
                 guard let selectedAsset else { return }
                 isPerformingAction = true
@@ -511,15 +511,7 @@ private struct CalendarDayPreview: View {
                 trashLocalCopy = false
                 isConfirmingDeletion = true
             }
-        } label: {
-            Label(L10n.string("Photo Actions"), systemImage: "ellipsis.circle")
-                .font(.system(size: 18))
         }
-        .labelStyle(.iconOnly)
-        .menuStyle(.borderlessButton)
-        .menuIndicator(.hidden)
-        .frame(width: ChameoLayout.compactControlSize, height: ChameoLayout.compactControlSize)
-        .help(L10n.string("Photo Actions"))
     }
 
     private func delete(_ asset: ChameoAsset) {

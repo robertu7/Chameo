@@ -30,15 +30,8 @@ struct ChameoSegmentedControl<Option: Hashable & Identifiable>: View {
                         .contentShape(RoundedRectangle(cornerRadius: cornerRadius))
                 }
                 .buttonStyle(.plain)
-                .background {
-                    if selection == tab {
-                        RoundedRectangle(cornerRadius: cornerRadius)
-                            .fill(Color(nsColor: .controlBackgroundColor))
-                            .shadow(color: .black.opacity(0.12), radius: 2, y: 1)
-                    } else if hoveredTab == tab {
-                        RoundedRectangle(cornerRadius: cornerRadius).fill(.primary.opacity(0.05))
-                    }
-                }
+                .modifier(SegmentSurface(isSelected: selection == tab, isHovered: hoveredTab == tab,
+                                         cornerRadius: cornerRadius))
                 .overlay {
                     RoundedRectangle(cornerRadius: cornerRadius)
                         .strokeBorder(focusedTab == tab ? Color.accentColor : .clear, lineWidth: 2)
@@ -67,6 +60,21 @@ struct ChameoSegmentedControl<Option: Hashable & Identifiable>: View {
             }
             selection = options[next]
             focusedTab = selection
+        }
+    }
+}
+
+private struct SegmentSurface: ViewModifier {
+    let isSelected: Bool
+    let isHovered: Bool
+    let cornerRadius: CGFloat
+
+    func body(content: Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: cornerRadius)
+        if isSelected {
+            content.chameoGlassControl(in: shape)
+        } else {
+            content.background(.primary.opacity(isHovered ? 0.05 : 0), in: shape)
         }
     }
 }

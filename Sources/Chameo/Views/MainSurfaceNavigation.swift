@@ -14,7 +14,7 @@ struct MainSurfaceNavigation: View {
                 TabPicker(selection: $selection)
                     .frame(width: 244)
                 Spacer(minLength: 0)
-                Menu {
+                ChameoMoreMenu(title: L10n.string("App Menu")) {
                     Button(L10n.string("Settings…"), systemImage: "gearshape", action: onOpenSettings)
                         .keyboardShortcut(",", modifiers: .command)
                     Divider()
@@ -22,26 +22,7 @@ struct MainSurfaceNavigation: View {
                         NSApplication.shared.terminate(nil)
                     }
                     .keyboardShortcut("q", modifiers: .command)
-                } label: {
-                    Label {
-                        Text(L10n.string("App Menu"))
-                    } icon: {
-                        Image(systemName: "ellipsis")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(.primary)
-                            .frame(width: 28, height: 28)
-                    }
                 }
-                .labelStyle(.iconOnly)
-                .menuStyle(.borderlessButton)
-                .menuIndicator(.hidden)
-                .frame(width: ChameoLayout.compactControlSize, height: ChameoLayout.compactControlSize)
-                .contentShape(Circle())
-                .chameoGlassControl(in: Circle())
-                .overlay {
-                    Circle().strokeBorder(.secondary.opacity(0.45), lineWidth: 1)
-                }
-                .help(L10n.string("App Menu"))
             }
             .padding(.horizontal, ChameoLayout.outerInset)
         }

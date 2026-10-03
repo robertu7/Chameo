@@ -143,6 +143,8 @@ struct PermissionStatusInline: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(2)
+                .help(message)
+                .accessibilityLabel(message)
                 .accessibilityAddTraits(.updatesFrequently)
 
             Spacer()
@@ -153,6 +155,7 @@ struct PermissionStatusInline: View {
                 }
                 .font(.caption)
                 .buttonStyle(.borderless)
+                .foregroundStyle(Color.accentColor)
             }
         }
     }
