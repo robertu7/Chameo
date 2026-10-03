@@ -63,7 +63,7 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertEqual(SettingsWindowController.contentSize, NSSize(width: 500, height: 460))
         XCTAssertEqual(window.contentLayoutRect.size, ChameoLayout.utilityWindowSize)
         XCTAssertEqual(TimelapseWindowController.contentSize.width, SettingsWindowController.contentSize.width)
-        XCTAssertEqual(TimelapseWindowController.contentSize.height, 430)
+        XCTAssertEqual(TimelapseWindowController.contentSize.height, 480)
     }
 }
 
