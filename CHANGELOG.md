@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.5.0
+
+### What’s new
+
+- Added **Save Local Copy** to Photo Actions to restore a missing original, and
+  an option to move its local copy to Trash when deleting the Photos asset.
+- Refreshed Camera, Library, Settings, Timelapse, and onboarding with clearer
+  navigation, fixed-size layouts, localized illustrations, and help for local
+  copies.
+- Reworked Timelapse export as a dedicated in-app flow with phase-specific
+  status, completed-photo progress, and explicit Open Folder and Open Video
+  actions.
+- Requires macOS 26 or newer.
+
+### Fixes
+
+- Improved window fit, album-selection guidance, selector and menu accessibility,
+  and progress reporting during iCloud downloads.
+
+### Known testing limitations
+
+- Camera capture and switching, local-copy restoration and deletion, real
+  Photos/iCloud handling, and Timelapse generation and playback still need live
+  device and library checks.
+- VoiceOver, full keyboard traversal, system accessibility settings, and
+  permission recovery need live validation.
+- Stage 1 builds are ad-hoc signed and are not notarized by Apple.
+- macOS may request Camera, Photos, Location, or Notification permission again
+  after an update.
+
 ## 0.5.0-rc.6
 
 ### What’s new
