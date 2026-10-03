@@ -16,6 +16,8 @@ assert_equal() {
 is_chameo_version "0.5.0" || die "stable version was rejected"
 is_chameo_version "0.5.0-rc.0" || die "RC version was rejected"
 is_chameo_version "1.2.3-beta.2" || die "semantic prerelease was rejected"
+! is_chameo_prerelease "0.5.0" || die "stable version was classified as a prerelease"
+is_chameo_prerelease "0.5.0-rc.0" || die "RC version was not classified as a prerelease"
 ! is_chameo_version "0.05.0" || die "leading zero in core version was accepted"
 ! is_chameo_version "0.5.0-rc.00" || die "leading zero in numeric prerelease was accepted"
 ! is_chameo_version "0.5.0-rc." || die "empty prerelease identifier was accepted"

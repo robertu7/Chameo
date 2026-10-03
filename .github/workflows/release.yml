@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   release:
-    name: Build and publish prerelease
+    name: Build and publish release
     runs-on: macos-26
     environment: release
     permissions:
@@ -144,21 +144,26 @@ jobs:
         with:
           path: release-source/dist/pages
 
-      - name: Publish GitHub prerelease
+      - name: Publish GitHub release
         working-directory: tooling
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
         run: |
+          source script/version.sh
           version="${RELEASE_TAG#v}"
           archive="../release-source/dist/updates/Chameo-$version-arm64.zip"
           disk_image="../release-source/dist/releases/Chameo-$version-arm64.dmg"
           notes_asset="../release-source/dist/updates/Chameo-$version-arm64.md"
+          release_flags=()
+          if is_chameo_prerelease "$version"; then
+            release_flags+=(--prerelease)
+          fi
           gh release create "$RELEASE_TAG" \
             "$archive" \
             "$disk_image" \
             "$notes_asset" \
-            --prerelease \
+            "${release_flags[@]}" \
             --title "Chameo $version" \
             --notes-file "$notes_asset" \
             --verify-tag

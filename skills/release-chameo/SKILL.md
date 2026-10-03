@@ -1,6 +1,6 @@
 ---
 name: release-chameo
-description: Suggest, prepare, publish, and verify a Chameo macOS release from main. Use when choosing or bumping a semantic version, updating VERSION or CHANGELOG.md, creating a release commit or tag, pushing a release, or verifying the GitHub prerelease and Sparkle appcast.
+description: Suggest, prepare, publish, and verify a Chameo macOS release from main. Use when choosing or bumping a semantic version, updating VERSION or CHANGELOG.md, creating a release commit or tag, pushing a release, or verifying the GitHub release and Sparkle appcast.
 ---
 
 # Release Chameo
@@ -25,8 +25,9 @@ skills/release-chameo/scripts/release.sh <command> [arguments]
 - Never reuse, move, delete, retarget, or force-push a release tag.
 - Push the release commit and require CI success for its exact full SHA before
   creating the annotated tag.
-- Call a release published only after verifying the prerelease, ZIP, DMG,
-  Markdown notes, public appcast, branch, and tag targets.
+- Call a release published only after verifying the expected stable or
+  prerelease channel, ZIP, DMG, Markdown notes, public appcast, branch, and tag
+  targets.
 
 ## Prepare
 

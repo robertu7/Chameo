@@ -7,6 +7,10 @@ is_chameo_version() {
   [[ "${1:-}" =~ $CHAMEO_VERSION_REGEX ]]
 }
 
+is_chameo_prerelease() {
+  [[ "${1:-}" == *-* ]]
+}
+
 chameo_base_version() {
   local version="${1:-}"
   is_chameo_version "$version" || return 2

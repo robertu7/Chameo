@@ -194,9 +194,19 @@ verify_publication() {
   require_clean_main
 
   local release_json release_url appcast_file local_target remote_target
+  local expected_prerelease release_channel
+  if is_chameo_prerelease "$version"; then
+    expected_prerelease="true"
+    release_channel="prerelease"
+  else
+    expected_prerelease="false"
+    release_channel="stable"
+  fi
+
   release_json="$(gh release view "$tag" --json url,name,isPrerelease,tagName,assets)"
   [[ "$(jq -r '.name' <<<"$release_json")" == "Chameo $version" ]] || die "release title mismatch"
-  [[ "$(jq -r '.isPrerelease' <<<"$release_json")" == "true" ]] || die "release is not a prerelease"
+  [[ "$(jq -r '.isPrerelease' <<<"$release_json")" == "$expected_prerelease" ]] ||
+    die "release channel mismatch: expected $release_channel"
   [[ "$(jq -r '.tagName' <<<"$release_json")" == "$tag" ]] || die "release tag mismatch"
 
   local asset
@@ -223,8 +233,8 @@ verify_publication() {
   [[ "$remote_target" == "$commit" ]] || die "remote tag target mismatch"
 
   release_url="$(jq -r '.url' <<<"$release_json")"
-  printf 'publication=verified\nversion=%s\ncommit=%s\ntag=%s\nassets=zip,dmg,md\nrelease_url=%s\nappcast_version=%s\n' \
-    "$version" "$commit" "$tag" "$release_url" "$version"
+  printf 'publication=verified\nversion=%s\nrelease_channel=%s\ncommit=%s\ntag=%s\nassets=zip,dmg,md\nrelease_url=%s\nappcast_version=%s\n' \
+    "$version" "$release_channel" "$commit" "$tag" "$release_url" "$version"
   grep -m 1 '<sparkle:version>' "$appcast_file" | sed -E 's/.*<sparkle:version>([^<]+).*/appcast_build=\1/'
   rm -f "$appcast_file"
   trap - EXIT
