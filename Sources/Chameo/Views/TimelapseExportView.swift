@@ -23,7 +23,7 @@ struct TimelapseExportView: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         } else {
                             videoSummary.padding(.bottom, 12)
-                            statusContent.frame(minHeight: 44, alignment: .top)
+                            statusContent.frame(minHeight: 64, alignment: .top)
                         }
                         supplementaryFeedback
                     }
@@ -44,7 +44,7 @@ struct TimelapseExportView: View {
 
     private func photoSide(height: CGFloat) -> CGFloat {
         // Preserve room for the status and fixed actions at the minimum window height.
-        min(170, max(110, height - 310))
+        min(170, max(110, height - 334))
     }
 
     private var header: some View {
@@ -111,16 +111,16 @@ struct TimelapseExportView: View {
         switch export.state {
         case .running, .cancelling:
             VStack(spacing: 8) {
-                if export.state == .running, let fraction = export.progress.phaseFraction(total: export.assets.count) {
-                    ProgressView(value: fraction, total: 1)
-                        .progressViewStyle(.linear)
-                        .accessibilityLabel(L10n.string(export.progress.phaseTitleKey))
-                        .accessibilityValue(progressDescription)
-                } else {
-                    ProgressView().progressViewStyle(.linear).accessibilityLabel(progressDescription)
+                ProgressView(value: export.completedPhotoFraction, total: 1)
+                    .progressViewStyle(.linear)
+                    .accessibilityLabel(L10n.string("Creating Timelapse…"))
+                    .accessibilityValue(export.completedPhotoText)
+                VStack(spacing: 4) {
+                    Text(export.completedPhotoText).font(.caption.weight(.medium)).monospacedDigit()
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(progressDescription).font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                Text(progressDescription).font(.caption).foregroundStyle(.secondary).monospacedDigit()
-                    .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: 310)
         case .succeeded(let result):
@@ -215,8 +215,8 @@ struct TimelapseExportView: View {
     }
 
     private var progressDescription: String {
-        if export.state == .running, case .framesWritten(let count) = export.progress {
-            return L10n.format("Encoding video · %lld of %lld photos", Int64(count), Int64(export.assets.count))
+        if export.state == .running, case .framesWritten = export.progress {
+            return L10n.string(export.progress.phaseTitleKey)
         }
         return export.footerText
     }

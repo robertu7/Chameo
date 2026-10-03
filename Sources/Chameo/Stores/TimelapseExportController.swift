@@ -46,6 +46,14 @@ final class TimelapseExportController: ObservableObject {
     var isBusy: Bool { state == .choosingDestination || task != nil }
     var isGenerating: Bool { state == .running || state == .cancelling }
     var duration: Double { Double(assets.count) / Double(TimelapseService.framesPerSecond) }
+    /// The main bar always measures appended photos, including while loading or saving.
+    var completedPhotoFraction: Double {
+        guard !assets.isEmpty else { return 0 }
+        return min(1, max(0, Double(completedPhotos) / Double(assets.count)))
+    }
+    var completedPhotoText: String {
+        TimelapseProgress.framesWritten(completedPhotos).text(total: assets.count)
+    }
     var footerText: String {
         switch state {
         case .succeeded: return L10n.string("Timelapse ready")

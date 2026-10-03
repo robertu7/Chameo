@@ -18,19 +18,6 @@ enum TimelapseProgress: Equatable, Sendable {
         }
     }
 
-    /// A fraction for this phase only; download progress is not frame completion.
-    func phaseFraction(total: Int) -> Double? {
-        switch self {
-        case .downloadingPhoto(_, let fraction):
-            return fraction.isFinite ? min(1, max(0, fraction)) : nil
-        case .framesWritten(let count):
-            guard total > 0 else { return nil }
-            return min(1, max(0, Double(count) / Double(total)))
-        case .preparing, .loadingPhoto, .saving:
-            return nil
-        }
-    }
-
     var order: Int {
         switch self {
         case .preparing: return 0

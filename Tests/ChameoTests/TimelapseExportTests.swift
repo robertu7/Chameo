@@ -72,6 +72,47 @@ final class TimelapseExportTests: XCTestCase {
         XCTAssertEqual(controller.state, .cancelled)
     }
 
+    func testMainProgressStaysOnCompletedPhotosAcrossPhaseChanges() async throws {
+        let probe = ExportProbe()
+        let controller = makeController(probe: probe)
+        XCTAssertEqual(controller.completedPhotoFraction, 0)
+        controller.prepare(assets: [asset(), asset(), asset(), asset()])
+        let url = try temporaryVideo()
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        controller.destinationChosen(url)
+        await waitUntil { probe.callback != nil }
+
+        for event in [TimelapseProgress.preparing, .loadingPhoto(0), .downloadingPhoto(0, 0.9), .downloadingPhoto(0, 1)] {
+            await probe.send(event)
+            XCTAssertEqual(controller.completedPhotoFraction, 0, "A download must not fill the main bar")
+        }
+        await probe.send(.framesWritten(1))
+        XCTAssertEqual(controller.completedPhotoFraction, 0.25)
+        XCTAssertEqual(controller.completedPhotoText, TimelapseProgress.framesWritten(1).text(total: 4))
+        for event in [TimelapseProgress.downloadingPhoto(0, 1), .loadingPhoto(1), .downloadingPhoto(1, 0.1), .downloadingPhoto(1, 1)] {
+            await probe.send(event)
+            XCTAssertEqual(controller.completedPhotoFraction, 0.25, "The next photo and late callbacks must not reset progress")
+        }
+        for count in 2...4 {
+            await probe.send(.framesWritten(count))
+            XCTAssertEqual(controller.completedPhotoFraction, Double(count) / 4)
+            if count < 4 {
+                await probe.send(.loadingPhoto(count))
+                XCTAssertEqual(controller.completedPhotoFraction, Double(count) / 4, "Local photo loading must preserve progress too")
+            }
+        }
+        await probe.send(.saving)
+        XCTAssertEqual(controller.completedPhotoFraction, 1)
+        XCTAssertEqual(controller.footerText, L10n.string("Saving video…"))
+        XCTAssertEqual(controller.state, .running, "A full photo bar must not claim the video is saved")
+        controller.cancel()
+        XCTAssertEqual(controller.completedPhotoFraction, 1)
+        XCTAssertEqual(controller.footerText, L10n.string("Cancelling…"))
+        await controller.cancelAndWait()
+        controller.prepare(assets: [asset()])
+        XCTAssertEqual(controller.completedPhotoFraction, 0, "The next export starts with an empty bar")
+    }
+
     func testFailedExportRetainsSelectionForRetry() async throws {
         let probe = ExportProbe()
         probe.failure = TimelapseError.imageUnavailable
@@ -88,6 +129,7 @@ final class TimelapseExportTests: XCTestCase {
         XCTAssertEqual(controller.assets.count, 1)
         probe.failure = nil
         controller.destinationChosen(url)
+        XCTAssertEqual(controller.completedPhotoFraction, 0)
         await waitUntil { probe.calls == 2 }
         probe.finish()
         await waitUntil { !controller.isBusy }
@@ -270,6 +312,7 @@ extension TimelapseExportTests {
         XCTAssertEqual(controller.state, .summary)
         XCTAssertEqual(controller.progress, .preparing)
         XCTAssertEqual(controller.completedPhotos, 0)
+        XCTAssertEqual(controller.completedPhotoFraction, 0)
         XCTAssertFalse(controller.hasStatus)
         XCTAssertNil(controller.resultActionError)
         XCTAssertNil(controller.completionNote)
@@ -308,14 +351,21 @@ extension TimelapseExportTests {
             defer { try? FileManager.default.removeItem(at: temporary) }
             controller.destinationChosen(video)
             await waitUntil { probe.callback != nil }
+            try await render(controller, to: directory.appendingPathComponent(language.rawValue + "-preparing.png"))
             await probe.send(.downloadingPhoto(0, 0.45))
             try await render(controller, to: directory.appendingPathComponent(language.rawValue + "-progress.png"))
             try await render(controller, to: directory.appendingPathComponent(language.rawValue + "-progress-minimum.png"),
                        size: TimelapseWindowController.minimumContentSize)
+            await probe.send(.framesWritten(1))
+            await probe.send(.loadingPhoto(1))
+            try await render(controller, to: directory.appendingPathComponent(language.rawValue + "-loading.png"))
+            await probe.send(.downloadingPhoto(1, 0.1))
+            try await render(controller, to: directory.appendingPathComponent(language.rawValue + "-next-download.png"))
             await probe.send(.framesWritten(132))
             try await render(controller, to: directory.appendingPathComponent(language.rawValue + "-encoding.png"))
             try await render(controller, to: directory.appendingPathComponent(language.rawValue + "-encoding-minimum.png"),
                        size: TimelapseWindowController.minimumContentSize)
+            await probe.send(.framesWritten(184))
             await probe.send(.saving)
             try await render(controller, to: directory.appendingPathComponent(language.rawValue + "-saving.png"),
                        size: TimelapseWindowController.minimumContentSize)
