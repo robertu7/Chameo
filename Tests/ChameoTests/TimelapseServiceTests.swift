@@ -159,6 +159,24 @@ private actor ProgressEvents {
 }
 
 extension TimelapseServiceTests {
+    func testEveryPlaybackPresetControlsRealEncodedDuration() async throws {
+        let image = try testImage()
+        for speed in TimelapsePlaybackSpeed.allCases {
+            let url = try destination()
+            defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+            let photos = (0..<6).map { _ in ChameoAsset(asset: PHAsset()) }
+            try await TimelapseService.generate(assets: photos, to: url, speed: speed,
+                                               imageLoader: { _, _ in image })
+            let video = AVURLAsset(url: url)
+            let duration = try await video.load(.duration)
+            XCTAssertEqual(duration.seconds, 6 / Double(speed.rawValue), accuracy: 0.01)
+            let tracks = try await video.loadTracks(withMediaType: .video)
+            let track = try XCTUnwrap(tracks.first)
+            let frameRate = try await track.load(.nominalFrameRate)
+            XCTAssertEqual(frameRate, Float(speed.rawValue), accuracy: 0.01)
+        }
+    }
+
     func testSinglePhotoProducesOneTenthSecondVideo() async throws {
         let url = try destination()
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }

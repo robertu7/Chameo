@@ -10,9 +10,11 @@ final class TimelapseExportController: ObservableObject {
         case failed(String)
     }
 
-    typealias Generator = ([ChameoAsset], URL, @escaping TimelapseService.ProgressHandler) async throws -> Void
+    typealias Generator = ([ChameoAsset], URL, TimelapsePlaybackSpeed, @escaping TimelapseService.ProgressHandler) async throws -> Void
     @Published private(set) var state: State = .summary
     @Published private(set) var assets: [ChameoAsset] = []
+    @Published private(set) var allAssets: [ChameoAsset] = []
+    @Published private(set) var options = TimelapseExportOptions()
     @Published private(set) var progress: TimelapseProgress = .preparing
     @Published private(set) var completedPhotos = 0
     @Published private(set) var resultActionError: String?
@@ -28,24 +30,49 @@ final class TimelapseExportController: ObservableObject {
     private var savePanel: NSSavePanel?
     private var previousDestination: URL?
     private var announcedPhases: Set<String> = []
+    private var hasPrepared = false
+    let calendar: Calendar
 
     init(
         results: TimelapseResultStore? = nil,
         generator: Generator? = nil,
         localPhotos: LocalPhotoStore = .shared,
         photoSource: any TimelapsePhotoSource = PhotosTimelapsePhotoSource(),
-        announce: @escaping (String) -> Void = { AccessibilityAnnouncement.post($0) }
+        announce: @escaping (String) -> Void = { AccessibilityAnnouncement.post($0) },
+        calendar: Calendar = .current
     ) {
         self.results = results ?? TimelapseResultStore()
         self.generator = generator
         self.localPhotos = localPhotos
         self.photoSource = photoSource
         self.announce = announce
+        self.calendar = calendar
     }
 
     var isBusy: Bool { state == .choosingDestination || task != nil }
     var isGenerating: Bool { state == .running || state == .cancelling }
-    var duration: Double { Double(assets.count) / Double(TimelapseService.framesPerSecond) }
+    var duration: Double { Double(assets.count) / Double(options.speed.rawValue) }
+    var canEditOptions: Bool {
+        guard !isBusy else { return false }
+        switch state {
+        case .summary, .cancelled, .failed: return true
+        default: return false
+        }
+    }
+    var hasUndatedPhotos: Bool { allAssets.contains { $0.createdAt == nil } }
+
+    func periods(for range: TimelapseDateRange) -> [Date] {
+        let component: Calendar.Component = range == .year ? .year : .month
+        var periods = Set(allAssets.compactMap { photo in
+            photo.createdAt.flatMap { calendar.dateInterval(of: component, for: $0)?.start }
+        })
+        // Keep the selected period visible even if the album changed or its
+        // last photo was deleted. Its empty result can then be corrected in UI.
+        if !periods.isEmpty, let selected = calendar.dateInterval(of: component, for: options.period)?.start {
+            periods.insert(selected)
+        }
+        return Array(periods).sorted(by: >)
+    }
     /// The main bar always measures appended photos, including while loading or saving.
     var completedPhotoFraction: Double {
         guard !assets.isEmpty else { return 0 }
@@ -67,7 +94,25 @@ final class TimelapseExportController: ObservableObject {
 
     func prepare(assets: [ChameoAsset]) {
         guard !isBusy else { return }
-        self.assets = assets
+        allAssets = assets
+        if !hasPrepared, !assets.isEmpty {
+            let dates = assets.compactMap(\.createdAt)
+            if let last = dates.max() {
+                options.period = last
+            }
+            hasPrepared = true
+        }
+        refreshSelection()
+    }
+
+    func updateOptions(_ options: TimelapseExportOptions) {
+        guard canEditOptions else { return }
+        self.options = options
+        refreshSelection()
+    }
+
+    private func refreshSelection() {
+        assets = TimelapseSelection.items(from: allAssets, options: options, calendar: calendar, date: \.createdAt)
         state = .summary
         progress = .preparing
         completedPhotos = 0
@@ -105,6 +150,7 @@ final class TimelapseExportController: ObservableObject {
         let id = UUID()
         runID = id
         let selection = assets
+        let speed = options.speed
         completedPhotos = 0
         progress = .preparing
         resultActionError = nil
@@ -125,10 +171,11 @@ final class TimelapseExportController: ObservableObject {
                 }
                 var localCopyFailures = 0
                 if let generator {
-                    try await generator(selection, url, report)
+                    try await generator(selection, url, speed, report)
                 } else {
                     let summary = try await TimelapseService.generate(
-                        assets: selection, to: url, onProgress: report, localPhotos: localPhotos, photoSource: photoSource
+                        assets: selection, to: url, speed: speed, onProgress: report,
+                        localPhotos: localPhotos, photoSource: photoSource
                     )
                     localCopyFailures = summary.localCopyFailures
                 }

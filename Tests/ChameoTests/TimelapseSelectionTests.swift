@@ -60,6 +60,28 @@ final class TimelapseSelectionTests: XCTestCase {
         ])
     }
 
+    func testMonthAndYearUseCalendarBoundariesAndExcludeUndatedPhotos() throws {
+        let items = [
+            Item(id: "undated", date: nil),
+            Item(id: "previous-year", date: try date(2025, 12, 31, 23)),
+            Item(id: "year-start", date: try date(2026, 1, 1, 0)),
+            Item(id: "month-start", date: try date(2026, 9, 1, 0)),
+            Item(id: "month-end", date: try date(2026, 9, 30, 23)),
+            Item(id: "next-month", date: try date(2026, 10, 1, 0)),
+            Item(id: "next-year", date: try date(2027, 1, 1, 0))
+        ]
+        var options = TimelapseExportOptions(date: try date(2026, 9, 15, 12))
+        options.range = .month
+        XCTAssertEqual(TimelapseSelection.items(from: items, options: options, calendar: calendar, date: \.date).map(\.id),
+                       ["month-start", "month-end"])
+        options.range = .year
+        XCTAssertEqual(TimelapseSelection.items(from: items, options: options, calendar: calendar, date: \.date).map(\.id),
+                       ["year-start", "month-start", "month-end", "next-month"])
+        options.range = .allPhotos
+        XCTAssertEqual(TimelapseSelection.items(from: items, options: options, calendar: calendar, date: \.date).last?.id,
+                       "undated", "All Photos must still retain undated assets")
+    }
+
     private func date(_ year: Int, _ month: Int, _ day: Int, _ hour: Int) throws -> Date {
         try XCTUnwrap(calendar.date(from: DateComponents(
             year: year,

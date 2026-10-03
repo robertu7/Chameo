@@ -77,6 +77,9 @@ Complete these requirements before moving beyond Stage 1 test distribution:
 - Added timelapse generation using every saved Chameo across the complete
   history, exported chronologically as a square 1080 x 1080
   H.264 MP4 at 10 photos per second through the standard Save dialog.
+- Added Timelapse date-range dropdowns for All Photos, Month, and Year,
+  with 5/10/15 photos-per-second controls and a live count
+  and duration summary. All Photos and 10 photos/sec remain the defaults.
 - Removed the rolling 30-day Library summary after the validation trial.
 - Added Camera, Photos, Location, and Notifications permission recovery actions.
 - Added permission-denied status near the action requiring permission.

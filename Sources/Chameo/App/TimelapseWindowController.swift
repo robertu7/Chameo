@@ -5,7 +5,7 @@ import SwiftUI
 /// A reusable window for the app-owned export; closing it never cancels generation.
 @MainActor
 final class TimelapseWindowController: NSWindowController, NSWindowDelegate {
-    static let contentSize = ChameoLayout.utilityWindowSize
+    static let contentSize = NSSize(width: ChameoLayout.utilityWindowWidth, height: 430)
     static let minimumContentSize = contentSize
     private let export: TimelapseExportController
     private let libraryStore: LibraryStore

@@ -321,3 +321,14 @@
 "Review your Chameo before saving." = "Review your Chameo before saving.";
 "A daily photo. A consistent frame." = "A daily photo. A consistent frame.";
 "From daily Chameos to a story in motion." = "From daily Chameos to a story in motion.";
+
+/* Timelapse date range and speed */
+"All Photos" = "All Photos";
+"Month" = "Month";
+"Year" = "Year";
+"Date range" = "Date range";
+"Playback speed" = "Playback speed";
+"%lld photos/sec" = "%lld photos/sec";
+"No dated photos are available." = "No dated photos are available.";
+"No photos in this period. Choose another date range." = "No photos in this period. Choose another date range.";
+"Photos without dates are only included in All Photos." = "Photos without dates are only included in All Photos.";

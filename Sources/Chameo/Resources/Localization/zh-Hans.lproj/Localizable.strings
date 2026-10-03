@@ -321,3 +321,14 @@
 "Review your Chameo before saving." = "保存前，先看看这张 Chameo。";
 "A daily photo. A consistent frame." = "每日一张，保持一致的构图。";
 "From daily Chameos to a story in motion." = "将每日 Chameo 串成流动的故事。";
+
+/* Timelapse date range and speed */
+"All Photos" = "全部";
+"Month" = "月份";
+"Year" = "年份";
+"Date range" = "日期范围";
+"Playback speed" = "播放速度";
+"%lld photos/sec" = "每秒 %lld 张照片";
+"No dated photos are available." = "没有带日期的照片。";
+"No photos in this period. Choose another date range." = "此日期范围内没有照片，请选择其他日期范围。";
+"Photos without dates are only included in All Photos." = "没有日期的照片仅包含在「全部」中。";

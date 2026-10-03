@@ -139,7 +139,7 @@ final class TimelapseExportTests: XCTestCase {
     func testLateCancellationAfterCommitStillReportsSuccess() async throws {
         let controller = TimelapseExportController(
             results: testResultStore(),
-            generator: { _, url, _ in
+            generator: { _, url, _, _ in
                 try Data("video".utf8).write(to: url)
                 withUnsafeCurrentTask { $0?.cancel() }
             }, announce: { _ in }
@@ -159,7 +159,7 @@ final class TimelapseExportTests: XCTestCase {
         var announcements: [String] = []
         let controller = TimelapseExportController(
             results: results,
-            generator: { assets, url, callback in try await probe.generate(assets, url, callback) },
+            generator: { assets, url, speed, callback in try await probe.generate(assets, url, speed, callback) },
             announce: { announcements.append($0) }
         )
         controller.prepare(assets: [asset()])
@@ -182,7 +182,7 @@ final class TimelapseExportTests: XCTestCase {
         let probe = probe ?? ExportProbe()
         return TimelapseExportController(
             results: testResultStore(),
-            generator: { assets, url, callback in try await probe.generate(assets, url, callback) },
+            generator: { assets, url, speed, callback in try await probe.generate(assets, url, speed, callback) },
             announce: { _ in }
         )
     }
@@ -192,6 +192,87 @@ final class TimelapseExportTests: XCTestCase {
     }
 
     private func asset() -> ChameoAsset { ChameoAsset(asset: TimelapseTestPhoto()) }
+
+    func testFilteredSelectionAndSpeedStayFrozenDuringExportAndRetry() async throws {
+        let probe = ExportProbe()
+        probe.failure = TimelapseError.imageUnavailable
+        let controller = makeController(probe: probe)
+        let first = Date(timeIntervalSince1970: 1772323200) // March 1, 2026
+        let second = first.addingTimeInterval(31 * 24 * 60 * 60) // April 1, 2026
+        let photos = [ChameoAsset(asset: TimelapseTestPhoto(date: first)),
+                      ChameoAsset(asset: TimelapseTestPhoto(date: second))]
+        controller.prepare(assets: photos)
+        XCTAssertEqual(controller.options.range, .allPhotos)
+        XCTAssertEqual(controller.options.speed, .standard)
+        var options = controller.options
+        options.range = .month
+        options.period = second
+        options.speed = .slow
+        controller.updateOptions(options)
+        XCTAssertEqual(controller.assets, [photos[1]])
+        XCTAssertEqual(controller.duration, 0.2)
+
+        let url = try temporaryVideo()
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        controller.destinationChosen(url)
+        await waitUntil { probe.callback != nil }
+        var changed = options
+        changed.range = .allPhotos
+        changed.speed = .fast
+        controller.updateOptions(changed)
+        controller.prepare(assets: [])
+        XCTAssertEqual(controller.options, options)
+        XCTAssertEqual(probe.selectionCount, 1)
+        XCTAssertEqual(probe.speed, .slow)
+        XCTAssertEqual(controller.assets, [photos[1]])
+        probe.finish()
+        await waitUntil { !controller.isBusy }
+        guard case .failed = controller.state else { return XCTFail("Expected failure") }
+        probe.failure = nil
+        controller.destinationChosen(url)
+        await waitUntil { probe.calls == 2 }
+        XCTAssertEqual(probe.speed, .slow)
+        XCTAssertEqual(probe.selectionCount, 1)
+        probe.finish()
+        await waitUntil { !controller.isBusy }
+        XCTAssertFalse(controller.canEditOptions, "Completed summaries must describe the saved video")
+        controller.updateOptions(changed)
+        XCTAssertEqual(controller.options, options)
+        controller.prepare(assets: photos)
+        XCTAssertEqual(controller.assets, [photos[1]], "Create Another keeps the user's options")
+        controller.updateOptions(changed)
+        XCTAssertEqual(controller.assets, photos)
+        XCTAssertEqual(controller.duration, 2.0 / 15)
+    }
+
+    func testEmptyMonthCannotStartAndSelectingAllPhotosRecovers() {
+        let controller = makeController()
+        controller.prepare(assets: [asset()])
+        var options = TimelapseExportOptions(date: Date(timeIntervalSince1970: 0))
+        options.range = .month
+        controller.updateOptions(options)
+        controller.destinationChosen(URL(fileURLWithPath: "/private/tmp/unused.mp4"))
+        XCTAssertTrue(controller.assets.isEmpty)
+        XCTAssertFalse(controller.isBusy)
+        XCTAssertEqual(controller.allAssets.count, 1)
+        options.range = .allPhotos
+        controller.updateOptions(options)
+        XCTAssertEqual(controller.assets.count, 1)
+    }
+
+    func testAlbumRefreshKeepsEmptySelectedPeriodVisible() throws {
+        let controller = makeController()
+        controller.prepare(assets: [asset()])
+        var options = controller.options
+        options.range = .month
+        controller.updateOptions(options)
+        let selected = try XCTUnwrap(options.interval(calendar: controller.calendar)?.start)
+        let newer = Date(timeIntervalSince1970: 1790985600)
+        controller.prepare(assets: [ChameoAsset(asset: TimelapseTestPhoto(date: newer))])
+        XCTAssertTrue(controller.assets.isEmpty)
+        XCTAssertTrue(controller.periods(for: .month).contains(selected))
+        XCTAssertEqual(controller.periods(for: .month).count, 2)
+    }
 
     private func temporaryVideo() throws -> URL {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
@@ -212,13 +293,16 @@ final class TimelapseExportTests: XCTestCase {
 private final class ExportProbe {
     var calls = 0
     var selectionCount = 0
+    var speed: TimelapsePlaybackSpeed?
     var callback: TimelapseService.ProgressHandler?
     var failure: Error?
     private var finished = false
 
-    func generate(_ assets: [ChameoAsset], _ url: URL, _ callback: @escaping TimelapseService.ProgressHandler) async throws {
+    func generate(_ assets: [ChameoAsset], _ url: URL, _ speed: TimelapsePlaybackSpeed,
+                  _ callback: @escaping TimelapseService.ProgressHandler) async throws {
         calls += 1
         selectionCount = assets.count
+        self.speed = speed
         self.callback = callback
         finished = false
         while !finished { try await Task.sleep(for: .milliseconds(2)) }
@@ -279,10 +363,10 @@ extension TimelapseExportTests {
                                                   localizationController: LocalizationController())
         let window = try XCTUnwrap(presenter.window)
         XCTAssertFalse(window.styleMask.contains(.resizable))
-        XCTAssertEqual(window.contentMinSize, ChameoLayout.utilityWindowSize)
-        XCTAssertEqual(window.contentMaxSize, ChameoLayout.utilityWindowSize)
-        XCTAssertEqual(window.contentLayoutRect.size, ChameoLayout.utilityWindowSize)
-        XCTAssertEqual(TimelapseWindowController.contentSize, SettingsWindowController.contentSize)
+        XCTAssertEqual(window.contentMinSize, TimelapseWindowController.contentSize)
+        XCTAssertEqual(window.contentMaxSize, TimelapseWindowController.contentSize)
+        XCTAssertEqual(window.contentLayoutRect.size, TimelapseWindowController.contentSize)
+        XCTAssertEqual(TimelapseWindowController.contentSize.width, SettingsWindowController.contentSize.width)
         window.close()
         XCTAssertTrue(presenter.window === window)
         XCTAssertEqual(controller.state, .running)
@@ -336,7 +420,7 @@ extension TimelapseExportTests {
             try await render(controller, to: directory.appendingPathComponent(language.rawValue + "-empty.png"),
                        size: TimelapseWindowController.minimumContentSize)
             let first = Date(timeIntervalSince1970: 1772323200) // March 1, 2026
-            let last = Date(timeIntervalSince1970: 1790899200) // October 2, 2026
+            let last = Date(timeIntervalSince1970: 1790985600) // October 3, 2026
             controller.prepare(assets: (0..<184).map { index in
                 ChameoAsset(asset: TimelapseTestPhoto(date: first.addingTimeInterval(
                     last.timeIntervalSince(first) * Double(index) / 183)))
@@ -344,6 +428,25 @@ extension TimelapseExportTests {
             try await render(controller, to: directory.appendingPathComponent(language.rawValue + "-summary.png"))
             try await render(controller, to: directory.appendingPathComponent(language.rawValue + "-summary-minimum.png"),
                        size: TimelapseWindowController.minimumContentSize)
+            var options = controller.options
+            for range in [TimelapseDateRange.month, .year] {
+                options.range = range
+                controller.updateOptions(options)
+                try await render(controller, to: directory.appendingPathComponent(language.rawValue + "-" + range.rawValue + ".png"))
+            }
+            options = controller.options
+            options.range = .allPhotos
+            for speed in [TimelapsePlaybackSpeed.slow, .fast] {
+                options.speed = speed
+                controller.updateOptions(options)
+                try await render(controller, to: directory.appendingPathComponent(language.rawValue + "-speed-" + String(speed.rawValue) + ".png"))
+            }
+            options.speed = .standard
+            controller.updateOptions(options)
+            for appearance in [NSAppearance.Name.darkAqua, .accessibilityHighContrastAqua] {
+                try await render(controller, to: directory.appendingPathComponent(language.rawValue + "-summary-" + appearance.rawValue + ".png"),
+                                 appearance: appearance)
+            }
             let temporary = try temporaryVideo().deletingLastPathComponent()
             let movies = temporary.appendingPathComponent("Movies", isDirectory: true)
             try FileManager.default.createDirectory(at: movies, withIntermediateDirectories: true)

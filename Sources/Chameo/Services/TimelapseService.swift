@@ -28,7 +28,6 @@ enum TimelapseError: LocalizedError {
 
 enum TimelapseService {
     private static let videoSize = CGSize(width: 1080, height: 1080)
-    static let framesPerSecond: CMTimeScale = 10
     typealias ProgressHandler = @Sendable (TimelapseProgress) async -> Void
     typealias ImageLoader = (PHAsset, @escaping @Sendable (Double) async -> Void) async throws -> CGImage
     private static let imageContext = CIContext(options: [.cacheIntermediates: false])
@@ -38,6 +37,7 @@ enum TimelapseService {
     @discardableResult
     static func generate(
         assets: [ChameoAsset], to outputURL: URL,
+        speed: TimelapsePlaybackSpeed = .standard,
         onProgress: @escaping ProgressHandler = { _ in },
         imageLoader: ImageLoader? = nil,
         localPhotos: LocalPhotoStore = .shared,
@@ -53,7 +53,7 @@ enum TimelapseService {
         }
         await onProgress(.preparing)
         try await generateFile(to: outputURL) { stagedURL in
-            try await write(assets: assets, to: stagedURL, onProgress: onProgress, imageLoader: loader)
+            try await write(assets: assets, to: stagedURL, speed: speed, onProgress: onProgress, imageLoader: loader)
         }
         return GenerationSummary(localCopyFailures: await localLoader.failureCount)
     }
@@ -88,9 +88,10 @@ enum TimelapseService {
     }
 
     private static func write(
-        assets: [ChameoAsset], to outputURL: URL, onProgress: @escaping ProgressHandler,
+        assets: [ChameoAsset], to outputURL: URL, speed: TimelapsePlaybackSpeed, onProgress: @escaping ProgressHandler,
         imageLoader: @escaping ImageLoader
     ) async throws {
+        let framesPerSecond: CMTimeScale = speed.rawValue
         let assetWriter: AVAssetWriter
         do {
             assetWriter = try AVAssetWriter(outputURL: outputURL, fileType: .mp4)

@@ -24,7 +24,12 @@ The app is intentionally small: click the camera icon in the menu bar, take a ph
   pre-tracking days.
 - Hover, keyboard focus, and selection preview a day's thumbnails, local
   date/time, and location name when available.
-- Library exports every saved Chameo photo in chronological order as a square H.264 MP4, with progress, iCloud download status, cancellation, and explicit Open Folder/Open Video actions when complete.
+- Library exports Chameo photos in chronological order as a square H.264 MP4.
+  Choose All Photos, a month, or a year, and 5,
+  10, or 15 photos/sec. All Photos and 10 photos/sec are the defaults; the setup
+  shows the selected photo count and video duration. Exports retain progress,
+  iCloud download status, cancellation, and explicit Open Folder/Open Video
+  actions when complete.
 - Dedicated Photos.app album name configurable in Settings. If Photos already has an album with the same name, Chameo uses that album instead of creating another one. If the album is deleted externally, the next save recreates it.
 - Optional location metadata on saved photos, off by default.
 - Reminder scheduling with none, daily, and weekly repeat modes.

@@ -4,6 +4,7 @@ struct TimelapseExportView: View {
     @EnvironmentObject private var libraryStore: LibraryStore
     @EnvironmentObject private var export: TimelapseExportController
     @EnvironmentObject private var localizationController: LocalizationController
+    @FocusState private var createFocused: Bool
     var onCreate: (() -> Void)?
     var onTakeChameo: () -> Void = {}
     var thumbnailLoader: (ChameoAsset) async -> NSImage? = TimelapsePreview.thumbnail
@@ -13,28 +14,33 @@ struct TimelapseExportView: View {
             VStack(spacing: 0) {
                 ScrollView {
                     VStack(spacing: 0) {
-                        header.padding(.bottom, 16)
+                        header.padding(.bottom, 8)
                         TimelapsePhotoStack(assets: previewAssets, side: photoSide(height: geometry.size.height),
                                             loader: thumbnailLoader)
-                            .padding(.bottom, 14)
-                        if export.assets.isEmpty {
+                            .padding(.bottom, 4)
+                        if export.allAssets.isEmpty {
                             Text(L10n.string("Take your first Chameo to create a timelapse."))
                                 .font(.callout).foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
                         } else {
-                            videoSummary.padding(.bottom, 12)
-                            statusContent.frame(minHeight: 64, alignment: .top)
+                            videoSummary
+                            if showsOptions {
+                                TimelapseOptionsView(export: export).padding(.top, 6)
+                            }
+                            if !showsOptions {
+                                statusContent.frame(minHeight: 64, alignment: .top).padding(.top, 12)
+                            }
                         }
                         supplementaryFeedback
                     }
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 24)
-                    .padding(.top, 16)
-                    .padding(.bottom, 8)
+                    .padding(.horizontal, 70)
+                    .padding(.top, 14)
+                    .padding(.bottom, 2)
                     .frame(maxWidth: .infinity)
                 }
-                .defaultScrollAnchor(.center, for: .alignment)
-                footer.padding(.horizontal, 24).padding(.top, 8).padding(.bottom, 12)
+                .defaultScrollAnchor(.top, for: .alignment)
+                footer.padding(.horizontal, 24).padding(.top, 8).padding(.bottom, 14)
             }
             .background(.background)
             .buttonBorderShape(.roundedRectangle(radius: 8))
@@ -43,16 +49,30 @@ struct TimelapseExportView: View {
     }
 
     private func photoSide(height: CGFloat) -> CGFloat {
-        // Preserve room for the status and fixed actions at the minimum window height.
-        min(170, max(110, height - 334))
+        // Preserve the reference photo proportions while leaving room for expanded date fields.
+        let extraFields: CGFloat
+        if showsOptions {
+            switch export.options.range {
+            case .allPhotos: extraFields = 0
+            case .month, .year: extraFields = 40
+            }
+        } else { extraFields = 0 }
+        return min(144, max(88, height - 286 - extraFields))
+    }
+
+    private var showsOptions: Bool {
+        switch export.state {
+        case .summary, .choosingDestination, .cancelled, .failed: return true
+        default: return false
+        }
     }
 
     private var header: some View {
         VStack(spacing: 4) {
-            Text(headerTitle).font(.system(size: 22, weight: .semibold))
+            Text(headerTitle).font(.system(size: 22, weight: .bold))
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)
-            Text(headerSubtitle).font(.callout).foregroundStyle(.secondary)
+            Text(headerSubtitle).font(.system(size: 14)).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -84,20 +104,33 @@ struct TimelapseExportView: View {
     private var dateSpan: String {
         let dates = export.assets.compactMap(\.createdAt)
         guard let first = dates.min(), let last = dates.max() else { return "" }
-        let style = Date.FormatStyle(date: .abbreviated, time: .omitted).locale(localizationController.displayLocale)
-        return first == last ? first.formatted(style) : first.formatted(style) + " – " + last.formatted(style)
+        let style = Date.FormatStyle(date: .abbreviated, time: .omitted,
+                                    locale: localizationController.displayLocale,
+                                    calendar: export.calendar, timeZone: export.calendar.timeZone)
+        guard first != last else { return first.formatted(style) }
+        let formatter = DateIntervalFormatter()
+        formatter.locale = localizationController.displayLocale
+        formatter.calendar = export.calendar
+        formatter.timeZone = export.calendar.timeZone
+        formatter.dateTemplate = "MMM d, yyyy"
+        return formatter.string(from: first, to: last)
     }
 
     private var videoSummary: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 4) {
             if !dateSpan.isEmpty {
-                Text(dateSpan).font(.caption).foregroundStyle(.secondary).padding(.bottom, 2)
+                Text(dateSpan).font(.system(size: 12)).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Text(photoCount + " → " + L10n.format("%.1f seconds", export.duration))
-                .font(.system(size: 17, weight: .semibold)).monospacedDigit()
+                .font(.system(size: 18, weight: .bold)).monospacedDigit()
                 .fixedSize(horizontal: false, vertical: true)
-            Text(verbatim: "1080 × 1080 · MP4 · " + L10n.string("10 photos/sec"))
-                .font(.caption).foregroundStyle(.secondary)
+            Text(verbatim: "1080 × 1080 · MP4")
+                .font(.system(size: 11)).foregroundStyle(.secondary)
+            if !showsOptions {
+                Text(L10n.format("%lld photos/sec", Int64(export.options.speed.rawValue)))
+                    .font(.caption).foregroundStyle(.secondary)
+            }
         }
         .accessibilityElement(children: .combine)
     }
@@ -141,6 +174,16 @@ struct TimelapseExportView: View {
 
     @ViewBuilder
     private var supplementaryFeedback: some View {
+        if showsOptions, !export.allAssets.isEmpty {
+            if export.assets.isEmpty {
+                Text(L10n.string("No photos in this period. Choose another date range."))
+                    .font(.callout).foregroundStyle(.secondary).padding(.top, 8)
+            }
+            if export.options.range != .allPhotos, export.hasUndatedPhotos {
+                Text(L10n.string("Photos without dates are only included in All Photos."))
+                    .font(.caption).foregroundStyle(.secondary).padding(.top, 8)
+            }
+        }
         if case .failed(let message) = export.state {
             messagePanel(message).padding(.top, 12)
         }
@@ -159,7 +202,7 @@ struct TimelapseExportView: View {
                 actionButtons.controlSize(.large)
             }
             .frame(minHeight: 32)
-            footerDetail.frame(minHeight: 15)
+            if !showsOptions { footerDetail.frame(minHeight: 15) }
         }
         .frame(maxWidth: .infinity)
     }
@@ -179,17 +222,24 @@ struct TimelapseExportView: View {
                     .buttonStyle(.glassProminent).keyboardShortcut(.defaultAction)
             }
         case .summary, .choosingDestination, .cancelled, .failed:
-            if export.assets.isEmpty {
+            if export.allAssets.isEmpty {
                 Button(L10n.string("Take Chameo"), systemImage: "camera", action: onTakeChameo)
                     .buttonStyle(.glassProminent).keyboardShortcut(.defaultAction)
             } else {
                 Button {
                     if let onCreate { onCreate() } else { export.chooseDestination() }
                 } label: {
-                    Text(L10n.string(isFailure ? "Retry…" : "Create Timelapse…")).frame(minWidth: 200)
+                    Text(L10n.string(isFailure ? "Retry…" : "Create Timelapse…"))
+                        .font(.system(size: 13, weight: .semibold))
                 }
-                .buttonStyle(.glassProminent).keyboardShortcut(.defaultAction)
-                .disabled(export.isBusy)
+                .buttonStyle(TimelapseCreateButtonStyle())
+                .focused($createFocused)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 12).inset(by: -3)
+                        .strokeBorder(createFocused ? Color.accentColor : .clear, lineWidth: 2)
+                }
+                .keyboardShortcut(.defaultAction)
+                .disabled(export.isBusy || export.assets.isEmpty)
             }
         }
     }
@@ -226,5 +276,18 @@ struct TimelapseExportView: View {
             .font(.callout).foregroundStyle(.primary).fixedSize(horizontal: false, vertical: true)
             .padding(12).frame(maxWidth: .infinity)
             .background(Color.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
+    }
+}
+
+private struct TimelapseCreateButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(.white)
+            .frame(width: 244, height: 30)
+            .background(Color(red: 0, green: 0.48, blue: 1).gradient, in: RoundedRectangle(cornerRadius: 12))
+            .shadow(color: .black.opacity(0.12), radius: 6, y: 4)
+            .opacity(isEnabled ? (configuration.isPressed ? 0.8 : 1) : 0.45)
     }
 }

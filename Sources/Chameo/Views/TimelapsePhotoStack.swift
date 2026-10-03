@@ -12,22 +12,22 @@ struct TimelapsePhotoStack: View {
                 Image(systemName: "photo.stack").font(.system(size: 56)).foregroundStyle(.tertiary)
             } else {
                 if assets.count > 1 {
-                    photo(assets[0]).rotationEffect(.degrees(-10)).offset(x: -side * 0.58, y: 4)
+                    photo(assets[0], size: side * 0.9).rotationEffect(.degrees(-10)).offset(x: -side * 0.64, y: 10)
                 }
                 if assets.count > 2 {
-                    photo(assets[assets.count - 1]).rotationEffect(.degrees(10)).offset(x: side * 0.58, y: 4)
+                    photo(assets[assets.count - 1], size: side * 0.9).rotationEffect(.degrees(10)).offset(x: side * 0.64, y: 10)
                 }
-                photo(assets[assets.count / 2])
+                photo(assets[assets.count / 2], size: side)
             }
         }
         .frame(maxWidth: .infinity)
-        .frame(height: side + 18)
+        .frame(height: side + 10)
         .accessibilityHidden(true)
     }
 
-    private func photo(_ asset: ChameoAsset) -> some View {
+    private func photo(_ asset: ChameoAsset, size: CGFloat) -> some View {
         TimelapsePhotoPreview(asset: asset, loader: loader)
-            .frame(width: side, height: side)
+            .frame(width: size, height: size)
             .clipShape(RoundedRectangle(cornerRadius: 6))
             .chameoImageOutline(cornerRadius: 6)
             .shadow(color: .black.opacity(0.14), radius: 6, y: 3)
