@@ -5,6 +5,30 @@ subsequently confirmed the complete photo workflow and reminders/Sparkle
 update workflow as validated on October 3, 2026; see the current
 [manual validation record](docs/testing/daily-workflows.md).
 
+## 0.5.2
+
+### What’s new
+
+- Added Timelapse date filters for All Photos, Month, and Year, plus 5, 10, or
+  15 photos-per-second playback speeds. The selected photos and estimated
+  duration update together; defaults remain All Photos and 10 photos/sec.
+
+### Fixes
+
+- Kept the expanded Timelapse options and Create action visible in the revised
+  export window, with controls localized in English and both Chinese variants.
+
+### Known testing limitations
+
+- Interactive menu selection and exports using the new date and speed options
+  with a populated Photos/iCloud library still need live validation; the new
+  states have automated tests and fixture renders.
+- VoiceOver, full keyboard traversal, system accessibility settings, and
+  permission denial/recovery need live validation.
+- Stage 1 builds are ad-hoc signed and are not notarized by Apple.
+- macOS may request Camera, Photos, Location, or Notification permission again
+  after an update.
+
 ## 0.5.1
 
 ### What’s new
