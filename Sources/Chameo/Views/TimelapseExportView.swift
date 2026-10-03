@@ -4,7 +4,6 @@ struct TimelapseExportView: View {
     @EnvironmentObject private var libraryStore: LibraryStore
     @EnvironmentObject private var export: TimelapseExportController
     @EnvironmentObject private var localizationController: LocalizationController
-    @FocusState private var createFocused: Bool
     var onCreate: (() -> Void)?
     var onTakeChameo: () -> Void = {}
     var thumbnailLoader: (ChameoAsset) async -> NSImage? = TimelapsePreview.thumbnail
@@ -230,14 +229,9 @@ struct TimelapseExportView: View {
                     if let onCreate { onCreate() } else { export.chooseDestination() }
                 } label: {
                     Text(L10n.string(isFailure ? "Retry…" : "Create Timelapse…"))
-                        .font(.system(size: 13, weight: .semibold))
+                        .frame(minWidth: 190)
                 }
-                .buttonStyle(TimelapseCreateButtonStyle())
-                .focused($createFocused)
-                .overlay {
-                    RoundedRectangle(cornerRadius: 12).inset(by: -3)
-                        .strokeBorder(createFocused ? Color.accentColor : .clear, lineWidth: 2)
-                }
+                .buttonStyle(.glassProminent)
                 .keyboardShortcut(.defaultAction)
                 .disabled(export.isBusy || export.assets.isEmpty)
             }
@@ -276,18 +270,5 @@ struct TimelapseExportView: View {
             .font(.callout).foregroundStyle(.primary).fixedSize(horizontal: false, vertical: true)
             .padding(12).frame(maxWidth: .infinity)
             .background(Color.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
-    }
-}
-
-private struct TimelapseCreateButtonStyle: ButtonStyle {
-    @Environment(\.isEnabled) private var isEnabled
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .foregroundStyle(.white)
-            .frame(width: 244, height: 30)
-            .background(Color(red: 0, green: 0.48, blue: 1).gradient, in: RoundedRectangle(cornerRadius: 12))
-            .shadow(color: .black.opacity(0.12), radius: 6, y: 4)
-            .opacity(isEnabled ? (configuration.isPressed ? 0.8 : 1) : 0.45)
     }
 }

@@ -21,6 +21,8 @@ struct CameraPreviewView: NSViewRepresentable {
 
 final class PreviewView: NSView {
     private let captureLayer = AVCaptureVideoPreviewLayer()
+    private var connectionObservation: NSKeyValueObservation?
+    private var shouldMirror = true
 
     var previewLayer: AVCaptureVideoPreviewLayer {
         captureLayer
@@ -28,14 +30,24 @@ final class PreviewView: NSView {
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
-        wantsLayer = true
-        layer = captureLayer
+        configurePreviewLayer()
     }
 
     required init?(coder: NSCoder) {
         super.init(coder: coder)
+        configurePreviewLayer()
+    }
+
+    private func configurePreviewLayer() {
         wantsLayer = true
         layer = captureLayer
+        // The view can mount before the session has an input. Keep the requested
+        // mirror state and reapply it whenever configuration creates a connection.
+        connectionObservation = captureLayer.observe(\.connection, options: [.new]) { [weak self] _, _ in
+            DispatchQueue.main.async { [weak self] in
+                self?.applyMirroring()
+            }
+        }
     }
 
     override func layout() {
@@ -44,12 +56,17 @@ final class PreviewView: NSView {
     }
 
     func setMirrored(_ mirrored: Bool) {
+        shouldMirror = mirrored
+        applyMirroring()
+    }
+
+    private func applyMirroring() {
         guard let connection = captureLayer.connection,
               connection.isVideoMirroringSupported else {
             return
         }
 
         connection.automaticallyAdjustsVideoMirroring = false
-        connection.isVideoMirrored = mirrored
+        connection.isVideoMirrored = shouldMirror
     }
 }
