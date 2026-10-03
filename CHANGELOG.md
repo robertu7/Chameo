@@ -5,6 +5,28 @@ subsequently confirmed the complete photo workflow and reminders/Sparkle
 update workflow as validated on October 3, 2026; see the current
 [manual validation record](docs/testing/daily-workflows.md).
 
+## 0.5.3
+
+### What’s new
+
+- None.
+
+### Fixes
+
+- Increased the Timelapse export window height so its expanded options and
+  Create action stay visible.
+
+### Known testing limitations
+
+- Interactive menu selection and exports using the new date and speed options
+  with a populated Photos/iCloud library still need live validation; the new
+  states have automated tests and fixture renders.
+- VoiceOver, full keyboard traversal, system accessibility settings, and
+  permission denial/recovery need live validation.
+- Stage 1 builds are ad-hoc signed and are not notarized by Apple.
+- macOS may request Camera, Photos, Location, or Notification permission again
+  after an update.
+
 ## 0.5.2
 
 ### What’s new
