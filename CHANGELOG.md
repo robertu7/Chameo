@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.5.0-rc.6
+
+### What’s new
+
+- Timelapse progress now tracks completed photos consistently across loading,
+  iCloud downloads, encoding, and saving, with separate text for the current
+  phase.
+
+### Fixes
+
+- Prevented iCloud download progress from changing the meaning of the main
+  completed-photo progress bar.
+
+### Known testing limitations
+
+- Real Photos/iCloud handling and Timelapse generation and playback still need
+  validation with a populated test library.
+- VoiceOver, full keyboard traversal, and system accessibility settings need
+  live checks; automated tests do not prove native announcements and controls.
+- Stage 1 builds are ad-hoc signed and are not notarized by Apple.
+- macOS may request Camera, Photos, Location, or Notification permission again
+  after an update.
+
 ## 0.5.0-rc.5
 
 ### What’s new
