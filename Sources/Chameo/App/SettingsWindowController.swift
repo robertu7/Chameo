@@ -4,8 +4,8 @@ import SwiftUI
 
 @MainActor
 final class SettingsWindowController: NSWindowController {
-    static let contentSize = NSSize(width: 500, height: 460)
-    static let minimumContentSize = NSSize(width: 480, height: 420)
+    static let contentSize = ChameoLayout.utilityWindowSize
+    static let minimumContentSize = contentSize
     let state = SettingsState()
     private var localizationObservation: AnyCancellable?
 
@@ -14,7 +14,7 @@ final class SettingsWindowController: NSWindowController {
          localPhotos: LocalPhotoSettingsController) {
         let window = NSWindow(
             contentRect: NSRect(origin: .zero, size: Self.contentSize),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered, defer: false
         )
         window.title = L10n.string("Settings")
@@ -26,11 +26,11 @@ final class SettingsWindowController: NSWindowController {
                 .environmentObject(updateController)
                 .environmentObject(localPhotos)
         )
-        window.contentMinSize = Self.minimumContentSize
-        window.setContentSize(Self.contentSize)
+        window.fixContentSize(Self.contentSize)
         window.center()
         super.init(window: window)
         window.setFrameAutosaveName("ChameoSettingsCompact")
+        window.fixContentSize(Self.contentSize)
         localizationObservation = localizationController.objectWillChange.sink { [weak self] _ in
             Task { @MainActor [weak self] in self?.window?.title = L10n.string("Settings") }
         }

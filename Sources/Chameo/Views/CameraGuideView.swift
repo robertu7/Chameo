@@ -2,15 +2,16 @@ import SwiftUI
 
 struct CameraGuideView: View {
     let guidanceState: LiveFramingGuidanceState
+    var guideOffset: CGFloat = 0
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         GeometryReader { proxy in
             let size = proxy.size
-            let faceRect = FaceGuideGeometry.rect(in: size)
+            let faceRect = FaceGuideGeometry.rect(in: size).offsetBy(dx: 0, dy: guideOffset)
             let centerX = size.width / 2
-            let eyeY = FaceGuideGeometry.eyeLineY(in: size)
+            let eyeY = FaceGuideGeometry.eyeLineY(in: size) + guideOffset
 
             ZStack {
                 Ellipse()
@@ -33,7 +34,8 @@ struct CameraGuideView: View {
                 .shadow(color: .black.opacity(0.8), radius: 1)
 
                 if let title = guidanceState.title {
-                    Text(title)
+                    Label(guidanceState == .ready ? L10n.string("Framing ready") : title, systemImage: guidanceState == .ready ? "checkmark.circle.fill" : "person.crop.circle")
+                        .labelStyle(.titleAndIcon)
                         .font(.caption.weight(.medium))
                         .foregroundStyle(.primary)
                         .lineLimit(1)

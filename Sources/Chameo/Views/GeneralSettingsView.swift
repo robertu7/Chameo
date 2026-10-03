@@ -10,41 +10,33 @@ struct GeneralSettingsView: View {
     @State private var errorMessage: LocalizedMessage?
 
     var body: some View {
-        Form {
-            Section {
-                Picker(
-                    L10n.string("settings.language.picker"),
-                    selection: languageBinding
-                ) {
-                    ForEach(AppLanguage.allCases) { language in
-                        Text(language.pickerTitle).tag(language)
-                    }
+        SettingsPage(title: L10n.string("General"), subtitle: L10n.string("Make Chameo feel at home.")) {
+            SettingsGroup(title: L10n.string("App")) {
+                HStack {
+                    Text(L10n.string("settings.language.picker"))
+                    Spacer()
+                    Picker(L10n.string("settings.language.picker"), selection: languageBinding) {
+                        ForEach(AppLanguage.allCases) { language in Text(language.pickerTitle).tag(language) }
+                    }.labelsHidden().fixedSize()
                 }
-
                 if AppDistribution.current.launchAtLoginEnabled {
-                    Toggle(L10n.string("Launch at Login"), isOn: $launchAtLogin)
+                    Divider()
+                    SettingsToggle(title: L10n.string("Launch at Login"), isOn: $launchAtLogin)
                         .disabled(isUpdatingLaunchAtLogin)
                 }
-
-                if updateController.isEnabled {
-                    Toggle(
-                        L10n.string("Automatically Check for Updates"),
-                        isOn: automaticUpdateChecksBinding
-                    )
-
-                    Button(L10n.string("Check for Updates…")) {
-                        updateController.checkForUpdates()
-                    }
-                    .disabled(!updateController.canCheckForUpdates)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                }
-            } header: {
-                Text(L10n.string("App"))
-            } footer: {
-                Text(buildInformation)
             }
+            if updateController.isEnabled {
+                SettingsGroup(title: L10n.string("Updates")) {
+                    SettingsToggle(title: L10n.string("Automatically Check for Updates"), isOn: automaticUpdateChecksBinding)
+                    Divider()
+                    Button(L10n.string("Check for Updates…")) { updateController.checkForUpdates() }
+                        .disabled(!updateController.canCheckForUpdates)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                }
+            }
+            Text(buildInformation).font(.caption).foregroundStyle(.secondary)
+                .textSelection(.enabled)
         }
-        .formStyle(.grouped)
         .safeAreaInset(edge: .bottom) {
             if let errorMessage { SettingsErrorView(message: errorMessage.text) }
         }

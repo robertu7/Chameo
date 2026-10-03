@@ -18,19 +18,16 @@ struct PhotosSettingsView: View {
     @State private var locationAuthorizationStatus = CLLocationManager().authorizationStatus
 
     var body: some View {
-        Form {
-            Section(L10n.string("settings.photos.section")) {
-                Picker(selection: $albumName) {
-                    ForEach(albumChoices, id: \.self) { albumName in
-                        Text(albumName).tag(albumName)
+        SettingsPage(title: L10n.string("settings.photos.section"), subtitle: L10n.string("Choose where your Chameos live."), spacing: 8) {
+            SettingsGroup(title: L10n.string("Album")) {
+                HStack {
+                    SettingsLabel(title: L10n.string("Album"),
+                                  description: L10n.string("Used for new captures and Library."))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Picker(L10n.string("Album"), selection: $albumName) {
+                        ForEach(albumChoices, id: \.self) { albumName in Text(albumName).tag(albumName) }
                     }
-                } label: {
-                    SettingsLabel(
-                        title: L10n.string("Album"),
-                        description: L10n.string(
-                            "Saves new photos here and shows them in Library."
-                        )
-                    )
+                    .labelsHidden().fixedSize()
                 }
                 .disabled(albumChoices.isEmpty || isLoadingPhotosAlbums)
                 .accessibilityLabel(L10n.string("Album"))
@@ -71,12 +68,10 @@ struct PhotosSettingsView: View {
                 }
             }
 
-            Section(L10n.string("Local Copies")) {
-                LocalPhotoSettingsView()
-            }
+            LocalPhotoSettingsView()
 
-            Section(L10n.string("Location")) {
-                Toggle(L10n.string("Add Location to Photos"), isOn: $saveLocation)
+            SettingsGroup(title: L10n.string("Location")) {
+                SettingsToggle(title: L10n.string("Add Location to Photos"), isOn: $saveLocation)
 
                 if saveLocation && isLocationPermissionDenied {
                     PermissionStatusInline(
@@ -86,7 +81,6 @@ struct PhotosSettingsView: View {
                 }
             }
         }
-        .formStyle(.grouped)
         .safeAreaInset(edge: .bottom) {
             if let errorMessage { SettingsErrorView(message: errorMessage.text) }
         }

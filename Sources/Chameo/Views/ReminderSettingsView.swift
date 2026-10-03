@@ -21,78 +21,82 @@ struct ReminderSettingsView: View {
     @State private var hasLoadedSettings = false
 
     var body: some View {
-        Section {
-            Toggle(L10n.string("Enable Reminders"), isOn: $reminderEnabled)
-                .disabled(isUpdatingReminder)
-
-            if reminderEnabled {
-                Picker(L10n.string("Frequency"), selection: $reminderRepeat) {
-                    ForEach(ReminderRepeat.allCases) { repeatMode in
-                        Text(repeatMode.title).tag(repeatMode)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .disabled(isUpdatingReminder)
-
-                if reminderRepeat == .weekly {
-                    Picker(L10n.string("Day"), selection: $reminderWeekday) {
-                        ForEach(1...7, id: \.self) { weekday in
-                            Text(weekdayName(for: weekday)).tag(weekday)
-                        }
-                    }
+        SettingsPage(title: L10n.string("Reminders"), subtitle: L10n.string("A gentle nudge for your daily photo.")) {
+            SettingsGroup {
+                SettingsToggle(title: L10n.string("Enable Reminders"), isOn: $reminderEnabled)
                     .disabled(isUpdatingReminder)
-                }
 
-                if reminderRepeat == .none {
-                    DatePicker(L10n.string("Date"), selection: $reminderDate, displayedComponents: .date)
-                        .disabled(isUpdatingReminder)
-                }
+                if reminderEnabled {
+                    Divider()
+                    HStack {
+                        Text(L10n.string("Frequency"))
+                        Spacer()
+                        Picker(L10n.string("Frequency"), selection: $reminderRepeat) {
+                            ForEach(ReminderRepeat.allCases) { repeatMode in Text(repeatMode.title).tag(repeatMode) }
+                        }
+                        .labelsHidden().pickerStyle(.menu).fixedSize().disabled(isUpdatingReminder)
+                    }
 
-                DatePicker(
-                    selection: $reminderDate,
-                    displayedComponents: .hourAndMinute
-                ) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(L10n.string("Time"))
-
-                        HStack(spacing: 6) {
-                            Text(reminderPreviewText)
-                                .font(.caption)
-                                .foregroundStyle(canSaveReminder ? Color.secondary : Color.red)
-
-                            if showsReminderProgress {
-                                ProgressView()
-                                    .controlSize(.small)
-                                    .accessibilityLabel(L10n.string("Updating reminder"))
+                    if reminderRepeat == .weekly {
+                        Picker(L10n.string("Day"), selection: $reminderWeekday) {
+                            ForEach(1...7, id: \.self) { weekday in
+                                Text(weekdayName(for: weekday)).tag(weekday)
                             }
                         }
+                        .disabled(isUpdatingReminder)
                     }
+
+                    if reminderRepeat == .none {
+                        DatePicker(L10n.string("Date"), selection: $reminderDate, displayedComponents: .date)
+                            .disabled(isUpdatingReminder)
+                    }
+
+                    Divider()
+                    DatePicker(
+                        selection: $reminderDate,
+                        displayedComponents: .hourAndMinute
+                    ) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(L10n.string("Time"))
+
+                            HStack(spacing: 6) {
+                                Text(reminderPreviewText)
+                                    .font(.caption)
+                                    .foregroundStyle(canSaveReminder ? Color.secondary : Color.red)
+
+                                if showsReminderProgress {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                        .accessibilityLabel(L10n.string("Updating reminder"))
+                                }
+                            }
+                        }.frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .disabled(isUpdatingReminder)
+                    .accessibilityLabel(L10n.string("Time"))
+                    .accessibilityValue(reminderPreviewText)
+                    .accessibilityHint(reminderPreviewText)
                 }
-                .disabled(isUpdatingReminder)
-                .accessibilityLabel(L10n.string("Time"))
-                .accessibilityValue(reminderPreviewText)
-                .accessibilityHint(reminderPreviewText)
-            }
 
-            if isNotificationPermissionDenied {
-                PermissionStatusInline(
-                    message: L10n.string("Allow Notifications in System Settings to schedule reminders."),
-                    destination: .notifications
-                )
-            }
+                if isNotificationPermissionDenied {
+                    PermissionStatusInline(
+                        message: L10n.string("Allow Notifications in System Settings to schedule reminders."),
+                        destination: .notifications
+                    )
+                }
 
-            if let errorMessage {
-                Text(errorMessage.text)
-                    .font(.caption)
-                    .foregroundStyle(.red)
-                    .accessibilityAddTraits(.updatesFrequently)
+                if let errorMessage {
+                    Text(errorMessage.text)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .accessibilityAddTraits(.updatesFrequently)
+                }
             }
-        } header: {
-            Text(L10n.string("Reminders"))
-        } footer: {
             if !reminderEnabled {
-                Text(reminderPreviewText)
+                Text(reminderPreviewText).font(.caption).foregroundStyle(.secondary)
             }
+            Text(L10n.string("Notifications are used only for reminders."))
+                .font(.caption).foregroundStyle(.secondary)
         }
         .onAppear {
             if !hasLoadedSettings || !hasReminderChanges {

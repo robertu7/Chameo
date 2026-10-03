@@ -7,9 +7,10 @@ struct SettingsLabel: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(title)
-            Text(description)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            if !description.isEmpty {
+                Text(description).font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 }

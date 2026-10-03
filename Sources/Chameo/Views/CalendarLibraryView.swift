@@ -11,6 +11,9 @@ struct CalendarLibraryView: View {
     let onExportTimelapse: () -> Void
     let onDelete: (ChameoAsset, Bool) async -> Void
     let onSaveLocalCopy: (ChameoAsset) async -> Void
+    var thumbnailLoader: (ChameoAsset, CGFloat) async -> NSImage? = { asset, size in
+        await PhotoLibraryService.thumbnail(for: asset.asset, size: CGSize(width: size * 2, height: size * 2))
+    }
 
     @State private var displayedMonth = Calendar.current.startOfDay(for: Date())
     @FocusState private var focusedDay: Date?
@@ -94,7 +97,8 @@ struct CalendarLibraryView: View {
                 canSaveLocalCopy: canSaveLocalCopy,
                 onTakeChameo: onTakeChameo,
                 onDelete: onDelete,
-                onSaveLocalCopy: onSaveLocalCopy
+                onSaveLocalCopy: onSaveLocalCopy,
+                thumbnailLoader: thumbnailLoader
             )
             .frame(height: 96)
             .padding(.top, 4)
@@ -104,7 +108,6 @@ struct CalendarLibraryView: View {
             Color(nsColor: .controlBackgroundColor),
             in: RoundedRectangle(cornerRadius: ChameoLayout.cornerRadius)
         )
-        .chameoImageOutline(cornerRadius: ChameoLayout.cornerRadius)
         .padding(.horizontal, ChameoLayout.outerInset)
         .padding(.bottom, 4)
         .task {
@@ -119,7 +122,7 @@ struct CalendarLibraryView: View {
     }
 
     private var calendarHeader: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 12) {
             HStack(spacing: 6) {
                 Text(DateFormatters.monthAndYear.string(from: displayedMonth))
                     .font(.headline)
@@ -314,6 +317,7 @@ private struct CalendarDayPreview: View {
     let onTakeChameo: () -> Void
     let onDelete: (ChameoAsset, Bool) async -> Void
     let onSaveLocalCopy: (ChameoAsset) async -> Void
+    let thumbnailLoader: (ChameoAsset, CGFloat) async -> NSImage?
 
     @State private var selectedAssetID: String?
     @State private var locationName = ""
@@ -371,7 +375,7 @@ private struct CalendarDayPreview: View {
 
     private func populatedPreview(_ selectedAsset: ChameoAsset) -> some View {
         HStack(alignment: .top, spacing: 12) {
-            CalendarAssetImage(asset: selectedAsset, size: 96)
+            CalendarAssetImage(asset: selectedAsset, size: 96, thumbnailLoader: thumbnailLoader)
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 8) {
@@ -465,7 +469,7 @@ private struct CalendarDayPreview: View {
 
             if status == .pendingToday {
                 Button(L10n.string("Take Chameo"), action: onTakeChameo)
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.glassProminent)
             }
         }
     }
@@ -477,7 +481,8 @@ private struct CalendarDayPreview: View {
                     CalendarAssetThumbnail(
                         asset: asset,
                         isSelected: selectedAsset?.id == asset.id,
-                        size: 22
+                        size: 32,
+                        thumbnailLoader: thumbnailLoader
                     ) {
                         selectedAssetID = asset.id
                         isConfirmingDeletion = false
@@ -486,7 +491,7 @@ private struct CalendarDayPreview: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .frame(height: 24)
+        .frame(height: 34)
     }
 
     private var photoActions: some View {
@@ -507,7 +512,8 @@ private struct CalendarDayPreview: View {
                 isConfirmingDeletion = true
             }
         } label: {
-            Label(L10n.string("Photo Actions"), systemImage: "ellipsis")
+            Label(L10n.string("Photo Actions"), systemImage: "ellipsis.circle")
+                .font(.system(size: 18))
         }
         .labelStyle(.iconOnly)
         .menuStyle(.borderlessButton)
@@ -565,6 +571,7 @@ private struct CalendarDayPreview: View {
 private struct CalendarAssetImage: View {
     let asset: ChameoAsset
     let size: CGFloat
+    let thumbnailLoader: (ChameoAsset, CGFloat) async -> NSImage?
 
     @State private var thumbnail: NSImage?
 
@@ -585,10 +592,10 @@ private struct CalendarAssetImage: View {
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .chameoImageOutline(cornerRadius: 8)
         .task(id: asset.id) {
-            thumbnail = await PhotoLibraryService.thumbnail(
-                for: asset.asset,
-                size: CGSize(width: size * 2, height: size * 2)
-            )
+            thumbnail = nil
+            let loaded = await thumbnailLoader(asset, size)
+            guard !Task.isCancelled else { return }
+            thumbnail = loaded
         }
     }
 }
@@ -597,11 +604,12 @@ private struct CalendarAssetThumbnail: View {
     let asset: ChameoAsset
     let isSelected: Bool
     let size: CGFloat
+    let thumbnailLoader: (ChameoAsset, CGFloat) async -> NSImage?
     let onSelect: () -> Void
 
     var body: some View {
         Button(action: onSelect) {
-            CalendarAssetImage(asset: asset, size: size)
+            CalendarAssetImage(asset: asset, size: size, thumbnailLoader: thumbnailLoader)
                 .overlay {
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
                         .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)

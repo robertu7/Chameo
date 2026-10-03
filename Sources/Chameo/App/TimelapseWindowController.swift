@@ -5,8 +5,8 @@ import SwiftUI
 /// A reusable window for the app-owned export; closing it never cancels generation.
 @MainActor
 final class TimelapseWindowController: NSWindowController, NSWindowDelegate {
-    static let contentSize = NSSize(width: 460, height: 480)
-    static let minimumContentSize = NSSize(width: 460, height: 420)
+    static let contentSize = ChameoLayout.utilityWindowSize
+    static let minimumContentSize = contentSize
     private let export: TimelapseExportController
     private let libraryStore: LibraryStore
     private var localizationObservation: AnyCancellable?
@@ -18,7 +18,7 @@ final class TimelapseWindowController: NSWindowController, NSWindowDelegate {
         self.libraryStore = libraryStore
         let window = NSWindow(
             contentRect: NSRect(origin: .zero, size: Self.contentSize),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered, defer: false
         )
         window.title = L10n.string("Timelapse")
@@ -36,16 +36,12 @@ final class TimelapseWindowController: NSWindowController, NSWindowDelegate {
                 .environmentObject(libraryStore)
                 .environmentObject(localizationController)
         )
-        // Installing the content controller can resize the window, so constrain it afterward.
-        window.contentMinSize = Self.minimumContentSize
-        window.contentMaxSize = NSSize(width: Self.contentSize.width, height: .greatestFiniteMagnitude)
-        window.setContentSize(Self.contentSize)
+        window.fixContentSize(Self.contentSize)
         window.center()
         super.init(window: window)
         window.delegate = self
         window.setFrameAutosaveName("ChameoTimelapseCompact")
-        // Keep the compact width when restoring the user's resized height.
-        window.setContentSize(NSSize(width: Self.contentSize.width, height: window.contentLayoutRect.height))
+        window.fixContentSize(Self.contentSize)
         localizationObservation = localizationController.objectWillChange.sink { [weak self] _ in
             Task { @MainActor [weak self] in self?.window?.title = L10n.string("Timelapse") }
         }

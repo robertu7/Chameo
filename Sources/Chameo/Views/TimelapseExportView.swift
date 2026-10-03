@@ -37,6 +37,7 @@ struct TimelapseExportView: View {
                 footer.padding(.horizontal, 24).padding(.top, 8).padding(.bottom, 12)
             }
             .background(.background)
+            .buttonBorderShape(.roundedRectangle(radius: 8))
         }
         .environment(\.locale, localizationController.displayLocale)
     }

@@ -17,33 +17,46 @@ enum PermissionOnboardingStep: Int, CaseIterable, Equatable {
 
 struct PermissionOnboardingView: View {
     @ObservedObject var model: PermissionOnboardingModel
-    @State private var step: PermissionOnboardingStep = .camera
+    @State private var step: PermissionOnboardingStep
 
     let onContinue: () -> Void
     let onQuit: () -> Void
     let onPermissionRequestFinished: () -> Void
 
+    init(model: PermissionOnboardingModel, initialStep: PermissionOnboardingStep = .camera,
+         onContinue: @escaping () -> Void, onQuit: @escaping () -> Void,
+         onPermissionRequestFinished: @escaping () -> Void) {
+        self.model = model
+        self._step = State(initialValue: initialStep)
+        self.onContinue = onContinue
+        self.onQuit = onQuit
+        self.onPermissionRequestFinished = onPermissionRequestFinished
+    }
+
     var body: some View {
         VStack(spacing: 0) {
-            Group {
-                switch step {
-                case .camera:
-                    featureIntroduction(
-                        title: L10n.string("Capture with confidence"),
-                        explanation: L10n.string("Use live framing guidance to keep every Chameo consistent."),
-                        imageName: "onboarding-feature-camera",
-                        accessibilityLabel: L10n.string("Chameo Camera feature preview")
-                    )
-                case .library:
-                    featureIntroduction(
-                        title: L10n.string("See your story grow"),
-                        explanation: L10n.string("Review your daily photos and turn your history into a timelapse."),
-                        imageName: "onboarding-feature-library",
-                        accessibilityLabel: L10n.string("Chameo Library feature preview")
-                    )
-                case .permissions:
-                    permissions
+            ScrollView {
+                Group {
+                    switch step {
+                    case .camera:
+                        featureIntroduction(
+                            title: L10n.string("Capture with confidence"),
+                            explanation: L10n.string("Use live framing guidance to keep every Chameo consistent."),
+                            imageName: "onboarding-portrait",
+                            accessibilityLabel: L10n.string("Chameo Camera feature preview")
+                        )
+                    case .library:
+                        featureIntroduction(
+                            title: L10n.string("See your story grow"),
+                            explanation: L10n.string("Review your daily photos and turn your history into a timelapse."),
+                            imageName: "onboarding-story",
+                            accessibilityLabel: L10n.string("Chameo Library feature preview")
+                        )
+                    case .permissions:
+                        permissions
+                    }
                 }
+                .frame(maxWidth: .infinity)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
@@ -53,8 +66,9 @@ struct PermissionOnboardingView: View {
             navigation
         }
         .padding(24)
-        .frame(width: ChameoLayout.utilityWindowWidth, height: 560)
-        .chameoReadableSurface(in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .frame(width: ChameoLayout.utilityWindowWidth, height: ChameoLayout.onboardingWindowHeight)
+        .background(.background)
+        .buttonBorderShape(.roundedRectangle(radius: 8))
     }
 
     private func featureIntroduction(
@@ -66,31 +80,50 @@ struct PermissionOnboardingView: View {
         VStack(spacing: 14) {
             VStack(spacing: 7) {
                 Text(title)
-                    .font(.title2.bold())
+                    .font(.system(size: 22, weight: .semibold))
 
                 Text(explanation)
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
+                    .frame(maxWidth: 340)
             }
 
             Image(nsImage: onboardingImage(named: imageName))
                 .resizable()
                 .scaledToFit()
-                .frame(maxWidth: 300, maxHeight: 350)
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                .chameoImageOutline(cornerRadius: 10)
-                .shadow(color: .black.opacity(0.12), radius: 12, y: 5)
+                .frame(width: imageName == "onboarding-portrait" ? 300 : 440,
+                       height: imageName == "onboarding-portrait" ? 270 : 292)
+                .overlay {
+                    if imageName == "onboarding-portrait" {
+                        CameraGuideView(guidanceState: .ready, guideOffset: -24)
+                            .frame(width: 300, height: 270)
+                    }
+                }
+                .overlay(alignment: .topLeading) {
+                    if imageName == "onboarding-portrait" {
+                        Label(L10n.string("Camera"), systemImage: "video")
+                            .font(.caption).padding(.horizontal, 10).padding(.vertical, 6)
+                            .chameoGlassControl(in: Capsule()).padding(8)
+                            .accessibilityHidden(true)
+                    }
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 8))
                 .accessibilityLabel(accessibilityLabel)
+            Text(L10n.string(imageName == "onboarding-portrait"
+                ? "A daily photo. A consistent frame."
+                : "From daily Chameos to a story in motion."))
+                .font(.callout).foregroundStyle(.secondary)
+
         }
-        .padding(.top, 4)
+        .padding(.top, 12)
     }
 
     private var permissions: some View {
         VStack(spacing: 20) {
             VStack(spacing: 7) {
                 Text(L10n.string("Always close at hand"))
-                    .font(.title2.bold())
+                    .font(.system(size: 22, weight: .semibold))
 
                 Text(L10n.string("Open Chameo from the eye in your menu bar whenever you’re ready for today’s photo."))
                     .font(.callout)
@@ -99,7 +132,17 @@ struct PermissionOnboardingView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Spacer(minLength: 24)
+            HStack(spacing: 14) {
+                Image(systemName: "wifi")
+                Image(systemName: "eye").foregroundStyle(.primary)
+                Image(systemName: "magnifyingglass")
+                Image(systemName: "switch.2")
+            }
+            .foregroundStyle(.secondary)
+            .padding(10)
+            .frame(maxWidth: .infinity)
+            .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
+            .accessibilityHidden(true)
 
             VStack(spacing: 0) {
                 permissionRow(
@@ -127,12 +170,6 @@ struct PermissionOnboardingView: View {
                 .quaternary.opacity(0.55),
                 in: RoundedRectangle(cornerRadius: 12, style: .continuous)
             )
-            .overlay {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(.separator.opacity(0.45), lineWidth: 1)
-            }
-
-            Spacer(minLength: 24)
 
             VStack(spacing: 4) {
                 Text(permissionFooterText)
@@ -146,7 +183,7 @@ struct PermissionOnboardingView: View {
             .padding(.bottom, 18)
         }
         .frame(maxWidth: 380)
-        .padding(.top, 30)
+        .padding(.top, 12)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
@@ -183,36 +220,42 @@ struct PermissionOnboardingView: View {
     }
 
     private var navigation: some View {
-        HStack {
-            if step == .camera {
-                Button(L10n.string("Quit"), role: .cancel, action: onQuit)
-            } else {
-                Button(L10n.string("Back")) {
-                    if let previous = step.previous {
-                        step = previous
+        GlassEffectContainer(spacing: 12) {
+            HStack {
+                if step == .camera {
+                    Button(L10n.string("Quit"), role: .cancel, action: onQuit)
+                        .frame(minWidth: 84)
+                } else {
+                    Button(L10n.string("Back")) {
+                        if let previous = step.previous {
+                            step = previous
+                        }
                     }
+                    .frame(minWidth: 84)
                 }
-            }
 
-            Spacer()
+                Spacer()
 
-            if step == .permissions {
-                Button(L10n.string("Continue"), action: onContinue)
+                if step == .permissions {
+                    Button(L10n.string("Continue"), action: onContinue)
+                        .frame(minWidth: 110)
+                        .buttonStyle(.glassProminent)
+                        .keyboardShortcut(.defaultAction)
+                        .disabled(!model.canContinue || model.permissionBeingRequested != nil)
+                } else {
+                    Button(L10n.string("Next")) {
+                        if let next = step.next {
+                            step = next
+                        }
+                    }
+                    .frame(minWidth: 110)
                     .buttonStyle(.glassProminent)
                     .keyboardShortcut(.defaultAction)
-                    .disabled(!model.canContinue || model.permissionBeingRequested != nil)
-            } else {
-                Button(L10n.string("Next")) {
-                    if let next = step.next {
-                        step = next
-                    }
                 }
-                .buttonStyle(.glassProminent)
-                .keyboardShortcut(.defaultAction)
             }
+            .buttonStyle(.glass)
+            .controlSize(.large)
         }
-        .buttonStyle(.glass)
-        .controlSize(.large)
     }
 
     private func permissionRow(

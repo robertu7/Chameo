@@ -20,7 +20,7 @@ enum PermissionOnboardingWindowPlacement {
 
 @MainActor
 final class PermissionOnboardingWindowController: NSWindowController, NSWindowDelegate {
-    private static let windowSize = NSSize(width: ChameoLayout.utilityWindowWidth, height: 560)
+    static let windowSize = ChameoLayout.onboardingWindowSize
 
     private let model: PermissionOnboardingModel
     private let onCompletion: () -> Void
@@ -47,16 +47,14 @@ final class PermissionOnboardingWindowController: NSWindowController, NSWindowDe
 
         let window = PermissionOnboardingWindow(
             contentRect: NSRect(origin: .zero, size: Self.windowSize),
-            styleMask: [.borderless],
+            styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered,
             defer: false
         )
         window.isReleasedWhenClosed = false
-        window.isMovableByWindowBackground = true
+        window.title = L10n.string("Welcome to Chameo")
+        window.isRestorable = false
         window.level = .floating
-        window.isOpaque = false
-        window.backgroundColor = .clear
-        window.hasShadow = true
 
         super.init(window: window)
 
@@ -77,11 +75,7 @@ final class PermissionOnboardingWindowController: NSWindowController, NSWindowDe
             .environmentObject(localizationController)
             .environment(\.locale, localizationController.displayLocale)
         )
-        window.setContentSize(Self.windowSize)
-        window.contentView?.wantsLayer = true
-        window.contentView?.layer?.cornerRadius = 16
-        window.contentView?.layer?.cornerCurve = .continuous
-        window.contentView?.layer?.masksToBounds = true
+        window.fixContentSize(Self.windowSize)
     }
 
     required init?(coder: NSCoder) {

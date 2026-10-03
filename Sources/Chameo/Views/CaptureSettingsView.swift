@@ -6,8 +6,8 @@ struct CaptureSettingsView: View {
     @AppStorage(AppPreferenceKey.autoAlignPhotos) private var autoAlignPhotos = true
 
     var body: some View {
-        Form {
-            Section(L10n.string("Capture")) {
+        SettingsPage(title: L10n.string("Capture"), subtitle: L10n.string("Keep every Chameo consistent.")) {
+            SettingsGroup {
                 SettingsToggle(
                     title: L10n.string("Framing Guide"),
                     description: L10n.string("Helps position your face with live guidance."),
@@ -15,6 +15,7 @@ struct CaptureSettingsView: View {
                 )
 
                 if showFaceGuide {
+                    Divider()
                     SettingsToggle(
                         title: L10n.string("Auto Capture"),
                         description: L10n.string(
@@ -24,6 +25,7 @@ struct CaptureSettingsView: View {
                     )
                 }
 
+                Divider()
                 SettingsToggle(
                     title: L10n.string("Face Alignment"),
                     description: L10n.string(
@@ -32,19 +34,18 @@ struct CaptureSettingsView: View {
                     isOn: $autoAlignPhotos
                 )
 
-                Button {
-                    resetCaptureSettings()
-                } label: {
-                    Label(
-                        L10n.string("Reset to Defaults"),
-                        systemImage: "arrow.counterclockwise"
-                    )
-                }
-                .disabled(isUsingDefaultCaptureSettings)
-                .frame(maxWidth: .infinity, alignment: .trailing)
             }
+            Button {
+                resetCaptureSettings()
+            } label: {
+                Label(
+                    L10n.string("Reset to Defaults"),
+                    systemImage: "arrow.counterclockwise"
+                )
+            }
+            .disabled(isUsingDefaultCaptureSettings)
+            .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .formStyle(.grouped)
     }
 
     private var isUsingDefaultCaptureSettings: Bool {

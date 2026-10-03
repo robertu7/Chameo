@@ -306,3 +306,18 @@
 "10 photos/sec" = "每秒 10 張照片";
 "Encoding video · %lld of %lld photos" = "正在編碼影片 · 已處理 %lld 張，共 %lld 張照片";
 "You can close this window. Creation continues." = "關閉此視窗後，仍會繼續建立。";
+
+/* Approved screen redesign */
+"Make Chameo feel at home." = "讓 Chameo 更合你的習慣。";
+"Updates" = "更新";
+"Keep every Chameo consistent." = "讓每張 Chameo 保持一致。";
+"A gentle nudge for your daily photo." = "輕輕提醒你拍下每日照片。";
+"Notifications are used only for reminders." = "通知僅用於拍照提醒。";
+"Choose where your Chameos live." = "選擇 Chameo 照片的儲存位置。";
+"Used for new captures and Library." = "儲存新照片，並在圖庫中顯示。";
+"Saves new captures and export originals." = "儲存新照片及匯出時下載的原始照片。";
+"How local copies work" = "本機副本的儲存方式";
+"Press Return to capture" = "按 Return 鍵拍照";
+"Review your Chameo before saving." = "儲存前，先看看這張 Chameo。";
+"A daily photo. A consistent frame." = "每日一張，保持一致的構圖。";
+"From daily Chameos to a story in motion." = "將每日 Chameo 串成流動的故事。";

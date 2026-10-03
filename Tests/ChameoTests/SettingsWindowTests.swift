@@ -30,12 +30,14 @@ final class SettingsWindowTests: XCTestCase {
             localPhotos: LocalPhotoSettingsController()
         )
         let window = try XCTUnwrap(controller.window)
-        XCTAssertEqual(window.contentMinSize, NSSize(width: 480, height: 420))
-        XCTAssertTrue(window.styleMask.contains(.resizable))
+        XCTAssertEqual(window.contentMinSize, ChameoLayout.utilityWindowSize)
+        XCTAssertEqual(window.contentMaxSize, ChameoLayout.utilityWindowSize)
+        XCTAssertFalse(window.styleMask.contains(.resizable))
+        XCTAssertFalse(window.standardWindowButton(.zoomButton)?.isEnabled ?? true)
         XCTAssertFalse(window.isReleasedWhenClosed)
-        // Saved geometry can restore a different size; the initial size contract is explicit.
+        // Fixed geometry must also override saved frames from older resizable builds.
         XCTAssertEqual(SettingsWindowController.contentSize, NSSize(width: 500, height: 460))
-        XCTAssertGreaterThanOrEqual(window.contentLayoutRect.width, 480)
-        XCTAssertGreaterThanOrEqual(window.contentLayoutRect.height, 420)
+        XCTAssertEqual(window.contentLayoutRect.size, ChameoLayout.utilityWindowSize)
+        XCTAssertEqual(TimelapseWindowController.contentSize, SettingsWindowController.contentSize)
     }
 }

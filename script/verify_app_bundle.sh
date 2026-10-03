@@ -29,7 +29,9 @@ for onboarding_asset in \
   "$APP_BUNDLE/Contents/Resources/Onboarding/onboarding-camera-light.png" \
   "$APP_BUNDLE/Contents/Resources/Onboarding/onboarding-camera-dark.png" \
   "$APP_BUNDLE/Contents/Resources/Onboarding/onboarding-feature-camera.png" \
-  "$APP_BUNDLE/Contents/Resources/Onboarding/onboarding-feature-library.png"; do
+  "$APP_BUNDLE/Contents/Resources/Onboarding/onboarding-feature-library.png" \
+  "$APP_BUNDLE/Contents/Resources/Onboarding/onboarding-portrait.png" \
+  "$APP_BUNDLE/Contents/Resources/Onboarding/onboarding-story.png"; do
   if [[ ! -f "$onboarding_asset" ]]; then
     echo "missing onboarding asset: $onboarding_asset" >&2
     exit 1

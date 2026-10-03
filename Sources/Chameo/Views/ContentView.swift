@@ -7,6 +7,7 @@ struct ContentView: View {
     let onOpenSettings: () -> Void
 
     @EnvironmentObject private var timelapseExport: TimelapseExportController
+    @EnvironmentObject private var cameraService: CameraService
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var libraryStore: LibraryStore
     @EnvironmentObject private var localizationController: LocalizationController
@@ -19,7 +20,7 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            navigation
+            MainSurfaceNavigation(selection: $appState.selectedTab, onOpenSettings: onOpenSettings)
                 .frame(height: 66)
             Group {
                 switch appState.selectedTab {
@@ -36,6 +37,7 @@ struct ContentView: View {
                 .frame(height: 53)
         }
         .frame(width: ChameoLayout.popoverWidth, height: ChameoLayout.popoverHeight)
+        .buttonBorderShape(.roundedRectangle(radius: 8))
         .environment(\.locale, localizationController.displayLocale)
         .task { await reloadLibraryIfAuthorized(albumName: albumName) }
         .onChange(of: statusMessage?.text) { _, text in
@@ -44,40 +46,6 @@ struct ContentView: View {
         .onChange(of: albumName) { _, name in
             Task { await reloadLibraryIfAuthorized(albumName: name) }
         }
-    }
-
-    private var navigation: some View {
-        HStack(spacing: 12) {
-            Color.clear.frame(width: ChameoLayout.compactControlSize)
-                .accessibilityHidden(true)
-            Spacer(minLength: 0)
-            TabPicker(selection: $appState.selectedTab)
-                .frame(width: 248)
-            Spacer(minLength: 0)
-            Menu {
-                Button(L10n.string("Settings…"), systemImage: "gearshape", action: onOpenSettings)
-                    .keyboardShortcut(",", modifiers: .command)
-                Divider()
-                Button(L10n.string("Quit Chameo"), systemImage: "power") {
-                    NSApplication.shared.terminate(nil)
-                }
-                .keyboardShortcut("q", modifiers: .command)
-            } label: {
-                Label {
-                    Text(L10n.string("App Menu"))
-                } icon: {
-                    Image(systemName: "ellipsis.circle")
-                        .resizable().scaledToFit()
-                        .frame(width: 18, height: 18)
-                }
-            }
-            .labelStyle(.iconOnly)
-            .menuStyle(.borderlessButton)
-            .menuIndicator(.hidden)
-            .frame(width: ChameoLayout.compactControlSize, height: ChameoLayout.compactControlSize)
-            .help(L10n.string("App Menu"))
-        }
-        .padding(.horizontal, ChameoLayout.outerInset)
     }
 
     private var feedback: some View {
@@ -89,6 +57,9 @@ struct ContentView: View {
                     .multilineTextAlignment(.center)
                     .help(statusMessage.text)
                     .accessibilityLabel(statusMessage.text)
+            }
+            if appState.selectedTab == .camera, statusMessage == nil, case .ready = cameraService.status {
+                Text(L10n.string("Press Return to capture")).foregroundStyle(.secondary)
             }
             if timelapseExport.hasStatus {
                 Button(action: onOpenTimelapse) {

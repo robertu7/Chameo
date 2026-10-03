@@ -1,8 +1,13 @@
+import AppKit
 import CoreGraphics
 import SwiftUI
 
 enum ChameoLayout {
     static let utilityWindowWidth: CGFloat = 500
+    static let utilityWindowHeight: CGFloat = 460
+    static let onboardingWindowHeight: CGFloat = 560
+    static let utilityWindowSize = CGSize(width: utilityWindowWidth, height: utilityWindowHeight)
+    static let onboardingWindowSize = CGSize(width: utilityWindowWidth, height: onboardingWindowHeight)
     static let utilityWindowInset: CGFloat = 20
 
     static let popoverWidth: CGFloat = 448
@@ -19,6 +24,19 @@ enum ChameoLayout {
     static let timelapseButtonWidth: CGFloat = 120
 
     static let cornerRadius: CGFloat = 8
+}
+
+@MainActor
+extension NSWindow {
+    /// Install after the hosting controller and any saved frame have been restored.
+    func fixContentSize(_ size: NSSize) {
+        styleMask.remove(.resizable)
+        collectionBehavior.insert(.fullScreenNone)
+        contentMinSize = size
+        contentMaxSize = size
+        setContentSize(size)
+        standardWindowButton(.zoomButton)?.isEnabled = false
+    }
 }
 
 struct ChameoImageOutlineModifier: ViewModifier {

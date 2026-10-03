@@ -385,12 +385,7 @@ private final class StandaloneChameoWindowController: NSWindowController, NSWind
         window.title = "Chameo"
         window.isReleasedWhenClosed = false
         window.contentViewController = NSHostingController(rootView: rootView)
-        window.setContentSize(
-            NSSize(
-                width: ChameoLayout.popoverWidth,
-                height: ChameoLayout.popoverHeight
-            )
-        )
+        window.fixContentSize(NSSize(width: ChameoLayout.popoverWidth, height: ChameoLayout.popoverHeight))
         window.center()
 
         super.init(window: window)

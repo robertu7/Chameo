@@ -1,5 +1,7 @@
 import AppKit
 import SwiftUI
+import Photos
+import CoreLocation
 import XCTest
 @testable import Chameo
 
@@ -30,8 +32,12 @@ final class ModernUIRenderTests: XCTestCase {
         let fixture = try LocalPhotoFixture()
         defer { fixture.remove() }
         let localPhotos = LocalPhotoSettingsController(store: fixture.store)
-        let updates = UpdateController(isEnabled: false)
-        let day = Calendar.current.date(from: DateComponents(year: 2026, month: 3, day: 15))!
+        await localPhotos.refresh()
+        defaults.set(true, forKey: AppPreferenceKey.reminderEnabled)
+        defaults.set(ReminderRepeat.daily.rawValue, forKey: AppPreferenceKey.reminderRepeat)
+        defaults.set(true, forKey: AppPreferenceKey.reminderSettingsMigrated)
+        let updates = UpdateController(isEnabled: true)
+        let day = Calendar.current.date(from: DateComponents(year: 2026, month: 10, day: 2))!
 
         for language in [AppLanguage.english, .simplifiedChinese, .traditionalChinese] {
             UserDefaults.standard.set(language.rawValue, forKey: AppPreferenceKey.language)
@@ -77,6 +83,42 @@ final class ModernUIRenderTests: XCTestCase {
                     try await render(settings, size: SettingsWindowController.minimumContentSize, appearance: appearance,
                         to: directory.appendingPathComponent(name + "-settings-" + category.rawValue + ".png"))
                 }
+                for step in PermissionOnboardingStep.allCases {
+                    let model = PermissionOnboardingModel(permissionProvider: PreviewPermissions())
+                    let onboarding = PermissionOnboardingView(model: model, initialStep: step,
+                        onContinue: {}, onQuit: {}, onPermissionRequestFinished: {})
+                        .environmentObject(localization)
+                        .environment(\.locale, localization.displayLocale)
+                    try await render(onboarding, size: ChameoLayout.onboardingWindowSize, appearance: appearance,
+                        to: directory.appendingPathComponent(name + "-onboarding-" + String(step.rawValue) + ".png"))
+                }
+                let imageURL = try XCTUnwrap(Bundle.module.url(forResource: "onboarding-portrait", withExtension: "png", subdirectory: "Onboarding"))
+                let portrait = try XCTUnwrap(NSImage(contentsOf: imageURL))
+                let preview = CapturedPreview(data: try XCTUnwrap(portrait.tiffRepresentation),
+                    qualityEvaluation: .scored(0.9), qualitySuggestion: nil)
+                let review = VStack(spacing: 0) {
+                    MainSurfaceNavigation(selection: .constant(.camera), onOpenSettings: {}).frame(height: 66)
+                    CapturedPreviewView(preview: preview, isSaving: false, photosPermissionDenied: false,
+                        locationPermissionDenied: false, onRetake: {}, onKeep: {})
+                    Text(L10n.string("Review your Chameo before saving."))
+                        .font(.caption).foregroundStyle(.secondary).frame(height: 53)
+                }
+                try await render(review, size: NSSize(width: 448, height: 526), appearance: appearance,
+                    to: directory.appendingPathComponent(name + "-camera-review.png"))
+                for previewDay in [day, day.addingTimeInterval(-86400)] {
+                    let assets = (0..<3).map { ChameoAsset(asset: PreviewPhoto(date: day.addingTimeInterval(-86400 + Double($0) * 60))) }
+                    let calendar = CalendarLibraryView(assets: assets, selectedDay: .constant(previewDay),
+                        isRefreshing: false, isExportingTimelapse: false, canSaveLocalCopy: true,
+                        onTakeChameo: {}, onExportTimelapse: {}, onDelete: { _, _ in }, onSaveLocalCopy: { _ in },
+                        thumbnailLoader: { _, _ in portrait })
+                    let libraryPreview = VStack(spacing: 0) {
+                        MainSurfaceNavigation(selection: .constant(.library), onOpenSettings: {}).frame(height: 66)
+                        calendar.frame(width: ChameoLayout.contentWidth, height: ChameoLayout.contentHeight, alignment: .top)
+                        Color.clear.frame(height: 53)
+                    }
+                    try await render(libraryPreview, size: NSSize(width: 448, height: 526), appearance: appearance,
+                        to: directory.appendingPathComponent(name + (previewDay == day ? "-library-today.png" : "-library-captured.png")))
+                }
                 let overlay = HStack(spacing: 12) {
                     overlaySample(background: .white)
                     overlaySample(background: .black)
@@ -108,9 +150,12 @@ final class ModernUIRenderTests: XCTestCase {
 
     private func render<V: View>(_ view: V, size: NSSize, appearance: NSAppearance, to url: URL) async throws {
         let rect = NSRect(origin: .zero, size: size)
-        let hosting = NSHostingView(rootView: view.frame(width: size.width, height: size.height)
+        let hosting = NSHostingView(rootView: view.environment(\.colorScheme, appearance.name == .darkAqua || appearance.name == .accessibilityHighContrastDarkAqua ? .dark : .light)
+            .frame(width: size.width, height: size.height)
             .background(Color(nsColor: .windowBackgroundColor)))
         let window = NSWindow(contentRect: rect, styleMask: .borderless, backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        defer { window.close() }
         window.appearance = appearance
         window.contentView = hosting
         hosting.frame = rect
@@ -125,4 +170,21 @@ final class ModernUIRenderTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(bitmap.pixelsHigh, Int(size.height))
         try XCTUnwrap(bitmap.representation(using: .png, properties: [:])).write(to: url)
     }
+}
+
+@MainActor
+private final class PreviewPermissions: RequiredPermissionProviding {
+    var cameraStatus: RequiredPermissionStatus { .authorized }
+    var photosStatus: RequiredPermissionStatus { .notDetermined }
+    func requestCameraAuthorization() async {}
+    func requestPhotosAuthorization() async {}
+}
+
+private final class PreviewPhoto: PHAsset, @unchecked Sendable {
+    private let date: Date
+    private let identifier = UUID().uuidString
+    init(date: Date) { self.date = date; super.init() }
+    override var localIdentifier: String { identifier }
+    override var creationDate: Date? { date }
+    override var location: CLLocation? { nil }
 }

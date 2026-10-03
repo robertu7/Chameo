@@ -14,12 +14,12 @@ struct SettingsView: View {
                         .tabItem { categoryLabel(.general) }.tag(SettingsCategory.general)
                     CaptureSettingsView()
                         .tabItem { categoryLabel(.capture) }.tag(SettingsCategory.capture)
-                    Form { ReminderSettingsView() }
-                        .formStyle(.grouped)
+                    ReminderSettingsView()
                         .tabItem { categoryLabel(.reminders) }.tag(SettingsCategory.reminders)
                     PhotosSettingsView()
                         .tabItem { categoryLabel(.photos) }.tag(SettingsCategory.photos)
                 }
+                .tabViewStyle(.grouped)
             } else {
                 ContentUnavailableView {
                     Label(L10n.string("Finish Chameo Setup"), systemImage: "lock.fill")
@@ -32,6 +32,6 @@ struct SettingsView: View {
     }
 
     private func categoryLabel(_ category: SettingsCategory) -> some View {
-        Label(category.title, systemImage: category.systemImage)
+        Text(category.title)
     }
 }

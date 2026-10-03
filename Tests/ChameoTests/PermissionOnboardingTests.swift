@@ -198,8 +198,8 @@ final class PermissionOnboardingTests: XCTestCase {
         )
 
         XCTAssertEqual(
-            controller.window?.frame.size,
-            NSSize(width: ChameoLayout.utilityWindowWidth, height: 560)
+            controller.window?.contentLayoutRect.size,
+            ChameoLayout.onboardingWindowSize
         )
     }
 
@@ -215,6 +215,10 @@ final class PermissionOnboardingTests: XCTestCase {
         )
 
         XCTAssertEqual(controller.window?.level, .floating)
+        XCTAssertFalse(controller.window?.styleMask.contains(.resizable) ?? true)
+        XCTAssertTrue(controller.window?.styleMask.contains(.titled) ?? false)
+        XCTAssertEqual(controller.window?.contentMinSize, ChameoLayout.onboardingWindowSize)
+        XCTAssertEqual(controller.window?.contentMaxSize, ChameoLayout.onboardingWindowSize)
     }
 
 }

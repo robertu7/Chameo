@@ -1,57 +1,68 @@
-# Timelapse photo-stack implementation — 2026-10-02
+# Approved screens implementation — 2026-10-02
 
-**Final result: passed** for the approved layout and the native fixture flow. Real Photos/iCloud generation and system accessibility settings retain the manual checks listed below.
+**Final result: blocked.** Implementation, regression checks, offscreen layout review and local bundle verification are complete. Live compositor and keyboard inspection remain unavailable: computer use reported that the Mac was locked, and subsequent native inspection timed out. Offscreen captures omit native glass and category-tab rendering; they cannot establish appearance, contrast or focus behavior.
 
-## Visual targets and evidence
+The previous Timelapse review is preserved in [prior-timelapse-qa.md](docs/reviews/approved-screens-2026-10-02/prior-timelapse-qa.md). Its resizable-window sizes are superseded by this pass.
 
-The user selected the second setup draft, then approved the matching Creating and Created drafts. This implements those three states in the existing native SwiftUI window, not a separate web prototype.
+## Targets and window contract
 
-| State | Approved visual | Current native fixture | Combined comparison |
-| --- | --- | --- | --- |
-| Setup | [Draft](docs/reviews/timelapse-keepsake-2026-10-02/draft-setup.png) | [Capture](docs/reviews/timelapse-keepsake-2026-10-02/native-setup.png) | [Comparison](docs/reviews/timelapse-keepsake-2026-10-02/comparison-setup.png) |
-| Creating | [Draft](docs/reviews/timelapse-keepsake-2026-10-02/draft-creating.png) | [Capture](docs/reviews/timelapse-keepsake-2026-10-02/native-creating.png) | [Comparison](docs/reviews/timelapse-keepsake-2026-10-02/comparison-creating.png) |
-| Created | [Draft](docs/reviews/timelapse-keepsake-2026-10-02/draft-created.png) | [Capture](docs/reviews/timelapse-keepsake-2026-10-02/native-created.png) | [Comparison](docs/reviews/timelapse-keepsake-2026-10-02/comparison-created.png) |
+The user approved all three design boards, then requested fixed sizing and consistency. Production remains native SwiftUI/AppKit.
 
-The comparisons put the source and implementation together in the same image. Native captures use a temporary app-hosted fixture with the production view, an isolated fake generator, and a portrait extracted from the approved mock. The same fixture portrait is repeated; production instead loads the first, middle, and latest available album thumbnails. No camera/Photos permission was requested, and the fixture output is not a playable video. The temporary interactive fixture was removed after capture; the persistent tests cover actual view layout and thumbnail retention.
+| Surface | Fixed content size |
+| --- | --- |
+| Camera / Library popover and standalone window | 448 × 526 points |
+| Settings / Timelapse | 500 × 460 points |
+| Onboarding | 500 × 560 points |
 
-**Viewport and normalization:** production content is 460 × 480 points, with a 460 × 420 minimum. Native screenshots are 920 × 1024 pixels including the 32-point title bar; their 920 × 960 content crops are compared at 2× density. The generated targets are 1228 × 1281 pixels; their 1128 × 1100 content crops are scaled proportionally to fit the same 920 × 960 comparison region, with neutral padding. There is no CSS viewport. Native chrome and the screen-sharing overlay are excluded. The generated draft's imperfect aspect ratio is not reproduced by stretching the photos or changing the supported window sizes.
+Native title bars add chrome outside these dimensions. Onboarding shares the utility width, with extra height for illustrations and permissions. Windows omit the resizable style, have equal content minimum/maximum sizes, disable zoom and opt out of full screen. Settings and Timelapse use one size constant and reapply it after saved-frame restoration. Longer content scrolls within the fixed window; system save panels retain native behavior.
+
+| Approved source | Inspected combined comparisons |
+| --- | --- |
+| [Main board](docs/reviews/approved-screens-2026-10-02/draft-main.png) | [Review](docs/reviews/approved-screens-2026-10-02/comparison-camera-review.png), [captured day](docs/reviews/approved-screens-2026-10-02/comparison-library-captured.png), [Today](docs/reviews/approved-screens-2026-10-02/comparison-library-today.png) |
+| [Settings board](docs/reviews/approved-screens-2026-10-02/draft-settings.png) | [General](docs/reviews/approved-screens-2026-10-02/comparison-general.png), [Capture](docs/reviews/approved-screens-2026-10-02/comparison-capture.png), [Reminders](docs/reviews/approved-screens-2026-10-02/comparison-reminders.png), [Photos](docs/reviews/approved-screens-2026-10-02/comparison-photos.png) |
+| [Onboarding board](docs/reviews/approved-screens-2026-10-02/draft-onboarding.png) | [Capture introduction](docs/reviews/approved-screens-2026-10-02/comparison-onboarding-capture.png), [story](docs/reviews/approved-screens-2026-10-02/comparison-onboarding-story.png), [permissions](docs/reviews/approved-screens-2026-10-02/comparison-onboarding-permissions.png) |
+
+Source boards measure 1159 × 1358, 1216 × 1294 and 1889 × 832 pixels respectively. App-owned regions are cropped and proportionally fitted beside native content in a 2040 × 1180 comparison canvas. [make-comparisons.swift](docs/reviews/approved-screens-2026-10-02/make-comparisons.swift) records crop coordinates and scaling. Images are never stretched. Native content is captured at 2× density: 896 × 1052, 1000 × 920 and 1000 × 1120 pixels respectively. There is no CSS viewport. Decorative reference chrome and imperfect generated aspect ratios do not override the requested sizes.
+
+Production views render in an app-hosted XCTest fixture with isolated defaults, temporary folders, synthetic album assets and generated portraits. Camera hardware, permission grants, network update checks and real user photographs are not involved. General's login row is absent in the fixture/test distribution and remains present in production. Album, folder, reminder times and build information reflect fixture data.
 
 ## Findings and fixes
 
-- **Resolved P2: destination text clipped at minimum height in Traditional Chinese.** The first fixture retained a 126-point minimum photo size, leaving insufficient room for the file-location line. The stack now shrinks to 110 points at 420-point window height. The post-fix [minimum-size Traditional Chinese capture](docs/reviews/timelapse-keepsake-2026-10-02/fixture-traditional-minimum.png) shows the filename, destination, and all completion actions.
-- **Resolved P2: progress detail absent from initial offscreen captures.** The synchronous renderer captured changing view state before it settled. The renderer now awaits view tasks and layout. The post-fix creating capture shows both the phase detail and its bar. Native accessibility inspection also reported “Encoding video · 132 of 184 photos” and a fraction of 0.7173913.
-- **No remaining actionable P0/P1/P2 layout findings** in the inspected fixture states. Source imagery differences are fixture data, and system button shapes/chrome are intentional native adaptations.
+- **Resolved P2: switch alignment and Photos clipping.** Full-width labels push switches right. Compact group spacing keeps Location visible at the fixed height. Post-fix [English](docs/reviews/approved-screens-2026-10-02/english-light-settings-photos.png) and [Traditional Chinese](docs/reviews/approved-screens-2026-10-02/traditionalChinese-light-settings-photos.png) captures show complete content.
+- **Resolved P2: album text lacked room.** An explicit label/picker row and fixed-size native picker restore the visible selected album.
+- **Resolved P2: undersized onboarding story illustration.** The transparent photo stack now uses a 440-point presentation area. Subtitle wrapping and stable footer placement follow the approved hierarchy; the post-fix story comparison is linked above.
+- **Open P2 verification: native glass, tabs and focus.** Cached captures omit button backgrounds and switch tint, and fail to compose native category tabs correctly. A native layout warning accompanies cached tab rendering. Inspect the signed test app on an unlocked Mac to distinguish capture limitations from production defects. Do not classify these surfaces as passed from cached images.
+- **Resolved P2, control fidelity follow-up:** The user reported that tabs and More differed from the draft. Camera/Library now use SwiftUI buttons with explicit icon-and-text labels, a neutral raised selection, visible keyboard-focus rings and left/right navigation. More uses a 28-point circular glass surface with an outline applied to the menu itself, since macOS ignores effects inside the menu icon. Settings explicitly use native grouped tabs; native action borders are rounded rectangles. The latest cached comparison verifies the main tab icons, selection and More outline. Native glass and focus still require live inspection; the computer-use attempt timed out. Fixed sizes remain unchanged.
 
 ## Required fidelity surfaces
 
 | Surface | Assessment |
 | --- | --- |
-| Fonts and typography | Native SF Pro, centered 22-point semibold titles, 17-point summaries, system body/caption styles. Dates, summary, phase, filename and action text remain readable and localized. Small raster/font-rendering differences from the generated mock are expected. |
-| Spacing and layout rhythm | The same photo stack and summary stay in place in setup, creating and created. Status changes below the summary. The action footer stays outside scrolling content. The stack adapts to supported height; errors and completion warnings can scroll without pushing actions away. |
-| Colors and visual tokens | Clear semantic content background adapts to light/dark. Glass is confined to actions. Native capture verifies a blue Open Video primary action and neutral Open Folder/Cancel controls. Setup's primary action appears muted in its capture but responded to Return and began creation; active/inactive focus colors remain a manual spot check. |
-| Image quality and assets | Square images preserve aspect ratio, with two rotated rear thumbnails and a centered front thumbnail. Existing contrast-aware outlines and modest shadows separate photos. Local-only preview requests increase to 360 × 360 for the larger Retina presentation; they do not start iCloud downloads. No generated portraits are bundled with the app. |
-| Copy and content | Approved setup/creating/created wording is localized in English, Simplified Chinese and Traditional Chinese. Encoding reports frame counts; downloading reports its photo fraction; unknown work remains indeterminate. Completion provides the real filename, short folder and full path in help/accessibility. |
+| Fonts / typography | Native SF text; 22-point semibold Settings/onboarding headings and secondary subtitles/captions. Three-language content renders are available. The compact calendar retains its existing headline to fit six rows. |
+| Spacing / rhythm | Shared Settings page/group spacing and trailing controls; separate right-aligned Today/Timelapse row with more vertical space; clearer 32-point thumbnails. Onboarding progress/navigation stay outside scrolling content. |
+| Colors / tokens | Semantic clear content groups adapt to light/dark. Selection/calendar semantics remain. Glass stays on controls and framing feedback keeps its readable surface. Actual glass and system accessibility settings remain unverified. |
+| Images / quality | New portrait and transparent stack illustrations are bundled for onboarding. Production Camera, Library and Timelapse use real camera/album data; fixture imagery is synthetic. Aspect ratios are preserved; scaled-to-fit capture review can retain narrow pillarboxing. |
+| Copy / content | Approved headings and supporting text are localized in English, Simplified Chinese and Traditional Chinese. Local-copy explanations remain in a disclosure group, with preservation guidance always visible. Recovery, reminder previews, progress and explicit Open Folder actions remain. |
 
-Full-view comparisons show all relevant text and controls at readable scale, so an additional focused crop is unnecessary. Offscreen [dark](docs/reviews/timelapse-keepsake-2026-10-02/fixture-dark-minimum.png) and [high-contrast](docs/reviews/timelapse-keepsake-2026-10-02/fixture-contrast-minimum.png) captures verify content layout; their cached native glass controls are not compositor evidence for button contrast.
+Full-view combined inputs show text and alignment at readable scale; additional crops cannot resolve missing compositor surfaces. Dark content and Chinese Photos/permissions captures were inspected separately. Cached dark glass labels cannot establish button contrast.
 
-## Interaction and regression evidence
+## Validation evidence
 
-- Native fixture: Return started creation; accessibility inspection verified phase description, fractional progress, Cancel, then Open Folder, Open Video and Create Another in the same window. Native compositor captures verify creating/completion controls. Opening actions were not invoked on the fake video.
-- Regression: thumbnail requests remain exactly once per sampled asset across setup, generation and completion. Existing tests cover cancellation, late completion, retries, saved results, window reuse, background ownership and minimum size.
-- Localization and fixture rendering cover all three languages, both supported sizes, preparation/download/encoding/saving/completion and empty states.
-- No notifications were added; no preferences, photo storage, generation settings, version or publication changed.
+- Final suite: **200 tests, one optional preview skipped, zero failures**. Fixed sizing, category/window reuse, onboarding placement, camera visibility routing and background export ownership remain covered.
+- Native render fixture passed separately in all three languages and light/dark/high-contrast appearances. Export-state rendering passed at the new shared size. [Setup](docs/reviews/approved-screens-2026-10-02/timelapse-fixed-setup.png) and [Traditional Chinese completion](docs/reviews/approved-screens-2026-10-02/timelapse-fixed-created-zh-Hant.png) were inspected.
+- Strict-concurrency compilation passed with complete checking and concurrency warnings enabled. Whitespace validation passed.
+- Local release and isolated test bundles built with ad-hoc signatures. Release bundle verification and both deep/strict signature checks passed. The bundle verifier now checks both new onboarding assets. Both bundles require macOS **26.0**; Swift tools remain **6.2** with the existing Swift language mode. These are local builds, without notarization/publication.
+- Capture, alignment, save, storage preference keys, reminder scheduling and export ownership are preserved. Timelapse completion notifications remain removed. No version change, commit, push or publication was performed.
 
-## Remaining manual checks
+## Remaining native acceptance
 
-Real Photos/iCloud downloads, playable exported video, full Tab traversal under the user's macOS Keyboard Navigation preference, VoiceOver announcements, active/inactive setup colors, and system Reduce Motion/Reduce Transparency behavior are not established by these fixtures. Native glass follows system accessibility settings; the photo stack adds no custom animation.
+Inspect native category tabs, glass buttons, switch tint, active/inactive focus, Tab traversal and disabled states on the unlocked Mac. Check bright/dark real video, camera switching, countdown/capture/retake/save, permission recovery, expanded explanations, weekly/one-time reminder fields, all languages, and Timelapse progress/completion. Confirm fixed sizing and no camera activity while the main surface is hidden. VoiceOver, Reduce Motion, Reduce Transparency, Increase Contrast and real Photos/iCloud export remain system/hardware checks, separate from automated success.
 
 ## Implementation checklist
 
-- [x] Shared photo-stack composition across setup, creating and created.
-- [x] Phase-specific progress, Cancel and background-generation explanation.
-- [x] Filename/location and explicit Open Video/Open Folder/Create Another actions.
-- [x] Empty, cancellation, retry and warning paths retained.
-- [x] Minimum-height adjustment and post-fix captures inspected.
-- [x] Three-language catalog checks and full regression suite: 200 tests, one optional preview skip, zero failures.
-- [x] Strict-concurrency compilation passed.
-- [x] Local release bundle built and passed `script/verify_app_bundle.sh`; isolated test bundle rebuilt and passed deep/strict signature verification. Both bundles require macOS 26.0. These use ad-hoc local signatures and are not distribution/notarization builds.
+- [x] Approved layouts and onboarding illustrations implemented.
+- [x] Shared fixed sizing and resize/zoom/full-screen restrictions applied.
+- [x] Category retention and existing capture/export behavior preserved.
+- [x] Localization, native content captures and combined comparisons reviewed.
+- [x] Tests, strict compilation, bundle building and signature verification passed.
+- [ ] Live compositor, keyboard and hardware acceptance completed; visual QA passed.
