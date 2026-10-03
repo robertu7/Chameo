@@ -70,8 +70,8 @@ struct LiveFramingFaceGeometry: Equatable, Sendable {
 enum FaceGuideGeometry {
     static func rect(in size: CGSize) -> CGRect {
         // The oval represents the detected face at the capture distance.
-        let width = min(size.width * 0.35, size.height * 0.30)
-        let height = min(size.height * 0.56, width * 1.34)
+        let width = min(size.width * 0.47, size.height * 0.40)
+        let height = min(size.height * 0.75, width * 1.34)
         let originX = (size.width - width) / 2
         let originY = (size.height - height) / 2
 

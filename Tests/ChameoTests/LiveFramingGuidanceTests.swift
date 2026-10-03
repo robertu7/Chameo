@@ -195,7 +195,7 @@ final class LiveFramingGuidanceTests: XCTestCase {
 
     func testFaceAtCaptureDistanceFitsVisibleGuide() {
         var evaluator = LiveFramingGuidanceEvaluator()
-        let faceWidth = previewSize.height * 0.30
+        let faceWidth = previewSize.height * 0.40
         let frame = directFrame(
             face: observation(
                 previewCenterX: previewSize.width / 2,

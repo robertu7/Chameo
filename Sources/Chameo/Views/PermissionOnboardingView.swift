@@ -97,7 +97,7 @@ struct PermissionOnboardingView: View {
                        height: imageName == "onboarding-portrait" ? 270 : 292)
                 .overlay {
                     if imageName == "onboarding-portrait" {
-                        CameraGuideView(guidanceState: .ready, guideOffset: -30)
+                        CameraGuideView(guidanceState: .ready, guideOffset: -26)
                             .frame(width: 300, height: 270)
                     }
                 }
