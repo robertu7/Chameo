@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.5.0-rc.4
+
+### What’s new
+
+- Refreshed the Camera, Library, Settings, Timelapse, and onboarding screens
+  with consistent fixed-size layouts and clearer navigation.
+- Added onboarding portrait and story illustrations, with updated copy localized
+  in English, Simplified Chinese, and Traditional Chinese.
+
+### Fixes
+
+- Adjusted Settings spacing, album selection layout, and onboarding illustration
+  sizing to keep content visible in the fixed-size windows.
+
+### Known testing limitations
+
+- Live inspection of native glass, Settings tabs, switch appearance, and keyboard
+  focus is still needed; fixture captures do not establish compositor behavior.
+- Camera capture and switching, real Photos/iCloud handling, permission recovery,
+  Timelapse playback, VoiceOver, and system accessibility settings need live
+  validation.
+- Stage 1 builds are ad-hoc signed and are not notarized by Apple.
+- macOS may request Camera, Photos, Location, or Notification permission again
+  after an update.
+
 ## 0.5.0-rc.3
 
 ### What’s new
