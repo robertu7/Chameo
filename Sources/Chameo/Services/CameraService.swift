@@ -51,6 +51,10 @@ final class CameraService: NSObject, ObservableObject {
     private var shouldRunSession = false
     private var isLiveFramingGuidanceEnabled = false
     private var liveFramingGuidanceEvaluator = LiveFramingGuidanceEvaluator()
+    private var liveFramingPreviewSize = CGSize(
+        width: ChameoLayout.previewWidth,
+        height: ChameoLayout.livePreviewHeight
+    )
 
     override init() {
         super.init()
@@ -192,6 +196,15 @@ final class CameraService: NSObject, ObservableObject {
         }
     }
 
+    func setLiveFramingPreviewSize(_ size: CGSize) {
+        guard size.width > 0, size.height > 0,
+              size != liveFramingPreviewSize else {
+            return
+        }
+        liveFramingPreviewSize = size
+        resetLiveFramingGuidance()
+    }
+
     func setLiveFramingGuidanceEnabled(_ enabled: Bool) {
         guard isLiveFramingGuidanceEnabled != enabled else {
             return
@@ -246,10 +259,7 @@ final class CameraService: NSObject, ObservableObject {
 
         liveFramingGuidanceState = liveFramingGuidanceEvaluator.evaluate(
             frame: frame,
-            previewSize: CGSize(
-                width: ChameoLayout.previewWidth,
-                height: ChameoLayout.livePreviewHeight
-            ),
+            previewSize: liveFramingPreviewSize,
             mirrored: isPreviewMirrored
         )
     }

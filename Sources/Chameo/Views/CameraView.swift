@@ -117,16 +117,19 @@ struct CameraView: View {
             photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
         }
         .onAppear {
-            if isVisible { cameraService.setLiveFramingGuidanceEnabled(showFaceGuide) }
+            syncLiveFramingGuidance()
             syncHandsFreeCountdown()
         }
         .onChange(of: isVisible) { _, visible in
-            if visible { cameraService.setLiveFramingGuidanceEnabled(showFaceGuide) }
+            if visible { syncLiveFramingGuidance() }
             syncHandsFreeCountdown()
         }
-        .onChange(of: showFaceGuide) { _, isEnabled in
-            if isVisible { cameraService.setLiveFramingGuidanceEnabled(isEnabled) }
+        .onChange(of: showFaceGuide) { _, _ in
+            syncLiveFramingGuidance()
             syncHandsFreeCountdown()
+        }
+        .onChange(of: livePreviewHeight) { _, _ in
+            syncLiveFramingGuidance()
         }
         .onChange(of: handsFreeCountdown) { _, _ in
             syncHandsFreeCountdown()
@@ -147,6 +150,14 @@ struct CameraView: View {
 
     private var isVisible: Bool {
         appState.isCameraVisible(on: surface)
+    }
+
+    private func syncLiveFramingGuidance() {
+        guard isVisible else { return }
+        cameraService.setLiveFramingPreviewSize(
+            CGSize(width: ChameoLayout.previewWidth, height: livePreviewHeight)
+        )
+        cameraService.setLiveFramingGuidanceEnabled(showFaceGuide)
     }
 
     private var livePreviewHeight: CGFloat {

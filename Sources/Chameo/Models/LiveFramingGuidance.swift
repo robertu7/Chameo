@@ -69,8 +69,9 @@ struct LiveFramingFaceGeometry: Equatable, Sendable {
 
 enum FaceGuideGeometry {
     static func rect(in size: CGSize) -> CGRect {
-        let width = min(size.width * 0.48, size.height * 0.42)
-        let height = min(size.height * 0.78, width * 1.34)
+        // The oval represents the detected face at the capture distance.
+        let width = min(size.width * 0.35, size.height * 0.30)
+        let height = min(size.height * 0.56, width * 1.34)
         let originX = (size.width - width) / 2
         let originY = (size.height - height) / 2
 
@@ -80,6 +81,19 @@ enum FaceGuideGeometry {
     static func eyeLineY(in size: CGSize) -> CGFloat {
         let rect = rect(in: size)
         return rect.minY + rect.height * 0.38
+    }
+
+    static func eyeLineTolerance(in size: CGSize) -> CGFloat {
+        max(6, rect(in: size).height * 0.06)
+    }
+
+    static func faceWidthRange(in size: CGSize) -> ClosedRange<CGFloat> {
+        let width = rect(in: size).width
+        return (width * 0.85)...(width * 1.15)
+    }
+
+    static func centerTolerance(in size: CGSize) -> CGFloat {
+        max(6, rect(in: size).width * 0.10)
     }
 }
 
@@ -147,11 +161,6 @@ struct LiveFramingGuidanceEvaluator {
     private static let smoothingFactor: CGFloat = 0.35
     private static let adjustmentSampleCount = 3
     private static let readySampleCount = 4
-    private static let centerTolerance: CGFloat = 0.06
-    private static let eyeLineTolerance: CGFloat = 0.08
-    private static let targetFaceWidthRatio: CGFloat = 0.72
-    private static let minimumFaceWidthRatio: CGFloat = 0.80
-    private static let maximumFaceWidthToGuideRatio: CGFloat = 1.10
     private static let stableCenterDelta: CGFloat = 0.015
     private static let stableWidthDelta: CGFloat = 0.03
 
@@ -267,23 +276,21 @@ struct LiveFramingGuidanceEvaluator {
         previewSize: CGSize
     ) -> LiveFramingGuidanceState {
         let guideRect = FaceGuideGeometry.rect(in: previewSize)
-        let targetWidth = guideRect.width * Self.targetFaceWidthRatio
-        let minimumWidth = targetWidth * Self.minimumFaceWidthRatio
-        let maximumWidth = guideRect.width * Self.maximumFaceWidthToGuideRatio
+        let faceWidthRange = FaceGuideGeometry.faceWidthRange(in: previewSize)
 
-        if face.boundingBox.width < minimumWidth {
+        if face.boundingBox.width < faceWidthRange.lowerBound {
             return .adjusting(.moveCloser)
         }
-        if face.boundingBox.width > maximumWidth {
+        if face.boundingBox.width > faceWidthRange.upperBound {
             return .adjusting(.moveBack)
         }
         if abs(face.boundingBox.midX - guideRect.midX)
-            > previewSize.width * Self.centerTolerance {
+            > FaceGuideGeometry.centerTolerance(in: previewSize) {
             return .adjusting(.moveTowardCenter)
         }
 
         let targetEyeLine = FaceGuideGeometry.eyeLineY(in: previewSize)
-        let eyeTolerance = previewSize.height * Self.eyeLineTolerance
+        let eyeTolerance = FaceGuideGeometry.eyeLineTolerance(in: previewSize)
         if face.eyeLineY > targetEyeLine + eyeTolerance {
             return .adjusting(.moveHigher)
         }

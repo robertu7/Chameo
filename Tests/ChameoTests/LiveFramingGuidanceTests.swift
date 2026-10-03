@@ -114,7 +114,7 @@ final class LiveFramingGuidanceTests: XCTestCase {
         let frame = directFrame(
             face: observation(
                 previewCenterX: previewSize.width / 2,
-                previewWidth: targetFaceWidth * 1.35
+                previewWidth: targetFaceWidth * 1.10
             )
         )
 
@@ -168,6 +168,103 @@ final class LiveFramingGuidanceTests: XCTestCase {
         )
 
         XCTAssertEqual(stabilizedState(&evaluator, frame: frame), .adjusting(.moveLower))
+    }
+
+    func testEyesVisiblyBelowGuideDoNotStartCountdown() {
+        var evaluator = LiveFramingGuidanceEvaluator()
+        var countdown = HandsFreeCountdownMachine()
+        _ = countdown.handle(.setVisible(true))
+        _ = countdown.handle(.setEnabled(true))
+        let frame = directFrame(
+            face: observation(
+                previewCenterX: previewSize.width / 2,
+                previewWidth: targetFaceWidth,
+                eyeLineOffset: 20
+            )
+        )
+
+        var guidance = LiveFramingGuidanceState.neutral
+        for _ in 0..<6 {
+            guidance = evaluator.evaluate(frame: frame, previewSize: previewSize, mirrored: false)
+            _ = countdown.handle(.guidanceChanged(guidance))
+        }
+
+        XCTAssertEqual(guidance, .adjusting(.moveHigher))
+        XCTAssertEqual(countdown.phase, .armed)
+    }
+
+    func testFaceAtCaptureDistanceFitsVisibleGuide() {
+        var evaluator = LiveFramingGuidanceEvaluator()
+        let faceWidth = previewSize.height * 0.30
+        let frame = directFrame(
+            face: observation(
+                previewCenterX: previewSize.width / 2,
+                previewWidth: faceWidth
+            )
+        )
+
+        for _ in 0..<6 {
+            _ = evaluator.evaluate(frame: frame, previewSize: previewSize, mirrored: false)
+        }
+        XCTAssertEqual(evaluator.evaluate(frame: frame, previewSize: previewSize, mirrored: false), .ready)
+        let guideWidth = FaceGuideGeometry.rect(in: previewSize).width
+        XCTAssertLessThanOrEqual(guideWidth / faceWidth, 1.15, "The oval should fit a face at the accepted capture distance.")
+    }
+
+    func testFaceVisiblyTooSmallForOvalNeedsToMoveCloser() {
+        var evaluator = LiveFramingGuidanceEvaluator()
+        let frame = directFrame(
+            face: observation(
+                previewCenterX: previewSize.width / 2,
+                previewWidth: FaceGuideGeometry.rect(in: previewSize).width * 0.65
+            )
+        )
+
+        for _ in 0..<6 {
+            _ = evaluator.evaluate(frame: frame, previewSize: previewSize, mirrored: false)
+        }
+        XCTAssertEqual(evaluator.evaluate(frame: frame, previewSize: previewSize, mirrored: false), .adjusting(.moveCloser))
+    }
+
+    func testVisibleEyeBandMatchesReadinessAcrossPreviewSizesAndCrops() {
+        for height in [ChameoLayout.livePreviewHeight, ChameoLayout.livePreviewHeight - 28] {
+            let size = CGSize(width: ChameoLayout.previewWidth, height: height)
+            let guide = FaceGuideGeometry.rect(in: size)
+            let eyeTolerance = FaceGuideGeometry.eyeLineTolerance(in: size)
+            for sourceSize in [CGSize(width: 1920, height: 1080), CGSize(width: 640, height: 480)] {
+                let scale = max(size.width / sourceSize.width, size.height / sourceSize.height)
+                let scaledSize = CGSize(width: sourceSize.width * scale, height: sourceSize.height * scale)
+                let cropY = (scaledSize.height - size.height) / 2
+                for mirrored in [true, false] {
+                    for direction: CGFloat in [-1, 1] {
+                        for isInside in [true, false] {
+                            let eyeY = FaceGuideGeometry.eyeLineY(in: size)
+                                + direction * (eyeTolerance + (isInside ? -1 : 1))
+                            let face = LiveFramingFaceObservation(
+                                boundingBox: CGRect(
+                                    x: 0.5 - guide.width / scaledSize.width / 2,
+                                    y: 1 - (eyeY + guide.height * 0.62 + cropY) / scaledSize.height,
+                                    width: guide.width / scaledSize.width,
+                                    height: guide.height / scaledSize.height
+                                ),
+                                eyeLineY: 1 - (eyeY + cropY) / scaledSize.height
+                            )
+                            let frame = LiveFramingFrame(
+                                pixelWidth: Int(sourceSize.width),
+                                pixelHeight: Int(sourceSize.height),
+                                faces: [face]
+                            )
+                            var evaluator = LiveFramingGuidanceEvaluator()
+                            var guidance = LiveFramingGuidanceState.neutral
+                            for _ in 0..<6 {
+                                guidance = evaluator.evaluate(frame: frame, previewSize: size, mirrored: mirrored)
+                            }
+                            XCTAssertEqual(guidance, isInside ? .ready : .adjusting(direction > 0 ? .moveHigher : .moveLower))
+                        }
+                    }
+                }
+            }
+        }
     }
 
     func testCenteredFaceBecomesReadyAfterFourStableSamples() {
@@ -299,7 +396,7 @@ final class LiveFramingGuidanceTests: XCTestCase {
     }
 
     private var targetFaceWidth: CGFloat {
-        FaceGuideGeometry.rect(in: previewSize).width * 0.72
+        FaceGuideGeometry.rect(in: previewSize).width
     }
 
     private func directFrame(face: LiveFramingFaceObservation) -> LiveFramingFrame {
@@ -317,7 +414,7 @@ final class LiveFramingGuidanceTests: XCTestCase {
     ) -> LiveFramingFaceObservation {
         let guide = FaceGuideGeometry.rect(in: previewSize)
         let targetEyeLine = FaceGuideGeometry.eyeLineY(in: previewSize) + eyeLineOffset
-        let height = guide.height * 0.72
+        let height = previewWidth * guide.height / guide.width
         let originY = targetEyeLine - height * 0.38
         let previewRect = CGRect(
             x: previewCenterX - previewWidth / 2,

@@ -39,6 +39,25 @@ final class ModernUIRenderTests: XCTestCase {
         let updates = UpdateController(isEnabled: true)
         let day = Calendar.current.date(from: DateComponents(year: 2026, month: 10, day: 2))!
 
+        let guideStates: [(String, LiveFramingGuidanceState)] = [
+            ("ready", .ready), ("eye-adjustment", .adjusting(.moveHigher)),
+            ("hold-still", .adjusting(.holdStill)),
+        ]
+        for (name, guidance) in guideStates {
+            let guides = HStack(spacing: 12) {
+                ForEach([false, true], id: \.self) { dark in
+                    ZStack {
+                        dark ? Color.black : Color.white
+                        CameraGuideView(guidanceState: guidance)
+                    }
+                    .frame(width: ChameoLayout.previewWidth, height: ChameoLayout.livePreviewHeight)
+                }
+            }.padding(12)
+            try await render(guides, size: NSSize(width: 820, height: 373),
+                appearance: NSAppearance(named: .aqua)!,
+                to: directory.appendingPathComponent("camera-guide-" + name + ".png"))
+        }
+
         for language in [AppLanguage.english, .simplifiedChinese, .traditionalChinese] {
             UserDefaults.standard.set(language.rawValue, forKey: AppPreferenceKey.language)
             let localization = LocalizationController()
