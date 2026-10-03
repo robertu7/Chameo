@@ -67,4 +67,12 @@ The user opened Timelapse from the menu bar for the native follow-up. Its setup 
 
 ## Remaining acceptance
 
-Verify on screen: glass contrast over bright/dark video, active/inactive windows, hover/disabled states, full keyboard traversal and VoiceOver, complete outside-window popover presentation, and system Reduce Motion/Reduce Transparency/Increase Contrast. Native capture/retake/save, Photos/iCloud recovery, and real Timelapse generation/completion remain hardware/system checks. Full Apple-guideline or accessibility compliance is not asserted before these checks pass.
+Verify on screen: glass contrast over bright/dark video, active/inactive windows, hover/disabled states, full keyboard traversal and VoiceOver, complete outside-window popover presentation, and system Reduce Motion/Reduce Transparency/Increase Contrast. Full Apple-guideline or accessibility compliance is not asserted before these checks pass.
+
+Subsequent owner confirmation on October 3, 2026 established the complete
+photo workflow, including capture/Retake/Save, Photos/iCloud, local-copy
+restoration/deletion, and real Timelapse export/playback, as validated. The
+owner also confirmed reminders across sleep/wake and a real Sparkle
+update/relaunch with cleanup. See the [validation record](../../testing/daily-workflows.md).
+This confirmation supplements the review's original evidence; the fixture
+and native inspection limitations above still describe that review pass.

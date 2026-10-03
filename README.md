@@ -109,10 +109,13 @@ warns and falls back to ad-hoc signing.
 
 Set the app version in `VERSION`. The build script also writes a build number and build id into the bundle so Settings can display the exact build.
 
-## Test Releases
+## GitHub Releases
 
-GitHub prereleases are built for Apple Silicon, ad-hoc signed, and not
-notarized by Apple.
+GitHub releases are built for Apple Silicon, ad-hoc signed, and not notarized
+by Apple. Final versions are published as stable releases; prerelease versions
+are marked as prereleases. Both remain Stage 1 distribution for the owner and
+selected testers until the [public-distribution requirements](docs/roadmap.md#conditional-distribution)
+are complete.
 
 Install a test release:
 
@@ -137,6 +140,10 @@ ZIP and disk-image contents, appcast XML, and published URLs. Sparkle continues
 to use the signed ZIP for updates; the disk image is the first-install option.
 The automation does not perform an installed-app end-to-end update or
 Gatekeeper test.
+
+The owner confirmed a real Sparkle update/relaunch with reminder cleanup and
+the complete photo workflow on October 3, 2026. See the
+[manual validation record](docs/testing/daily-workflows.md) for remaining checks.
 
 ## Permissions
 

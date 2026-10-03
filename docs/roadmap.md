@@ -10,6 +10,12 @@ Use the capture, reminder, and timelapse workflows regularly. Prioritize fixes
 for capture loss, inability to save or export, and reminder failures before
 expanding the feature set.
 
+The owner confirmed the complete photo workflow and reminders/Sparkle
+update workflow as validated on October 3, 2026. See the
+[validation record](testing/daily-workflows.md) for scope and remaining checks.
+Finish native accessibility, permission recovery, and launch-at-login checks;
+repeat workflow checks when relevant behavior changes.
+
 ## Later
 
 ### Capture Experience
@@ -33,6 +39,10 @@ expanding the feature set.
 
 ## Conditional Distribution
 
+GitHub publishes stable releases for final versions and prereleases for
+prerelease versions. The GitHub release designation does not change Stage 1's
+ad-hoc signing and lack of notarization; v0.5.1 is a stable GitHub release.
+
 Complete these requirements before moving beyond Stage 1 test distribution:
 
 - Select and manage the intended Developer ID or Mac App Store distribution identity; local builds already prefer an installed stable development identity over ad-hoc signing.
@@ -44,7 +54,10 @@ Complete these requirements before moving beyond Stage 1 test distribution:
 ## Completed
 
 - Added Apple Silicon CI for pull requests and `main`, plus tag-triggered public
-  GitHub prereleases.
+  GitHub releases with prerelease status determined by the version.
+- Validated the complete photo workflow, including real Photos/iCloud and
+  Timelapse export/playback, and reminders across sleep/wake plus a real
+  Sparkle update/relaunch with cleanup (owner-confirmed October 3, 2026).
 - Added pinned Sparkle updates with daily opt-in checks, manual checking,
   user-confirmed installation, signed archives, signed release notes, and a
   signed GitHub Pages appcast.

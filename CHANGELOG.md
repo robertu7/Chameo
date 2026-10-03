@@ -1,5 +1,10 @@
 # Changelog
 
+Testing limitations below describe the status at each release. The owner
+subsequently confirmed the complete photo workflow and reminders/Sparkle
+update workflow as validated on October 3, 2026; see the current
+[manual validation record](docs/testing/daily-workflows.md).
+
 ## 0.5.1
 
 ### What’s new

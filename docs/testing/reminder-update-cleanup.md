@@ -16,7 +16,14 @@ Run `swift test`. `UpdateReminderBarrierTests` covers ordinary quit, update quit
 
 These tests do not validate Notification Center's source identity lookup or an actual Sparkle replacement.
 
-## Native release-validation checklist (not yet performed)
+## Owner-confirmed native validation (October 3, 2026)
+
+The owner confirmed reminder delivery and clicks after sleep/wake, plus a real
+Sparkle update/relaunch with reminder cleanup, as validated. See the
+[workflow validation record](daily-workflows.md). This confirmation does not
+provide a per-scenario result for the failure-injection and control cases below.
+
+## Native regression checklist
 
 Use a separate test bundle identifier, data container, and private appcast. The existing `script/build_app.sh --test` uses `com.robertu.Chameo.test` but **disables Sparkle**, so it is not an end-to-end updater fixture without a test-only configuration change. Never point a fixture at the production feed or replace `/Applications/Chameo.app` for this test.
 
@@ -28,4 +35,4 @@ Use a separate test bundle identifier, data container, and private appcast. The 
 6. Simulate notification removal failing and a query that never completes. The app must refuse the update quit; a late successful result must restore scheduling rather than terminate it.
 7. Control: retain A reminders and manually replace A with B without cleanup. Record the old-source behavior separately; manual replacement and force-kill bypass the barrier and are not covered by this mitigation.
 
-Existing orphaned production reminders, the first upgrade from a build without the barrier, force quits, and manual app replacement remain outside the verified repair scope. Do not label this as a complete fix for all notification clicks until native validation passes.
+Existing orphaned production reminders, the first upgrade from a build without the barrier, force quits, and manual app replacement remain outside the verified repair scope. Validation of the supported update flow does not establish a repair for those cases.
