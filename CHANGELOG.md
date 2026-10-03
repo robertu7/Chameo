@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.5.1
+
+### What’s new
+
+- Release appcast feeds are now re-signed and verified after final version
+  edits. A guarded workflow can repair an existing feed signature without
+  changing release tags or downloads.
+
+### Fixes
+
+- Preserved the More menu’s full circular control as its click target.
+
+### Known testing limitations
+
+- Camera capture and switching, local-copy restoration and deletion, real
+  Photos/iCloud handling, and Timelapse generation and playback still need live
+  device and library checks.
+- VoiceOver, full keyboard traversal, system accessibility settings, and
+  permission recovery need live validation.
+- Stage 1 builds are ad-hoc signed and are not notarized by Apple.
+- macOS may request Camera, Photos, Location, or Notification permission again
+  after an update.
+
 ## 0.5.0
 
 ### What’s new
