@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.5.0-rc.5
+
+### What’s new
+
+- Unified Camera/Library and Settings selectors plus app and photo menus with
+  consistent glass controls, arrow-key navigation, and clearer labels.
+- Added a compact Local Copies help popover explaining storage behavior and
+  improved album-selection guidance.
+
+### Fixes
+
+- Removed duplicated album-picker accessibility announcements and improved
+  Settings content fit in the fixed-size window.
+
+### Known testing limitations
+
+- Bright/dark glass contrast, hover and disabled states, full keyboard traversal,
+  VoiceOver, and system accessibility settings still need live validation.
+- Real camera capture/save, permission recovery, real Photos/iCloud handling,
+  and Timelapse generation and playback need hardware/library checks.
+- Stage 1 builds are ad-hoc signed and are not notarized by Apple.
+- macOS may request Camera, Photos, Location, or Notification permission again
+  after an update.
+
 ## 0.5.0-rc.4
 
 ### What’s new
