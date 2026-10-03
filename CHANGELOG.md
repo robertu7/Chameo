@@ -5,6 +5,31 @@ subsequently confirmed the complete photo workflow and reminders/Sparkle
 update workflow as validated on October 3, 2026; see the current
 [manual validation record](docs/testing/daily-workflows.md).
 
+## 0.5.4
+
+### What’s new
+
+- Updated the camera framing guide with a visible eye-line tolerance band
+  aligned with capture readiness.
+
+### Fixes
+
+- Aligned face-size, center, and eye-line readiness with the visible guide and
+  rendered preview size.
+- Adjusted the onboarding portrait guide to match the revised camera overlay.
+
+### Known testing limitations
+
+- Live framing distance, eye alignment, and countdown behavior still need
+  device checks across preview sizes.
+- Full keyboard traversal, VoiceOver, system accessibility settings, permission
+  denial/recovery, and launch at login still need live validation.
+- Installation, update/relaunch, Gatekeeper, and permission persistence on a
+  clean Mac still need validation before broader distribution.
+- Stage 1 builds are ad-hoc signed and are not notarized by Apple.
+- macOS may request Camera, Photos, Location, or Notification permission again
+  after an update.
+
 ## 0.5.3
 
 ### What’s new
