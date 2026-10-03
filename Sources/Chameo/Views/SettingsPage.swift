@@ -15,7 +15,7 @@ struct SettingsPage<Content: View>: View {
                         .accessibilityAddTraits(.isHeader)
                     Text(subtitle).foregroundStyle(.secondary)
                 }
-                .padding(.bottom, 4)
+                .padding(.bottom, 16)
                 content
             }
             .font(.body)

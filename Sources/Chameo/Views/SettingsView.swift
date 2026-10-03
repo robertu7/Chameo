@@ -9,17 +9,21 @@ struct SettingsView: View {
     var body: some View {
         Group {
             if hasCompletedPermissionOnboarding {
-                TabView(selection: $state.category) {
-                    GeneralSettingsView()
-                        .tabItem { categoryLabel(.general) }.tag(SettingsCategory.general)
-                    CaptureSettingsView()
-                        .tabItem { categoryLabel(.capture) }.tag(SettingsCategory.capture)
-                    ReminderSettingsView()
-                        .tabItem { categoryLabel(.reminders) }.tag(SettingsCategory.reminders)
-                    PhotosSettingsView()
-                        .tabItem { categoryLabel(.photos) }.tag(SettingsCategory.photos)
+                VStack(spacing: 0) {
+                    ChameoSegmentedControl(options: SettingsCategory.allCases, selection: $state.category,
+                        title: { $0.title }, cornerRadius: 16,
+                        accessibilityTitle: L10n.string("Settings"))
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 8)
+                    RetainedSettingsPages(selection: $state.category) { category in
+                        switch category {
+                        case .general: GeneralSettingsView()
+                        case .capture: CaptureSettingsView()
+                        case .reminders: ReminderSettingsView()
+                        case .photos: PhotosSettingsView()
+                        }
+                    }
                 }
-                .tabViewStyle(.grouped)
             } else {
                 ContentUnavailableView {
                     Label(L10n.string("Finish Chameo Setup"), systemImage: "lock.fill")
@@ -31,7 +35,33 @@ struct SettingsView: View {
         .environment(\.locale, localizationController.displayLocale)
     }
 
-    private func categoryLabel(_ category: SettingsCategory) -> some View {
-        Text(category.title)
+}
+
+/// Mount pages on first visit, then keep their local form state while excluding hidden pages from input.
+struct RetainedSettingsPages<Content: View>: View {
+    @Binding var selection: SettingsCategory
+    @State private var visited: Set<SettingsCategory>
+    let content: (SettingsCategory) -> Content
+
+    init(selection: Binding<SettingsCategory>, @ViewBuilder content: @escaping (SettingsCategory) -> Content) {
+        self._selection = selection
+        self._visited = State(initialValue: [selection.wrappedValue])
+        self.content = content
+    }
+
+    var body: some View {
+        ZStack {
+            ForEach(SettingsCategory.allCases.filter { visited.contains($0) || $0 == selection }) { category in
+                content(category)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .opacity(category == selection ? 1 : 0)
+                    .disabled(category != selection)
+                    .allowsHitTesting(category == selection)
+                    .accessibilityHidden(category != selection)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .clipped()
+        .onChange(of: selection) { _, category in visited.insert(category) }
     }
 }

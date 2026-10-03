@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 import XCTest
 @testable import Chameo
 
@@ -23,6 +24,29 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertEqual(controller.state.category, .reminders)
     }
 
+    func testCategoryPagesMountLazilyAndRetainLocalStateWhenRevisited() async throws {
+        let state = SettingsState()
+        var identities: [SettingsCategory: [UUID]] = [:]
+        let view = SettingsPagesProbe(state: state) { category, id in
+            identities[category, default: []].append(id)
+        }
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 500, height: 460),
+            styleMask: .borderless, backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        defer { window.close() }
+        window.contentView = NSHostingView(rootView: view)
+        try await Task.sleep(for: .milliseconds(100))
+        XCTAssertEqual(Set(identities.keys), [.general], "Unvisited forms must not start permission or preference work")
+        for category in [SettingsCategory.photos, .capture, .photos, .general] {
+            state.category = category
+            try await Task.sleep(for: .milliseconds(100))
+        }
+        XCTAssertEqual(identities[.general]?.count, 1)
+        XCTAssertEqual(identities[.photos]?.count, 1, "Revisiting a category must retain its local SwiftUI state")
+        XCTAssertEqual(identities[.capture]?.count, 1)
+        XCTAssertNil(identities[.reminders])
+    }
+
     func testSettingsWindowConstrainsContentAfterInstallingItsHostingController() throws {
         let controller = SettingsWindowController(
             localizationController: LocalizationController(),
@@ -39,5 +63,27 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertEqual(SettingsWindowController.contentSize, NSSize(width: 500, height: 460))
         XCTAssertEqual(window.contentLayoutRect.size, ChameoLayout.utilityWindowSize)
         XCTAssertEqual(TimelapseWindowController.contentSize, SettingsWindowController.contentSize)
+    }
+}
+
+@MainActor
+private struct SettingsPagesProbe: View {
+    @ObservedObject var state: SettingsState
+    let onAppear: (SettingsCategory, UUID) -> Void
+
+    var body: some View {
+        RetainedSettingsPages(selection: $state.category) { category in
+            SettingsPageIdentityProbe { onAppear(category, $0) }
+        }
+    }
+}
+
+@MainActor
+private struct SettingsPageIdentityProbe: View {
+    @State private var identity = UUID()
+    let onAppear: (UUID) -> Void
+
+    var body: some View {
+        Color.clear.onAppear { onAppear(identity) }
     }
 }

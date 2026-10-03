@@ -83,6 +83,9 @@ final class ModernUIRenderTests: XCTestCase {
                     try await render(settings, size: SettingsWindowController.minimumContentSize, appearance: appearance,
                         to: directory.appendingPathComponent(name + "-settings-" + category.rawValue + ".png"))
                 }
+                try await render(LocalCopyExplanation(folderPath: localPhotos.configuration.activeFolder?.displayPath),
+                    size: NSSize(width: 320, height: 380), appearance: appearance,
+                    to: directory.appendingPathComponent(name + "-local-copy-help.png"))
                 for step in PermissionOnboardingStep.allCases {
                     let model = PermissionOnboardingModel(permissionProvider: PreviewPermissions())
                     let onboarding = PermissionOnboardingView(model: model, initialStep: step,

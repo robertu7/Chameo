@@ -16,6 +16,7 @@ enum PermissionOnboardingStep: Int, CaseIterable, Equatable {
 }
 
 struct PermissionOnboardingView: View {
+    @Environment(\.colorScheme) private var colorScheme
     @ObservedObject var model: PermissionOnboardingModel
     @State private var step: PermissionOnboardingStep
 
@@ -132,17 +133,7 @@ struct PermissionOnboardingView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            HStack(spacing: 14) {
-                Image(systemName: "wifi")
-                Image(systemName: "eye").foregroundStyle(.primary)
-                Image(systemName: "magnifyingglass")
-                Image(systemName: "switch.2")
-            }
-            .foregroundStyle(.secondary)
-            .padding(10)
-            .frame(maxWidth: .infinity)
-            .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
-            .accessibilityHidden(true)
+            menuBarHint
 
             VStack(spacing: 0) {
                 permissionRow(
@@ -185,6 +176,37 @@ struct PermissionOnboardingView: View {
         .frame(maxWidth: 380)
         .padding(.top, 12)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    private var menuBarHint: some View {
+        VStack(spacing: 4) {
+            HStack(spacing: 14) {
+                Image(systemName: "wifi").frame(width: 20)
+                Image(nsImage: StatusMenuIcon.image(named: "eye",
+                    appearance: NSAppearance(named: colorScheme == .dark ? .darkAqua : .aqua)!))
+                    .resizable().scaledToFit().frame(width: 18, height: 18)
+                    .frame(width: 32, height: 32)
+                    .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 7))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 7).strokeBorder(Color.accentColor, lineWidth: 1.5)
+                    }
+                Image(systemName: "magnifyingglass").frame(width: 20)
+                Image(systemName: "switch.2").frame(width: 20)
+            }
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
+            HStack(spacing: 14) {
+                Color.clear.frame(width: 20)
+                Image(systemName: "arrow.up").font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(Color.accentColor).frame(width: 32)
+                Color.clear.frame(width: 20)
+                Color.clear.frame(width: 20)
+            }
+            .frame(height: 20)
+        }
+        .accessibilityHidden(true)
     }
 
     private func onboardingImage(named name: String) -> NSImage {
