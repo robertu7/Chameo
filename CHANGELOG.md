@@ -5,6 +5,30 @@ subsequently confirmed the complete photo workflow and reminders/Sparkle
 update workflow as validated on October 3, 2026; see the current
 [manual validation record](docs/testing/daily-workflows.md).
 
+## 0.5.6
+
+### What’s new
+
+- Updated the Timelapse Create action to use the system’s prominent glass
+  style.
+
+### Fixes
+
+- Preserved the camera-preview mirror preference when a video connection
+  appears or is replaced.
+
+### Known testing limitations
+
+- Physical-camera mirroring after late or replacement connections and the
+  native Timelapse button appearance still need live checks.
+- Full keyboard traversal, VoiceOver, system accessibility settings, permission
+  denial/recovery, and launch at login still need live validation.
+- Installation, update/relaunch, Gatekeeper, and permission persistence on a
+  clean Mac still need validation before broader distribution.
+- Stage 1 builds are ad-hoc signed and are not notarized by Apple.
+- macOS may request Camera, Photos, Location, or Notification permission again
+  after an update.
+
 ## 0.5.5
 
 ### What’s new
