@@ -10,15 +10,17 @@ struct ChameoMoreMenu<Content: View>: View {
             content
         } label: {
             Label(title, systemImage: "ellipsis")
+                .labelStyle(.iconOnly)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.primary)
+                .frame(width: ChameoLayout.compactControlSize, height: ChameoLayout.compactControlSize)
+                .contentShape(Circle())
+                .chameoGlassControl(in: Circle())
         }
-        .labelStyle(.iconOnly)
-        .menuStyle(.borderlessButton)
+        // Keep the label's full circle as the target; borderless menus use a smaller native popup button.
+        .menuStyle(.button)
+        .buttonStyle(.plain)
         .menuIndicator(.hidden)
-        .frame(width: ChameoLayout.compactControlSize, height: ChameoLayout.compactControlSize)
-        .contentShape(Circle())
-        .chameoGlassControl(in: Circle())
         .help(title)
         .accessibilityLabel(title)
     }
