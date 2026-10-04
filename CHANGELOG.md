@@ -5,6 +5,31 @@ subsequently confirmed the complete photo workflow and reminders/Sparkle
 update workflow as validated on October 3, 2026; see the current
 [manual validation record](docs/testing/daily-workflows.md).
 
+## 0.5.7
+
+### What’s new
+
+- Unsaved captures stay available for review when navigating between app
+  surfaces.
+
+### Fixes
+
+- Serialized reminder updates; coalesced album creation; canceled obsolete
+  thumbnail requests; cached calendar history; corrected pending login approval
+  and location/privacy disclosures; and strengthened release recovery, feed
+  concurrency, and signed-entitlement checks.
+
+### Known testing limitations
+
+- Physical capture, Photos/iCloud behavior, login-item approval, VoiceOver and
+  other accessibility behavior, and deployed release recovery still need manual
+  integration checks.
+- Installation/update, Gatekeeper, and permission persistence on a clean Mac
+  still need validation before broader distribution.
+- Stage 1 builds are ad-hoc signed and are not notarized by Apple.
+- macOS may request Camera, Photos, Location, or Notification permission again
+  after an update.
+
 ## 0.5.6
 
 ### What’s new
