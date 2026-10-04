@@ -5,6 +5,28 @@ subsequently confirmed the complete photo workflow and reminders/Sparkle
 update workflow as validated on October 3, 2026; see the current
 [manual validation record](docs/testing/daily-workflows.md).
 
+## 0.5.8
+
+### What’s new
+
+- Added a combined date and time picker with Today/Tomorrow shortcuts and
+  previews for the next occurrence of recurring reminders.
+
+### Fixes
+
+- Kept typed time entry usable while correcting invalid values and aligned the
+  weekly day picker.
+
+### Known testing limitations
+
+- Full keyboard traversal, VoiceOver and system accessibility settings,
+  permission denial and recovery, launch at login, and clean-Mac installation,
+  update, relaunch, Gatekeeper, and permission persistence still need manual
+  checks.
+- Stage 1 builds are ad-hoc signed and are not notarized by Apple.
+- macOS may request Camera, Photos, Location, or Notification permission again
+  after an update.
+
 ## 0.5.7
 
 ### What’s new
