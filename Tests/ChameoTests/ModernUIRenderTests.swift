@@ -8,6 +8,102 @@ import XCTest
 /// Opt-in native layout previews; never starts a camera or changes system appearance.
 @MainActor
 final class ModernUIRenderTests: XCTestCase {
+    func testRenderReminderEditors() async throws {
+        guard let path = ProcessInfo.processInfo.environment["CHAMEO_UI_PREVIEW_DIR"] else {
+            throw XCTSkip("Set CHAMEO_UI_PREVIEW_DIR to export native layout previews.")
+        }
+        let directory = URL(fileURLWithPath: path)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let previousLanguage = UserDefaults.standard.object(forKey: AppPreferenceKey.language)
+        defer {
+            if let previousLanguage {
+                UserDefaults.standard.set(previousLanguage, forKey: AppPreferenceKey.language)
+            } else {
+                UserDefaults.standard.removeObject(forKey: AppPreferenceKey.language)
+            }
+        }
+        let date = Calendar.current.date(from:
+            DateComponents(year: 2026, month: 10, day: 5, hour: 9, minute: 30))!
+        for language in [AppLanguage.english, .simplifiedChinese, .traditionalChinese] {
+            UserDefaults.standard.set(language.rawValue, forKey: AppPreferenceKey.language)
+            for (name, appearanceName) in [("light", NSAppearance.Name.aqua), ("dark", .darkAqua)] {
+                let appearance = NSAppearance(named: appearanceName)!
+                let prefix = language.rawValue + "-" + name
+                for component in [ReminderDateTimeComponent.date, .time] {
+                    let editor = ReminderDateTimeEditor(
+                        draft: .constant(ReminderDateTimeDraft(date: date, locale: L10n.currentLocalization.displayLocale)), component: component,
+                        repeatMode: component == .date ? .none : .daily,
+                        onCancel: {}, onDone: {})
+                        .environment(\.locale, L10n.currentLocalization.displayLocale)
+                    try await render(editor,
+                        size: NSSize(width: 332, height: component == .date ? 450 : 240),
+                        appearance: appearance,
+                        to: directory.appendingPathComponent(prefix + (component == .date ? "-date-editor.png" : "-time-editor.png")))
+                }
+                let rows = SettingsPage(title: L10n.string("Reminders"),
+                    subtitle: L10n.string("A gentle nudge for your daily photo.")) {
+                    SettingsGroup {
+                        HStack {
+                            Text(L10n.string("Date"))
+                            Spacer()
+                            ReminderDateTimePicker(selection: .constant(date), component: .date, repeatMode: .none)
+                        }
+                        Divider()
+                        HStack(alignment: .top) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(L10n.string("Time"))
+                                Text(L10n.format("Next reminder: %@", DateFormatters.reminderPreview.string(from: date)))
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            ReminderDateTimePicker(selection: .constant(date), component: .time, repeatMode: .none)
+                        }
+                    }
+                }
+                try await render(rows, size: NSSize(width: 480, height: 250), appearance: appearance,
+                    to: directory.appendingPathComponent(prefix + "-reminder-controls.png"))
+                let weekly = SettingsPage(title: L10n.string("Reminders"),
+                    subtitle: L10n.string("A gentle nudge for your daily photo.")) {
+                    SettingsGroup {
+                        HStack {
+                            Text(L10n.string("Frequency"))
+                            Spacer()
+                            Picker(L10n.string("Frequency"), selection: .constant(ReminderRepeat.weekly)) {
+                                ForEach(ReminderRepeat.allCases) { Text($0.title).tag($0) }
+                            }.labelsHidden().pickerStyle(.menu).fixedSize()
+                        }
+                        ReminderWeekdayPicker(selection: .constant(2))
+                        Divider()
+                        HStack {
+                            Text(L10n.string("Time"))
+                            Spacer()
+                            ReminderDateTimePicker(selection: .constant(date), component: .time,
+                                repeatMode: .weekly, weekday: 2)
+                        }
+                    }
+                }.environment(\.locale, L10n.currentLocalization.displayLocale)
+                try await render(weekly, size: NSSize(width: 480, height: 250), appearance: appearance,
+                    to: directory.appendingPathComponent(prefix + "-weekly-reminder-controls.png"))
+            }
+        }
+        UserDefaults.standard.set(AppLanguage.english.rawValue, forKey: AppPreferenceKey.language)
+        for identifier in ["en_US", "en_GB"] {
+            let locale = Locale(identifier: identifier)
+            let valid = ReminderDateTimeDraft(date: date, locale: locale)
+            var invalid = valid
+            invalid.time.hourText = "99"
+            invalid.time.minuteText = ""
+            for (name, draft) in [("valid", valid), ("invalid", invalid)] {
+                let editor = ReminderDateTimeEditor(draft: .constant(draft), component: .time,
+                    repeatMode: .daily, onCancel: {}, onDone: {})
+                    .environment(\.locale, locale)
+                try await render(editor, size: NSSize(width: 332, height: 250),
+                    appearance: NSAppearance(named: .aqua)!,
+                    to: directory.appendingPathComponent(identifier + "-" + name + "-time-input.png"))
+            }
+        }
+    }
+
     func testRenderModernScreensInAllLanguagesAndAppearances() async throws {
         guard let path = ProcessInfo.processInfo.environment["CHAMEO_UI_PREVIEW_DIR"] else {
             throw XCTSkip("Set CHAMEO_UI_PREVIEW_DIR to export native layout previews.")

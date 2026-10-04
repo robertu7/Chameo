@@ -335,3 +335,15 @@
 
 "Saves geographic coordinates. Shared photos may include this location." = "Saves geographic coordinates. Shared photos may include this location.";
 "Open Login Items" = "Open Login Items";
+
+// Reminder date and time editor
+"Hour" = "Hour";
+"Minute" = "Minute";
+"Done" = "Done";
+"This time is unavailable on this date. Choose another time." = "This time is unavailable on this date. Choose another time.";
+
+"Date and time" = "Date and time";
+"Tomorrow" = "Tomorrow";
+"AM/PM" = "AM/PM";
+"Enter an hour from 1 to 12 and a minute from 0 to 59." = "Enter an hour from 1 to 12 and a minute from 0 to 59.";
+"Enter an hour from 0 to 23 and a minute from 0 to 59." = "Enter an hour from 0 to 23 and a minute from 0 to 59.";

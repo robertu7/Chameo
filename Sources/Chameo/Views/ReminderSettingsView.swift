@@ -12,6 +12,7 @@ struct ReminderSettingsView: View {
     @State private var reminderRepeat = ReminderRepeat.none
     @State private var reminderWeekday = Calendar.current.component(.weekday, from: Date())
     @State private var isUpdatingReminder = false
+    @State private var isEditingReminderDateTime = false
     @State private var showsReminderProgress = false
     @State private var reminderUpdateTask: Task<Void, Never>?
     @State private var reminderProgressTask: Task<Void, Never>?
@@ -37,24 +38,23 @@ struct ReminderSettingsView: View {
                     }
 
                     if reminderRepeat == .weekly {
-                        Picker(L10n.string("Day"), selection: $reminderWeekday) {
-                            ForEach(1...7, id: \.self) { weekday in
-                                Text(weekdayName(for: weekday)).tag(weekday)
-                            }
-                        }
-                        .disabled(isUpdatingReminder)
-                    }
-
-                    if reminderRepeat == .none {
-                        DatePicker(L10n.string("Date"), selection: $reminderDate, displayedComponents: .date)
+                        ReminderWeekdayPicker(selection: $reminderWeekday)
                             .disabled(isUpdatingReminder)
                     }
 
+                    if reminderRepeat == .none {
+                        HStack {
+                            Text(L10n.string("Date"))
+                            Spacer()
+                            ReminderDateTimePicker(selection: $reminderDate, component: .date,
+                                repeatMode: reminderRepeat, weekday: reminderWeekday,
+                                onEditingChanged: { isEditingReminderDateTime = $0 })
+                                .disabled(isUpdatingReminder)
+                        }
+                    }
+
                     Divider()
-                    DatePicker(
-                        selection: $reminderDate,
-                        displayedComponents: .hourAndMinute
-                    ) {
+                    HStack(alignment: .top) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(L10n.string("Time"))
 
@@ -70,11 +70,11 @@ struct ReminderSettingsView: View {
                                 }
                             }
                         }.frame(maxWidth: .infinity, alignment: .leading)
+                        ReminderDateTimePicker(selection: $reminderDate, component: .time,
+                            repeatMode: reminderRepeat, weekday: reminderWeekday,
+                            onEditingChanged: { isEditingReminderDateTime = $0 })
+                            .disabled(isUpdatingReminder)
                     }
-                    .disabled(isUpdatingReminder)
-                    .accessibilityLabel(L10n.string("Time"))
-                    .accessibilityValue(reminderPreviewText)
-                    .accessibilityHint(reminderPreviewText)
                 }
 
                 if isNotificationPermissionDenied {
@@ -121,7 +121,13 @@ struct ReminderSettingsView: View {
         .onChange(of: reminderDate) {
             scheduleReminderUpdate()
         }
-        .onChange(of: reminderRepeat) {
+        .onChange(of: isEditingReminderDateTime) {
+            scheduleReminderUpdate()
+        }
+        .onChange(of: reminderRepeat) { _, newValue in
+            if newValue == .none, nextReminderDate == nil {
+                reminderDate = defaultOneTimeReminderDate
+            }
             scheduleReminderUpdate()
         }
         .onChange(of: reminderWeekday) {
@@ -146,7 +152,7 @@ struct ReminderSettingsView: View {
     }
 
     private func saveReminderSettings() async {
-        guard hasReminderChanges, canSaveReminder, !isUpdatingReminder else {
+        guard hasReminderChanges, canSaveReminder, !isUpdatingReminder, !isEditingReminderDateTime else {
             return
         }
 
@@ -177,7 +183,7 @@ struct ReminderSettingsView: View {
         reminderUpdateTask?.cancel()
         reminderUpdateTask = nil
 
-        guard hasLoadedSettings else {
+        guard hasLoadedSettings, !isEditingReminderDateTime else {
             return
         }
 
@@ -223,7 +229,10 @@ struct ReminderSettingsView: View {
     }
 
     private var defaultOneTimeReminderDate: Date {
-        Calendar.current.date(byAdding: .day, value: 1, to: Date()) ?? Date()
+        let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: Date()) ?? Date()
+        var draft = ReminderDateTimeDraft(date: reminderDate)
+        draft.day = tomorrow
+        return draft.resolvedDate() ?? tomorrow
     }
 
     private var reminderPreviewText: String {
@@ -247,15 +256,6 @@ struct ReminderSettingsView: View {
             repeatMode: reminderRepeat,
             weekday: reminderWeekday
         ).nextDate(after: Date())
-    }
-
-    private func weekdayName(for weekday: Int) -> String {
-        let symbols = localizedCalendar.weekdaySymbols
-        guard symbols.indices.contains(weekday - 1) else {
-            return ""
-        }
-
-        return symbols[weekday - 1]
     }
 
     private func validWeekday(_ weekday: Int) -> Int {

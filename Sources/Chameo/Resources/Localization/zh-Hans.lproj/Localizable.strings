@@ -335,3 +335,15 @@
 
 "Saves geographic coordinates. Shared photos may include this location." = "保存地理坐标。分享的照片可能包含此位置。";
 "Open Login Items" = "打开登录项";
+
+// Reminder date and time editor
+"Hour" = "小时";
+"Minute" = "分钟";
+"Done" = "完成";
+"This time is unavailable on this date. Choose another time." = "此日期无法使用该时间。请选择其他时间。";
+
+"Date and time" = "日期和时间";
+"Tomorrow" = "明天";
+"AM/PM" = "上午/下午";
+"Enter an hour from 1 to 12 and a minute from 0 to 59." = "请输入 1 至 12 的小时和 0 至 59 的分钟。";
+"Enter an hour from 0 to 23 and a minute from 0 to 59." = "请输入 0 至 23 的小时和 0 至 59 的分钟。";
