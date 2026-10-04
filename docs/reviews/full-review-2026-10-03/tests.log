@@ -1,0 +1,560 @@
+Building for debugging...
+[Using on-disk description]
+[4 / 16]
+[4 / 13] Chameo-product
+[7 / 14] Chameo-product
+Build complete! (2.06 secs)
+Test Suite 'All tests' started at 2026-10-03 22:44:41.972.
+Test Suite 'ChameoTests.xctest' started at 2026-10-03 22:44:41.973.
+Test Suite 'AppDistributionTests' started at 2026-10-03 22:44:41.973.
+Test Case '-[ChameoTests.AppDistributionTests testMissingDistributionKeysUseSafeLocalDefaults]' started.
+Test Case '-[ChameoTests.AppDistributionTests testMissingDistributionKeysUseSafeLocalDefaults]' passed (0.000 seconds).
+Test Case '-[ChameoTests.AppDistributionTests testReleaseConfigurationReadsEnabledCapabilities]' started.
+Test Case '-[ChameoTests.AppDistributionTests testReleaseConfigurationReadsEnabledCapabilities]' passed (0.000 seconds).
+Test Case '-[ChameoTests.AppDistributionTests testTestConfigurationUsesSeparateIdentityAndDisablesReleaseCapabilities]' started.
+Test Case '-[ChameoTests.AppDistributionTests testTestConfigurationUsesSeparateIdentityAndDisablesReleaseCapabilities]' passed (0.000 seconds).
+Test Suite 'AppDistributionTests' passed at 2026-10-03 22:44:41.974.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'AppPreferencesTests' started at 2026-10-03 22:44:41.974.
+Test Case '-[ChameoTests.AppPreferencesTests testStoredReminderSettingsFallsBackFromUnknownRepeatValue]' started.
+Test Case '-[ChameoTests.AppPreferencesTests testStoredReminderSettingsFallsBackFromUnknownRepeatValue]' passed (0.001 seconds).
+Test Case '-[ChameoTests.AppPreferencesTests testStoredReminderSettingsLoadsTypedValues]' started.
+Test Case '-[ChameoTests.AppPreferencesTests testStoredReminderSettingsLoadsTypedValues]' passed (0.001 seconds).
+Test Suite 'AppPreferencesTests' passed at 2026-10-03 22:44:41.977.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+Test Suite 'CameraPreviewViewTests' started at 2026-10-03 22:44:41.977.
+Test Case '-[ChameoTests.CameraPreviewViewTests testConnectionCreatedOnSessionQueueReceivesStoredPreference]' started.
+Test Case '-[ChameoTests.CameraPreviewViewTests testConnectionCreatedOnSessionQueueReceivesStoredPreference]' passed (0.049 seconds).
+Test Case '-[ChameoTests.CameraPreviewViewTests testInitialMirrorPreferenceIsAppliedWhenConnectionAppears]' started.
+Test Case '-[ChameoTests.CameraPreviewViewTests testInitialMirrorPreferenceIsAppliedWhenConnectionAppears]' passed (0.008 seconds).
+Test Case '-[ChameoTests.CameraPreviewViewTests testLatestPreferenceBeforeConnectionAppearsWins]' started.
+Test Case '-[ChameoTests.CameraPreviewViewTests testLatestPreferenceBeforeConnectionAppearsWins]' passed (0.008 seconds).
+Test Case '-[ChameoTests.CameraPreviewViewTests testMirrorPreferenceIsAppliedWhenConnectionAlreadyExists]' started.
+Test Case '-[ChameoTests.CameraPreviewViewTests testMirrorPreferenceIsAppliedWhenConnectionAlreadyExists]' passed (0.000 seconds).
+Test Case '-[ChameoTests.CameraPreviewViewTests testReplacementConnectionReceivesStoredPreference]' started.
+Test Case '-[ChameoTests.CameraPreviewViewTests testReplacementConnectionReceivesStoredPreference]' passed (0.016 seconds).
+Test Suite 'CameraPreviewViewTests' passed at 2026-10-03 22:44:42.059.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.081 (0.082) seconds
+Test Suite 'CameraSelectionPolicyTests' started at 2026-10-03 22:44:42.059.
+Test Case '-[ChameoTests.CameraSelectionPolicyTests testBuiltInCameraIsFallbackWhenSystemPreferenceIsUnavailable]' started.
+Test Case '-[ChameoTests.CameraSelectionPolicyTests testBuiltInCameraIsFallbackWhenSystemPreferenceIsUnavailable]' passed (0.000 seconds).
+Test Case '-[ChameoTests.CameraSelectionPolicyTests testBuiltInFallbackWinsWhenStoredUserPreferenceIsDisconnected]' started.
+Test Case '-[ChameoTests.CameraSelectionPolicyTests testBuiltInFallbackWinsWhenStoredUserPreferenceIsDisconnected]' passed (0.000 seconds).
+Test Case '-[ChameoTests.CameraSelectionPolicyTests testContinuityCameraPreviewIsNotMirrored]' started.
+Test Case '-[ChameoTests.CameraSelectionPolicyTests testContinuityCameraPreviewIsNotMirrored]' passed (0.000 seconds).
+Test Case '-[ChameoTests.CameraSelectionPolicyTests testFirstAvailableCameraIsFallbackWithoutBuiltInCamera]' started.
+Test Case '-[ChameoTests.CameraSelectionPolicyTests testFirstAvailableCameraIsFallbackWithoutBuiltInCamera]' passed (0.000 seconds).
+Test Case '-[ChameoTests.CameraSelectionPolicyTests testNoCameraReturnsNil]' started.
+Test Case '-[ChameoTests.CameraSelectionPolicyTests testNoCameraReturnsNil]' passed (0.000 seconds).
+Test Case '-[ChameoTests.CameraSelectionPolicyTests testOtherCameraPreviewsRemainMirrored]' started.
+Test Case '-[ChameoTests.CameraSelectionPolicyTests testOtherCameraPreviewsRemainMirrored]' passed (0.000 seconds).
+Test Case '-[ChameoTests.CameraSelectionPolicyTests testSystemPreferredCameraWinsWhenAvailable]' started.
+Test Case '-[ChameoTests.CameraSelectionPolicyTests testSystemPreferredCameraWinsWhenAvailable]' passed (0.000 seconds).
+Test Case '-[ChameoTests.CameraSelectionPolicyTests testUserPreferredCameraWinsWhenSystemPreferenceIsUnavailable]' started.
+Test Case '-[ChameoTests.CameraSelectionPolicyTests testUserPreferredCameraWinsWhenSystemPreferenceIsUnavailable]' passed (0.000 seconds).
+Test Suite 'CameraSelectionPolicyTests' passed at 2026-10-03 22:44:42.061.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Suite 'CaptureQualityHistoryStoreTests' started at 2026-10-03 22:44:42.061.
+Test Case '-[ChameoTests.CaptureQualityHistoryStoreTests testHistoryKeepsOnlyMostRecentScores]' started.
+Test Case '-[ChameoTests.CaptureQualityHistoryStoreTests testHistoryKeepsOnlyMostRecentScores]' passed (0.007 seconds).
+Test Case '-[ChameoTests.CaptureQualityHistoryStoreTests testRecordsOnlyScoredAcceptedCaptures]' started.
+Test Case '-[ChameoTests.CaptureQualityHistoryStoreTests testRecordsOnlyScoredAcceptedCaptures]' passed (0.001 seconds).
+Test Suite 'CaptureQualityHistoryStoreTests' passed at 2026-10-03 22:44:42.069.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.008 (0.008) seconds
+Test Suite 'DailyCaptureStatusTests' started at 2026-10-03 22:44:42.069.
+Test Case '-[ChameoTests.DailyCaptureStatusTests testCalendarDatesAlwaysProducesSixCompleteWeeks]' started.
+Test Case '-[ChameoTests.DailyCaptureStatusTests testCalendarDatesAlwaysProducesSixCompleteWeeks]' passed (0.000 seconds).
+Test Case '-[ChameoTests.DailyCaptureStatusTests testNoCapturesLeavesPastOutsideTrackingAndTodayPending]' started.
+Test Case '-[ChameoTests.DailyCaptureStatusTests testNoCapturesLeavesPastOutsideTrackingAndTodayPending]' passed (0.000 seconds).
+Test Case '-[ChameoTests.DailyCaptureStatusTests testStatusDistinguishesCapturedPendingMissedAndUntrackedDays]' started.
+Test Case '-[ChameoTests.DailyCaptureStatusTests testStatusDistinguishesCapturedPendingMissedAndUntrackedDays]' passed (0.000 seconds).
+Test Case '-[ChameoTests.DailyCaptureStatusTests testTodayIsCapturedWhenItHasAPhoto]' started.
+Test Case '-[ChameoTests.DailyCaptureStatusTests testTodayIsCapturedWhenItHasAPhoto]' passed (0.000 seconds).
+Test Case '-[ChameoTests.DailyCaptureStatusTests testUnavailableHistoryReturnsUnknown]' started.
+Test Case '-[ChameoTests.DailyCaptureStatusTests testUnavailableHistoryReturnsUnknown]' passed (0.000 seconds).
+Test Suite 'DailyCaptureStatusTests' passed at 2026-10-03 22:44:42.070.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'DeferredOpenRequestTests' started at 2026-10-03 22:44:42.070.
+Test Case '-[ChameoTests.DeferredOpenRequestTests testMultipleStartupRequestsCoalesceIntoLatestDestination]' started.
+Test Case '-[ChameoTests.DeferredOpenRequestTests testMultipleStartupRequestsCoalesceIntoLatestDestination]' passed (0.000 seconds).
+Test Case '-[ChameoTests.DeferredOpenRequestTests testRequestMadeAfterAppUIIsReadyIsDeliveredImmediately]' started.
+Test Case '-[ChameoTests.DeferredOpenRequestTests testRequestMadeAfterAppUIIsReadyIsDeliveredImmediately]' passed (0.000 seconds).
+Test Case '-[ChameoTests.DeferredOpenRequestTests testRequestMadeBeforeAppUIIsReadyIsDeliveredWhenHandlerIsInstalled]' started.
+Test Case '-[ChameoTests.DeferredOpenRequestTests testRequestMadeBeforeAppUIIsReadyIsDeliveredWhenHandlerIsInstalled]' passed (0.000 seconds).
+Test Suite 'DeferredOpenRequestTests' passed at 2026-10-03 22:44:42.071.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+Test Suite 'FaceAlignmentGeometryTests' started at 2026-10-03 22:44:42.071.
+Test Case '-[ChameoTests.FaceAlignmentGeometryTests testHorizontalEyesDoNotRotate]' started.
+Test Case '-[ChameoTests.FaceAlignmentGeometryTests testHorizontalEyesDoNotRotate]' passed (0.000 seconds).
+Test Case '-[ChameoTests.FaceAlignmentGeometryTests testOutputIsSquareAndAnchorsFace]' started.
+Test Case '-[ChameoTests.FaceAlignmentGeometryTests testOutputIsSquareAndAnchorsFace]' passed (0.000 seconds).
+Test Case '-[ChameoTests.FaceAlignmentGeometryTests testTiltedEyesProduceCorrectiveRotation]' started.
+Test Case '-[ChameoTests.FaceAlignmentGeometryTests testTiltedEyesProduceCorrectiveRotation]' passed (0.000 seconds).
+Test Suite 'FaceAlignmentGeometryTests' passed at 2026-10-03 22:44:42.072.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+Test Suite 'FaceCaptureQualitySelectionTests' started at 2026-10-03 22:44:42.072.
+Test Case '-[ChameoTests.FaceCaptureQualitySelectionTests testAnalysisFailureDoesNotSuggestRetake]' started.
+Test Case '-[ChameoTests.FaceCaptureQualitySelectionTests testAnalysisFailureDoesNotSuggestRetake]' passed (0.000 seconds).
+Test Case '-[ChameoTests.FaceCaptureQualitySelectionTests testLargestFaceDeterminesCaptureQuality]' started.
+Test Case '-[ChameoTests.FaceCaptureQualitySelectionTests testLargestFaceDeterminesCaptureQuality]' passed (0.000 seconds).
+Test Case '-[ChameoTests.FaceCaptureQualitySelectionTests testMissingScoreOnLargestFaceDoesNotUseAnotherPerson]' started.
+Test Case '-[ChameoTests.FaceCaptureQualitySelectionTests testMissingScoreOnLargestFaceDoesNotUseAnotherPerson]' passed (0.000 seconds).
+Test Case '-[ChameoTests.FaceCaptureQualitySelectionTests testNoFaceAlwaysSuggestsRetake]' started.
+Test Case '-[ChameoTests.FaceCaptureQualitySelectionTests testNoFaceAlwaysSuggestsRetake]' passed (0.000 seconds).
+Test Case '-[ChameoTests.FaceCaptureQualitySelectionTests testNoFacesProducesNoFaceEvaluation]' started.
+Test Case '-[ChameoTests.FaceCaptureQualitySelectionTests testNoFacesProducesNoFaceEvaluation]' passed (0.000 seconds).
+Test Case '-[ChameoTests.FaceCaptureQualitySelectionTests testScoreClearlyBelowBaselineSuggestsRetake]' started.
+Test Case '-[ChameoTests.FaceCaptureQualitySelectionTests testScoreClearlyBelowBaselineSuggestsRetake]' passed (0.000 seconds).
+Test Case '-[ChameoTests.FaceCaptureQualitySelectionTests testScoreDoesNotTriggerWarningBeforeBaselineIsEstablished]' started.
+Test Case '-[ChameoTests.FaceCaptureQualitySelectionTests testScoreDoesNotTriggerWarningBeforeBaselineIsEstablished]' passed (0.000 seconds).
+Test Case '-[ChameoTests.FaceCaptureQualitySelectionTests testScoreNearBaselineDoesNotSuggestRetake]' started.
+Test Case '-[ChameoTests.FaceCaptureQualitySelectionTests testScoreNearBaselineDoesNotSuggestRetake]' passed (0.000 seconds).
+Test Suite 'FaceCaptureQualitySelectionTests' passed at 2026-10-03 22:44:42.073.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Suite 'GoogleMapsLinkTests' started at 2026-10-03 22:44:42.073.
+Test Case '-[ChameoTests.GoogleMapsLinkTests testURLTargetsThePhotoCoordinateInGoogleMaps]' started.
+Test Case '-[ChameoTests.GoogleMapsLinkTests testURLTargetsThePhotoCoordinateInGoogleMaps]' passed (0.000 seconds).
+Test Suite 'GoogleMapsLinkTests' passed at 2026-10-03 22:44:42.074.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+Test Suite 'HandsFreeCountdownTests' started at 2026-10-03 22:44:42.074.
+Test Case '-[ChameoTests.HandsFreeCountdownTests testAutomaticCaptureRequiresReadyAtFinalTick]' started.
+Test Case '-[ChameoTests.HandsFreeCountdownTests testAutomaticCaptureRequiresReadyAtFinalTick]' passed (0.000 seconds).
+Test Case '-[ChameoTests.HandsFreeCountdownTests testBriefCorrectiveGuidanceDoesNotCancelCountdown]' started.
+Test Case '-[ChameoTests.HandsFreeCountdownTests testBriefCorrectiveGuidanceDoesNotCancelCountdown]' passed (0.000 seconds).
+Test Case '-[ChameoTests.HandsFreeCountdownTests testCorrectiveGuidanceUnlocksPostCaptureCycle]' started.
+Test Case '-[ChameoTests.HandsFreeCountdownTests testCorrectiveGuidanceUnlocksPostCaptureCycle]' passed (0.000 seconds).
+Test Case '-[ChameoTests.HandsFreeCountdownTests testCountdownIsInactiveByDefault]' started.
+Test Case '-[ChameoTests.HandsFreeCountdownTests testCountdownIsInactiveByDefault]' passed (0.000 seconds).
+Test Case '-[ChameoTests.HandsFreeCountdownTests testDisablingFeatureCancelsAndResetsLockout]' started.
+Test Case '-[ChameoTests.HandsFreeCountdownTests testDisablingFeatureCancelsAndResetsLockout]' passed (0.000 seconds).
+Test Case '-[ChameoTests.HandsFreeCountdownTests testHidingCameraCancelsActiveTimer]' started.
+Test Case '-[ChameoTests.HandsFreeCountdownTests testHidingCameraCancelsActiveTimer]' passed (0.000 seconds).
+Test Case '-[ChameoTests.HandsFreeCountdownTests testHidingCameraCancelsButPreservesLockout]' started.
+Test Case '-[ChameoTests.HandsFreeCountdownTests testHidingCameraCancelsButPreservesLockout]' passed (0.000 seconds).
+Test Case '-[ChameoTests.HandsFreeCountdownTests testManualCaptureCancelsCountdownAndLocksCycle]' started.
+Test Case '-[ChameoTests.HandsFreeCountdownTests testManualCaptureCancelsCountdownAndLocksCycle]' passed (0.000 seconds).
+Test Case '-[ChameoTests.HandsFreeCountdownTests testMissingOrMultipleFacesCancelImmediately]' started.
+Test Case '-[ChameoTests.HandsFreeCountdownTests testMissingOrMultipleFacesCancelImmediately]' passed (0.000 seconds).
+Test Case '-[ChameoTests.HandsFreeCountdownTests testNeutralCancelsWithoutUnlockingPostCaptureCycle]' started.
+Test Case '-[ChameoTests.HandsFreeCountdownTests testNeutralCancelsWithoutUnlockingPostCaptureCycle]' passed (0.000 seconds).
+Test Case '-[ChameoTests.HandsFreeCountdownTests testReadyStartsThreeSecondCountdownAndCapturesOnce]' started.
+Test Case '-[ChameoTests.HandsFreeCountdownTests testReadyStartsThreeSecondCountdownAndCapturesOnce]' passed (0.000 seconds).
+Test Case '-[ChameoTests.HandsFreeCountdownTests testRepeatedReadyDoesNotStartOverlappingTimers]' started.
+Test Case '-[ChameoTests.HandsFreeCountdownTests testRepeatedReadyDoesNotStartOverlappingTimers]' passed (0.000 seconds).
+Test Case '-[ChameoTests.HandsFreeCountdownTests testSustainedFramingLossCancelsAndReadyRestartsCountdown]' started.
+Test Case '-[ChameoTests.HandsFreeCountdownTests testSustainedFramingLossCancelsAndReadyRestartsCountdown]' passed (0.000 seconds).
+Test Suite 'HandsFreeCountdownTests' passed at 2026-10-03 22:44:42.076.
+	 Executed 13 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Test Suite 'LibraryStoreTests' started at 2026-10-03 22:44:42.076.
+Test Case '-[ChameoTests.LibraryStoreTests testChangingAlbumInvalidatesThePreviousSnapshot]' started.
+Test Case '-[ChameoTests.LibraryStoreTests testChangingAlbumInvalidatesThePreviousSnapshot]' passed (0.001 seconds).
+Test Case '-[ChameoTests.LibraryStoreTests testDailyStatusIsUnknownUntilInitialLoadCompletes]' started.
+Test Case '-[ChameoTests.LibraryStoreTests testDailyStatusIsUnknownUntilInitialLoadCompletes]' passed (0.000 seconds).
+Test Case '-[ChameoTests.LibraryStoreTests testDefaultDeletionKeepsTheLocalCopy]' started.
+Test Case '-[ChameoTests.LibraryStoreTests testDefaultDeletionKeepsTheLocalCopy]' passed (0.007 seconds).
+Test Case '-[ChameoTests.LibraryStoreTests testLocalTrashFailureKeepsSuccessfulPhotosDeletionAndDailyStatus]' started.
+Test Case '-[ChameoTests.LibraryStoreTests testLocalTrashFailureKeepsSuccessfulPhotosDeletionAndDailyStatus]' passed (0.003 seconds).
+Test Case '-[ChameoTests.LibraryStoreTests testOlderReloadCannotOverwriteNewerState]' started.
+Test Case '-[ChameoTests.LibraryStoreTests testOlderReloadCannotOverwriteNewerState]' passed (0.056 seconds).
+Test Suite 'LibraryStoreTests' passed at 2026-10-03 22:44:42.144.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.067 (0.068) seconds
+Test Suite 'LiveFramingGuidanceTests' started at 2026-10-03 22:44:42.144.
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testAspectFillGeometryAccountsForHorizontalCrop]' started.
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testAspectFillGeometryAccountsForHorizontalCrop]' passed (0.000 seconds).
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testCenteredFaceBecomesReadyAfterFourStableSamples]' started.
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testCenteredFaceBecomesReadyAfterFourStableSamples]' passed (0.000 seconds).
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testCloserFaceCanStillBecomeReady]' started.
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testCloserFaceCanStillBecomeReady]' passed (0.000 seconds).
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testCountdownRetainsReadyForSlightMovementButCancelsForMissingFace]' started.
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testCountdownRetainsReadyForSlightMovementButCancelsForMissingFace]' passed (0.000 seconds).
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testDistanceHintsTakePriorityOverCentering]' started.
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testDistanceHintsTakePriorityOverCentering]' passed (0.000 seconds).
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testEyesVisiblyBelowGuideDoNotStartCountdown]' started.
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testEyesVisiblyBelowGuideDoNotStartCountdown]' passed (0.000 seconds).
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testFaceAtCaptureDistanceFitsVisibleGuide]' started.
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testFaceAtCaptureDistanceFitsVisibleGuide]' passed (0.000 seconds).
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testFaceVisiblyTooSmallForOvalNeedsToMoveCloser]' started.
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testFaceVisiblyTooSmallForOvalNeedsToMoveCloser]' passed (0.000 seconds).
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testHighEyeLineProducesMoveLowerHint]' started.
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testHighEyeLineProducesMoveLowerHint]' passed (0.000 seconds).
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testLowEyeLineProducesMoveHigherHint]' started.
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testLowEyeLineProducesMoveHigherHint]' passed (0.000 seconds).
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testMirroringReflectsFaceAcrossPreviewCenter]' started.
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testMirroringReflectsFaceAcrossPreviewCenter]' passed (0.000 seconds).
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testMovementProducesHoldStill]' started.
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testMovementProducesHoldStill]' passed (0.000 seconds).
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testMultipleFacesTakePriority]' started.
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testMultipleFacesTakePriority]' passed (0.000 seconds).
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testNoFaceDebouncesToCenterHint]' started.
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testNoFaceDebouncesToCenterHint]' passed (0.000 seconds).
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testOffCenterFaceProducesCenteringHint]' started.
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testOffCenterFaceProducesCenteringHint]' passed (0.000 seconds).
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testOversizedFaceProducesMoveBackHint]' started.
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testOversizedFaceProducesMoveBackHint]' passed (0.000 seconds).
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testResetReturnsEvaluatorToNeutral]' started.
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testResetReturnsEvaluatorToNeutral]' passed (0.000 seconds).
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testVisibleEyeBandMatchesReadinessAcrossPreviewSizesAndCrops]' started.
+Test Case '-[ChameoTests.LiveFramingGuidanceTests testVisibleEyeBandMatchesReadinessAcrossPreviewSizesAndCrops]' passed (0.000 seconds).
+Test Suite 'LiveFramingGuidanceTests' passed at 2026-10-03 22:44:42.149.
+	 Executed 18 tests, with 0 failures (0 unexpected) in 0.004 (0.005) seconds
+Test Suite 'LocalPhotoEncodingTests' started at 2026-10-03 22:44:42.149.
+Test Case '-[ChameoTests.LocalPhotoEncodingTests testExportRetainsLocalCopyWarningWithoutNotificationWarning]' started.
+Test Case '-[ChameoTests.LocalPhotoEncodingTests testExportRetainsLocalCopyWarningWithoutNotificationWarning]' passed (0.182 seconds).
+Test Case '-[ChameoTests.LocalPhotoEncodingTests testLocalFirstResolverProducesReal1080SquareVideoAndPreservesCenterCrop]' started.
+Test Case '-[ChameoTests.LocalPhotoEncodingTests testLocalFirstResolverProducesReal1080SquareVideoAndPreservesCenterCrop]' passed (0.181 seconds).
+Test Case '-[ChameoTests.LocalPhotoEncodingTests testRealEncoderStillCompletesWhenLocalFolderFails]' started.
+Test Case '-[ChameoTests.LocalPhotoEncodingTests testRealEncoderStillCompletesWhenLocalFolderFails]' passed (0.083 seconds).
+Test Suite 'LocalPhotoEncodingTests' passed at 2026-10-03 22:44:42.595.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.446 (0.446) seconds
+Test Suite 'LocalPhotoSettingsTests' started at 2026-10-03 22:44:42.595.
+Test Case '-[ChameoTests.LocalPhotoSettingsTests testDefaultSettingsShowFixedFolderWithoutCreatingIt]' started.
+Test Case '-[ChameoTests.LocalPhotoSettingsTests testDefaultSettingsShowFixedFolderWithoutCreatingIt]' passed (0.002 seconds).
+Test Case '-[ChameoTests.LocalPhotoSettingsTests testEnableFailureKeepsSettingOffAndRetryClearsError]' started.
+Test Case '-[ChameoTests.LocalPhotoSettingsTests testEnableFailureKeepsSettingOffAndRetryClearsError]' passed (0.005 seconds).
+Test Case '-[ChameoTests.LocalPhotoSettingsTests testLocalFailurePreservesSuccessfulCaptureAndDoesNotRepeatPhotosSave]' started.
+Test Case '-[ChameoTests.LocalPhotoSettingsTests testLocalFailurePreservesSuccessfulCaptureAndDoesNotRepeatPhotosSave]' passed (0.000 seconds).
+Test Case '-[ChameoTests.LocalPhotoSettingsTests testPhotoResourceCancellationRejectsLateCompletion]' started.
+Test Case '-[ChameoTests.LocalPhotoSettingsTests testPhotoResourceCancellationRejectsLateCompletion]' passed (0.000 seconds).
+Test Case '-[ChameoTests.LocalPhotoSettingsTests testPhotoResourceChunksFinishOnceAndRejectLateData]' started.
+Test Case '-[ChameoTests.LocalPhotoSettingsTests testPhotoResourceChunksFinishOnceAndRejectLateData]' passed (0.000 seconds).
+Test Case '-[ChameoTests.LocalPhotoSettingsTests testPhotosFailureDoesNotAttemptLocalSave]' started.
+Test Case '-[ChameoTests.LocalPhotoSettingsTests testPhotosFailureDoesNotAttemptLocalSave]' passed (0.000 seconds).
+Test Case '-[ChameoTests.LocalPhotoSettingsTests testSettingsRecreationRemembersFolderAndEnabledState]' started.
+Test Case '-[ChameoTests.LocalPhotoSettingsTests testSettingsRecreationRemembersFolderAndEnabledState]' passed (0.003 seconds).
+Test Case '-[ChameoTests.LocalPhotoSettingsTests testSuccessfulCaptureSavesIdenticalBytesOnce]' started.
+Test Case '-[ChameoTests.LocalPhotoSettingsTests testSuccessfulCaptureSavesIdenticalBytesOnce]' passed (0.003 seconds).
+Test Suite 'LocalPhotoSettingsTests' passed at 2026-10-03 22:44:42.610.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.014 (0.015) seconds
+Test Suite 'LocalPhotoStoreTests' started at 2026-10-03 22:44:42.610.
+Test Case '-[ChameoTests.LocalPhotoStoreTests testAutomaticSaveRespectsRemovalAndExplicitSaveRestoresCopy]' started.
+Test Case '-[ChameoTests.LocalPhotoStoreTests testAutomaticSaveRespectsRemovalAndExplicitSaveRestoresCopy]' passed (0.004 seconds).
+Test Case '-[ChameoTests.LocalPhotoStoreTests testBlockedFixedFolderCannotEnableAndDoesNotOverwriteUserFile]' started.
+Test Case '-[ChameoTests.LocalPhotoStoreTests testBlockedFixedFolderCannotEnableAndDoesNotOverwriteUserFile]' passed (0.002 seconds).
+Test Case '-[ChameoTests.LocalPhotoStoreTests testCancelledSaveDoesNotCreateFile]' started.
+Test Case '-[ChameoTests.LocalPhotoStoreTests testCancelledSaveDoesNotCreateFile]' passed (0.002 seconds).
+Test Case '-[ChameoTests.LocalPhotoStoreTests testConcurrentSavesProduceOneOriginalAndNoPartials]' started.
+Test Case '-[ChameoTests.LocalPhotoStoreTests testConcurrentSavesProduceOneOriginalAndNoPartials]' passed (0.004 seconds).
+Test Case '-[ChameoTests.LocalPhotoStoreTests testCorruptIndexNeverOverwritesOriginalFiles]' started.
+Test Case '-[ChameoTests.LocalPhotoStoreTests testCorruptIndexNeverOverwritesOriginalFiles]' passed (0.001 seconds).
+Test Case '-[ChameoTests.LocalPhotoStoreTests testCreatesFixedFolderOnSaveButNotDuringInitialization]' started.
+Test Case '-[ChameoTests.LocalPhotoStoreTests testCreatesFixedFolderOnSaveButNotDuringInitialization]' passed (0.003 seconds).
+Test Case '-[ChameoTests.LocalPhotoStoreTests testEnabledByDefaultAndSavesWithoutFolderSelection]' started.
+Test Case '-[ChameoTests.LocalPhotoStoreTests testEnabledByDefaultAndSavesWithoutFolderSelection]' passed (0.003 seconds).
+Test Case '-[ChameoTests.LocalPhotoStoreTests testLegacyCopyCanBeTrashedWithBalancedFolderAccess]' started.
+Test Case '-[ChameoTests.LocalPhotoStoreTests testLegacyCopyCanBeTrashedWithBalancedFolderAccess]' passed (0.003 seconds).
+Test Case '-[ChameoTests.LocalPhotoStoreTests testMigratesCustomFolderForFutureWritesAndKeepsEarlierOriginal]' started.
+Test Case '-[ChameoTests.LocalPhotoStoreTests testMigratesCustomFolderForFutureWritesAndKeepsEarlierOriginal]' passed (0.005 seconds).
+Test Case '-[ChameoTests.LocalPhotoStoreTests testPreservesBytesFormatAndIndexAcrossRecreation]' started.
+Test Case '-[ChameoTests.LocalPhotoStoreTests testPreservesBytesFormatAndIndexAcrossRecreation]' passed (0.003 seconds).
+Test Case '-[ChameoTests.LocalPhotoStoreTests testSavedOffSettingSurvivesMigrationAndRecreation]' started.
+Test Case '-[ChameoTests.LocalPhotoStoreTests testSavedOffSettingSurvivesMigrationAndRecreation]' passed (0.002 seconds).
+Test Case '-[ChameoTests.LocalPhotoStoreTests testStaleBookmarkIsRefreshedAndAccessIsBalanced]' started.
+Test Case '-[ChameoTests.LocalPhotoStoreTests testStaleBookmarkIsRefreshedAndAccessIsBalanced]' passed (0.003 seconds).
+Test Case '-[ChameoTests.LocalPhotoStoreTests testTrashMovesOnlyIndexedCopyEvenWhenKeepingCopiesIsOff]' started.
+Test Case '-[ChameoTests.LocalPhotoStoreTests testTrashMovesOnlyIndexedCopyEvenWhenKeepingCopiesIsOff]' passed (0.003 seconds).
+Test Case '-[ChameoTests.LocalPhotoStoreTests testTrashPreservesModifiedCopyAndReportsFailure]' started.
+Test Case '-[ChameoTests.LocalPhotoStoreTests testTrashPreservesModifiedCopyAndReportsFailure]' passed (0.003 seconds).
+Test Case '-[ChameoTests.LocalPhotoStoreTests testUserModifiedFileIsPreservedAndRejected]' started.
+Test Case '-[ChameoTests.LocalPhotoStoreTests testUserModifiedFileIsPreservedAndRejected]' passed (0.003 seconds).
+Test Suite 'LocalPhotoStoreTests' passed at 2026-10-03 22:44:42.655.
+	 Executed 15 tests, with 0 failures (0 unexpected) in 0.044 (0.045) seconds
+Test Suite 'LocalizationCatalogTests' started at 2026-10-03 22:44:42.655.
+Test Case '-[ChameoTests.LocalizationCatalogTests testInfoPlistCatalogsHaveIdenticalRequiredKeys]' started.
+Test Case '-[ChameoTests.LocalizationCatalogTests testInfoPlistCatalogsHaveIdenticalRequiredKeys]' passed (0.001 seconds).
+Test Case '-[ChameoTests.LocalizationCatalogTests testLocalizableCatalogsHaveIdenticalKeysAndPlaceholders]' started.
+Test Case '-[ChameoTests.LocalizationCatalogTests testLocalizableCatalogsHaveIdenticalKeysAndPlaceholders]' passed (0.009 seconds).
+Test Case '-[ChameoTests.LocalizationCatalogTests testSourceLocalizationKeysExistInEnglishCatalog]' started.
+Test Case '-[ChameoTests.LocalizationCatalogTests testSourceLocalizationKeysExistInEnglishCatalog]' passed (0.008 seconds).
+Test Case '-[ChameoTests.LocalizationCatalogTests testUserFacingSwiftUICopyUsesTheLocalizer]' started.
+Test Case '-[ChameoTests.LocalizationCatalogTests testUserFacingSwiftUICopyUsesTheLocalizer]' passed (0.007 seconds).
+Test Suite 'LocalizationCatalogTests' passed at 2026-10-03 22:44:42.681.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.025 (0.025) seconds
+Test Suite 'LocalizationControllerTests' started at 2026-10-03 22:44:42.681.
+Test Case '-[ChameoTests.LocalizationControllerTests testSelectionPersistsAndPublishesTheEffectiveLanguage]' started.
+Test Case '-[ChameoTests.LocalizationControllerTests testSelectionPersistsAndPublishesTheEffectiveLanguage]' passed (0.002 seconds).
+Test Suite 'LocalizationControllerTests' passed at 2026-10-03 22:44:42.682.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Test Suite 'LocalizationResolutionTests' started at 2026-10-03 22:44:42.682.
+Test Case '-[ChameoTests.LocalizationResolutionTests testAutomaticLanguageMapsChineseScriptsAndFallsBackToEnglish]' started.
+Test Case '-[ChameoTests.LocalizationResolutionTests testAutomaticLanguageMapsChineseScriptsAndFallsBackToEnglish]' passed (0.000 seconds).
+Test Case '-[ChameoTests.LocalizationResolutionTests testExplicitLanguagePreferencesResolveDirectly]' started.
+Test Case '-[ChameoTests.LocalizationResolutionTests testExplicitLanguagePreferencesResolveDirectly]' passed (0.000 seconds).
+Test Case '-[ChameoTests.LocalizationResolutionTests testFormattingUsesTheSelectedLanguageAndPreservesTheSystemRegion]' started.
+Test Case '-[ChameoTests.LocalizationResolutionTests testFormattingUsesTheSelectedLanguageAndPreservesTheSystemRegion]' passed (0.001 seconds).
+Test Case '-[ChameoTests.LocalizationResolutionTests testLocalizedResourcesLoadForEverySupportedLanguage]' started.
+Test Case '-[ChameoTests.LocalizationResolutionTests testLocalizedResourcesLoadForEverySupportedLanguage]' passed (0.002 seconds).
+Test Case '-[ChameoTests.LocalizationResolutionTests testReminderNotificationTextUsesRequestedLanguage]' started.
+Test Case '-[ChameoTests.LocalizationResolutionTests testReminderNotificationTextUsesRequestedLanguage]' passed (0.000 seconds).
+Test Suite 'LocalizationResolutionTests' passed at 2026-10-03 22:44:42.686.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.004 (0.004) seconds
+Test Suite 'MainCameraLifecycleTests' started at 2026-10-03 22:44:42.686.
+Test Case '-[ChameoTests.MainCameraLifecycleTests testCameraRequiresAVisibleMainSurfaceAndCameraTab]' started.
+Test Case '-[ChameoTests.MainCameraLifecycleTests testCameraRequiresAVisibleMainSurfaceAndCameraTab]' passed (0.000 seconds).
+Test Case '-[ChameoTests.MainCameraLifecycleTests testCameraVisibilityBelongsOnlyToTheActiveHostingSurface]' started.
+Test Case '-[ChameoTests.MainCameraLifecycleTests testCameraVisibilityBelongsOnlyToTheActiveHostingSurface]' passed (0.000 seconds).
+Test Case '-[ChameoTests.MainCameraLifecycleTests testLatePopoverDismissalCannotStopTheStandaloneCamera]' started.
+Test Case '-[ChameoTests.MainCameraLifecycleTests testLatePopoverDismissalCannotStopTheStandaloneCamera]' passed (0.000 seconds).
+Test Case '-[ChameoTests.MainCameraLifecycleTests testNormalMenuBarOpenSelectsTodaysLibraryWhenCaptured]' started.
+Test Case '-[ChameoTests.MainCameraLifecycleTests testNormalMenuBarOpenSelectsTodaysLibraryWhenCaptured]' passed (0.000 seconds).
+Test Case '-[ChameoTests.MainCameraLifecycleTests testOpeningSettingsPreservesTheLibrarySelectionOnReturn]' started.
+Test Case '-[ChameoTests.MainCameraLifecycleTests testOpeningSettingsPreservesTheLibrarySelectionOnReturn]' passed (0.000 seconds).
+Test Suite 'MainCameraLifecycleTests' passed at 2026-10-03 22:44:42.687.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'ModernUIRenderTests' started at 2026-10-03 22:44:42.687.
+Test Case '-[ChameoTests.ModernUIRenderTests testRenderModernScreensInAllLanguagesAndAppearances]' started.
+/Users/john/Documents/Projects/Chameo/Tests/ChameoTests/ModernUIRenderTests.swift:13: -[ChameoTests.ModernUIRenderTests testRenderModernScreensInAllLanguagesAndAppearances] : Test skipped - Set CHAMEO_UI_PREVIEW_DIR to export native layout previews.
+Test Case '-[ChameoTests.ModernUIRenderTests testRenderModernScreensInAllLanguagesAndAppearances]' skipped (0.002 seconds).
+Test Suite 'ModernUIRenderTests' passed at 2026-10-03 22:44:42.690.
+	 Executed 1 test, with 1 test skipped and 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Test Suite 'PermissionOnboardingTests' started at 2026-10-03 22:44:42.690.
+Test Case '-[ChameoTests.PermissionOnboardingTests testCanContinueOnlyWhenCameraAndPhotosAreAuthorized]' started.
+Test Case '-[ChameoTests.PermissionOnboardingTests testCanContinueOnlyWhenCameraAndPhotosAreAuthorized]' passed (0.000 seconds).
+Test Case '-[ChameoTests.PermissionOnboardingTests testCompletionIsPersistedOnlyWhenBothPermissionsAreAuthorized]' started.
+Test Case '-[ChameoTests.PermissionOnboardingTests testCompletionIsPersistedOnlyWhenBothPermissionsAreAuthorized]' passed (0.001 seconds).
+Test Case '-[ChameoTests.PermissionOnboardingTests testEducationalStepsLeadToPermissionsAndStopAtTheirBounds]' started.
+Test Case '-[ChameoTests.PermissionOnboardingTests testEducationalStepsLeadToPermissionsAndStopAtTheirBounds]' passed (0.000 seconds).
+Test Case '-[ChameoTests.PermissionOnboardingTests testOnboardingWindowCentersInTheFullScreenFrame]' started.
+Test Case '-[ChameoTests.PermissionOnboardingTests testOnboardingWindowCentersInTheFullScreenFrame]' passed (0.000 seconds).
+Test Case '-[ChameoTests.PermissionOnboardingTests testOnboardingWindowFloatsAboveNormalWindowsDuringPermissionRequests]' started.
+Test Case '-[ChameoTests.PermissionOnboardingTests testOnboardingWindowFloatsAboveNormalWindowsDuringPermissionRequests]' passed (0.073 seconds).
+Test Case '-[ChameoTests.PermissionOnboardingTests testOnboardingWindowRetainsItsSizeAfterInstallingTheHostingView]' started.
+Test Case '-[ChameoTests.PermissionOnboardingTests testOnboardingWindowRetainsItsSizeAfterInstallingTheHostingView]' passed (0.022 seconds).
+Test Case '-[ChameoTests.PermissionOnboardingTests testRequestRefreshesPermissionStatus]' started.
+Test Case '-[ChameoTests.PermissionOnboardingTests testRequestRefreshesPermissionStatus]' passed (0.002 seconds).
+Test Case '-[ChameoTests.PermissionOnboardingTests testStartupPolicyKeepsLaterPermissionRevocationContextual]' started.
+Test Case '-[ChameoTests.PermissionOnboardingTests testStartupPolicyKeepsLaterPermissionRevocationContextual]' passed (0.000 seconds).
+Test Case '-[ChameoTests.PermissionOnboardingTests testStartupPolicyShowsOnboardingUntilInitialPermissionsAreGranted]' started.
+Test Case '-[ChameoTests.PermissionOnboardingTests testStartupPolicyShowsOnboardingUntilInitialPermissionsAreGranted]' passed (0.000 seconds).
+Test Case '-[ChameoTests.PermissionOnboardingTests testSystemAuthorizationStatusesAreNormalized]' started.
+Test Case '-[ChameoTests.PermissionOnboardingTests testSystemAuthorizationStatusesAreNormalized]' passed (0.000 seconds).
+Test Suite 'PermissionOnboardingTests' passed at 2026-10-03 22:44:42.789.
+	 Executed 10 tests, with 0 failures (0 unexpected) in 0.098 (0.099) seconds
+Test Suite 'PhotoDeletionConfirmationTests' started at 2026-10-03 22:44:42.789.
+Test Case '-[ChameoTests.PhotoDeletionConfirmationTests testConsequencesAndControlsFitTheInlinePreviewInEveryLanguage]' started.
+Test Case '-[ChameoTests.PhotoDeletionConfirmationTests testConsequencesAndControlsFitTheInlinePreviewInEveryLanguage]' passed (0.067 seconds).
+Test Suite 'PhotoDeletionConfirmationTests' passed at 2026-10-03 22:44:42.856.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.067 (0.067) seconds
+Test Suite 'PhotoDeletionServiceTests' started at 2026-10-03 22:44:42.856.
+Test Case '-[ChameoTests.PhotoDeletionServiceTests testLocalFailureReportsPartialSuccessAfterPhotosDeletion]' started.
+Test Case '-[ChameoTests.PhotoDeletionServiceTests testLocalFailureReportsPartialSuccessAfterPhotosDeletion]' passed (0.001 seconds).
+Test Case '-[ChameoTests.PhotoDeletionServiceTests testPhotosFailureLeavesLocalCopyUntouched]' started.
+Test Case '-[ChameoTests.PhotoDeletionServiceTests testPhotosFailureLeavesLocalCopyUntouched]' passed (0.000 seconds).
+Test Case '-[ChameoTests.PhotoDeletionServiceTests testSuccessfulDeletionTrashesOnlyAfterPhotosCompletes]' started.
+Test Case '-[ChameoTests.PhotoDeletionServiceTests testSuccessfulDeletionTrashesOnlyAfterPhotosCompletes]' passed (0.000 seconds).
+Test Suite 'PhotoDeletionServiceTests' passed at 2026-10-03 22:44:42.858.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'ReminderNotificationPlannerTests' started at 2026-10-03 22:44:42.858.
+Test Case '-[ChameoTests.ReminderNotificationPlannerTests testCompletedDayIsSkipped]' started.
+Test Case '-[ChameoTests.ReminderNotificationPlannerTests testCompletedDayIsSkipped]' passed (0.000 seconds).
+Test Case '-[ChameoTests.ReminderNotificationPlannerTests testDailyReminderSchedulesPrimaryReminders]' started.
+Test Case '-[ChameoTests.ReminderNotificationPlannerTests testDailyReminderSchedulesPrimaryReminders]' passed (0.000 seconds).
+Test Case '-[ChameoTests.ReminderNotificationPlannerTests testOneTimeReminderMoreThanOneYearAwayIsScheduled]' started.
+Test Case '-[ChameoTests.ReminderNotificationPlannerTests testOneTimeReminderMoreThanOneYearAwayIsScheduled]' passed (0.000 seconds).
+Test Case '-[ChameoTests.ReminderNotificationPlannerTests testOneTimeReminderSchedulesOnlyPrimaryNotification]' started.
+Test Case '-[ChameoTests.ReminderNotificationPlannerTests testOneTimeReminderSchedulesOnlyPrimaryNotification]' passed (0.000 seconds).
+Test Case '-[ChameoTests.ReminderNotificationPlannerTests testUpdateCleanupFailsWhenDeliveredRemindersRemain]' started.
+Test Case '-[ChameoTests.ReminderNotificationPlannerTests testUpdateCleanupFailsWhenDeliveredRemindersRemain]' passed (0.618 seconds).
+Test Case '-[ChameoTests.ReminderNotificationPlannerTests testUpdateCleanupFailsWhenPendingRemindersRemain]' started.
+Test Case '-[ChameoTests.ReminderNotificationPlannerTests testUpdateCleanupFailsWhenPendingRemindersRemain]' passed (0.607 seconds).
+Test Case '-[ChameoTests.ReminderNotificationPlannerTests testUpdateCleanupRemovesPendingAndDeliveredButPreservesUnrelatedNotifications]' started.
+Test Case '-[ChameoTests.ReminderNotificationPlannerTests testUpdateCleanupRemovesPendingAndDeliveredButPreservesUnrelatedNotifications]' passed (0.202 seconds).
+Test Case '-[ChameoTests.ReminderNotificationPlannerTests testWeeklyReminderFallsBackFromInvalidStoredWeekday]' started.
+Test Case '-[ChameoTests.ReminderNotificationPlannerTests testWeeklyReminderFallsBackFromInvalidStoredWeekday]' passed (0.002 seconds).
+Test Case '-[ChameoTests.ReminderNotificationPlannerTests testWeeklyReminderFillsRequestedLimitBeyondOneYear]' started.
+Test Case '-[ChameoTests.ReminderNotificationPlannerTests testWeeklyReminderFillsRequestedLimitBeyondOneYear]' passed (0.006 seconds).
+Test Suite 'ReminderNotificationPlannerTests' passed at 2026-10-03 22:44:44.296.
+	 Executed 9 tests, with 0 failures (0 unexpected) in 1.436 (1.439) seconds
+Test Suite 'ReminderNotificationResponsePolicyTests' started at 2026-10-03 22:44:44.296.
+Test Case '-[ChameoTests.ReminderNotificationResponsePolicyTests testDefaultActionOpensCameraWhenTodayIsIncomplete]' started.
+Test Case '-[ChameoTests.ReminderNotificationResponsePolicyTests testDefaultActionOpensCameraWhenTodayIsIncomplete]' passed (0.001 seconds).
+Test Case '-[ChameoTests.ReminderNotificationResponsePolicyTests testDefaultActionStillOpensLibraryWhenTodayIsAlreadyCompleted]' started.
+Test Case '-[ChameoTests.ReminderNotificationResponsePolicyTests testDefaultActionStillOpensLibraryWhenTodayIsAlreadyCompleted]' passed (0.000 seconds).
+Test Case '-[ChameoTests.ReminderNotificationResponsePolicyTests testDismissActionDoesNotOpenChameo]' started.
+Test Case '-[ChameoTests.ReminderNotificationResponsePolicyTests testDismissActionDoesNotOpenChameo]' passed (0.000 seconds).
+Test Case '-[ChameoTests.ReminderNotificationResponsePolicyTests testUnrelatedNotificationDoesNotOpenChameo]' started.
+Test Case '-[ChameoTests.ReminderNotificationResponsePolicyTests testUnrelatedNotificationDoesNotOpenChameo]' passed (0.000 seconds).
+Test Suite 'ReminderNotificationResponsePolicyTests' passed at 2026-10-03 22:44:44.299.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.002 (0.003) seconds
+Test Suite 'ReminderOperationQueueTests' started at 2026-10-03 22:44:44.299.
+Test Case '-[ChameoTests.ReminderOperationQueueTests testSaveReconciliationFinishesAfterOverlappingLaunchRefresh]' started.
+Test Case '-[ChameoTests.ReminderOperationQueueTests testSaveReconciliationFinishesAfterOverlappingLaunchRefresh]' passed (0.055 seconds).
+Test Suite 'ReminderOperationQueueTests' passed at 2026-10-03 22:44:44.354.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.055 (0.055) seconds
+Test Suite 'ReminderSelfieCompletionTests' started at 2026-10-03 22:44:44.354.
+Test Case '-[ChameoTests.ReminderSelfieCompletionTests testLaunchRefreshRemovesDeliveredNotificationsWhenPendingRemovalTimesOut]' started.
+Test Case '-[ChameoTests.ReminderSelfieCompletionTests testLaunchRefreshRemovesDeliveredNotificationsWhenPendingRemovalTimesOut]' passed (1.206 seconds).
+Test Case '-[ChameoTests.ReminderSelfieCompletionTests testLaunchRefreshRemovesDeliveredReminderNotificationsWhenTodayIsAlreadyCompleted]' started.
+Test Case '-[ChameoTests.ReminderSelfieCompletionTests testLaunchRefreshRemovesDeliveredReminderNotificationsWhenTodayIsAlreadyCompleted]' passed (0.543 seconds).
+Test Case '-[ChameoTests.ReminderSelfieCompletionTests testLaunchRefreshRemovesReminderRestoredShortlyAfterWake]' started.
+Test Case '-[ChameoTests.ReminderSelfieCompletionTests testLaunchRefreshRemovesReminderRestoredShortlyAfterWake]' passed (1.077 seconds).
+Test Case '-[ChameoTests.ReminderSelfieCompletionTests testLaunchRefreshRemovesStaleReminderNotificationsWhenReminderIsDisabled]' started.
+Test Case '-[ChameoTests.ReminderSelfieCompletionTests testLaunchRefreshRemovesStaleReminderNotificationsWhenReminderIsDisabled]' passed (0.002 seconds).
+Test Case '-[ChameoTests.ReminderSelfieCompletionTests testRecordingSelfieRemovesDeliveredReminderRestoredDuringCleanup]' started.
+Test Case '-[ChameoTests.ReminderSelfieCompletionTests testRecordingSelfieRemovesDeliveredReminderRestoredDuringCleanup]' passed (0.418 seconds).
+Test Case '-[ChameoTests.ReminderSelfieCompletionTests testRecordingSelfieRemovesTodayPendingAndDeliveredReminderNotifications]' started.
+Test Case '-[ChameoTests.ReminderSelfieCompletionTests testRecordingSelfieRemovesTodayPendingAndDeliveredReminderNotifications]' passed (0.215 seconds).
+Test Case '-[ChameoTests.ReminderSelfieCompletionTests testRecordingSelfieRetriesPendingRemovalBeforeGivingUp]' started.
+Test Case '-[ChameoTests.ReminderSelfieCompletionTests testRecordingSelfieRetriesPendingRemovalBeforeGivingUp]' passed (0.655 seconds).
+Test Case '-[ChameoTests.ReminderSelfieCompletionTests testRecordingSelfieStillClearsDeliveredReminderWhenPendingRemovalDoesNotSettle]' started.
+Test Case '-[ChameoTests.ReminderSelfieCompletionTests testRecordingSelfieStillClearsDeliveredReminderWhenPendingRemovalDoesNotSettle]' passed (0.873 seconds).
+Test Case '-[ChameoTests.ReminderSelfieCompletionTests testReminderNotificationIsSuppressedWhenReminderIsDisabled]' started.
+Test Case '-[ChameoTests.ReminderSelfieCompletionTests testReminderNotificationIsSuppressedWhenReminderIsDisabled]' passed (0.002 seconds).
+Test Case '-[ChameoTests.ReminderSelfieCompletionTests testReminderNotificationIsSuppressedWhenTodayIsAlreadyCompleted]' started.
+Test Case '-[ChameoTests.ReminderSelfieCompletionTests testReminderNotificationIsSuppressedWhenTodayIsAlreadyCompleted]' passed (0.002 seconds).
+Test Suite 'ReminderSelfieCompletionTests' passed at 2026-10-03 22:44:49.350.
+	 Executed 10 tests, with 0 failures (0 unexpected) in 4.993 (4.996) seconds
+Test Suite 'SettingsWindowTests' started at 2026-10-03 22:44:49.350.
+Test Case '-[ChameoTests.SettingsWindowTests testCategoryPagesMountLazilyAndRetainLocalStateWhenRevisited]' started.
+Test Case '-[ChameoTests.SettingsWindowTests testCategoryPagesMountLazilyAndRetainLocalStateWhenRevisited]' passed (0.532 seconds).
+Test Case '-[ChameoTests.SettingsWindowTests testSettingsWindowConstrainsContentAfterInstallingItsHostingController]' started.
+Test Case '-[ChameoTests.SettingsWindowTests testSettingsWindowConstrainsContentAfterInstallingItsHostingController]' passed (0.051 seconds).
+Test Case '-[ChameoTests.SettingsWindowTests testSettingsWindowKeepsItsHostingControllerAndCategoryAfterClosing]' started.
+Test Case '-[ChameoTests.SettingsWindowTests testSettingsWindowKeepsItsHostingControllerAndCategoryAfterClosing]' passed (0.045 seconds).
+Test Suite 'SettingsWindowTests' passed at 2026-10-03 22:44:49.979.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.629 (0.629) seconds
+Test Suite 'TimelapseExportTests' started at 2026-10-03 22:44:49.979.
+Test Case '-[ChameoTests.TimelapseExportTests testAlbumRefreshKeepsEmptySelectedPeriodVisible]' started.
+Test Case '-[ChameoTests.TimelapseExportTests testAlbumRefreshKeepsEmptySelectedPeriodVisible]' passed (0.001 seconds).
+Test Case '-[ChameoTests.TimelapseExportTests testCancellationHasNoCompletionAndIgnoresProgress]' started.
+Test Case '-[ChameoTests.TimelapseExportTests testCancellationHasNoCompletionAndIgnoresProgress]' passed (0.006 seconds).
+Test Case '-[ChameoTests.TimelapseExportTests testClosingExportWindowKeepsTaskAndReusesWindow]' started.
+Test Case '-[ChameoTests.TimelapseExportTests testClosingExportWindowKeepsTaskAndReusesWindow]' passed (0.084 seconds).
+Test Case '-[ChameoTests.TimelapseExportTests testClosingFinishedExportWindowResetsSummaryAndProgress]' started.
+Test Case '-[ChameoTests.TimelapseExportTests testClosingFinishedExportWindowResetsSummaryAndProgress]' passed (0.040 seconds).
+Test Case '-[ChameoTests.TimelapseExportTests testEmptyMonthCannotStartAndSelectingAllPhotosRecovers]' started.
+Test Case '-[ChameoTests.TimelapseExportTests testEmptyMonthCannotStartAndSelectingAllPhotosRecovers]' passed (0.001 seconds).
+Test Case '-[ChameoTests.TimelapseExportTests testEmptySelectionCannotStart]' started.
+Test Case '-[ChameoTests.TimelapseExportTests testEmptySelectionCannotStart]' passed (0.001 seconds).
+Test Case '-[ChameoTests.TimelapseExportTests testExportScreenRendersAtWindowSizeInEveryLanguage]' started.
+Test Case '-[ChameoTests.TimelapseExportTests testExportScreenRendersAtWindowSizeInEveryLanguage]' passed (7.505 seconds).
+Test Case '-[ChameoTests.TimelapseExportTests testFailedExportRetainsSelectionForRetry]' started.
+Test Case '-[ChameoTests.TimelapseExportTests testFailedExportRetainsSelectionForRetry]' passed (0.013 seconds).
+Test Case '-[ChameoTests.TimelapseExportTests testFilteredSelectionAndSpeedStayFrozenDuringExportAndRetry]' started.
+Test Case '-[ChameoTests.TimelapseExportTests testFilteredSelectionAndSpeedStayFrozenDuringExportAndRetry]' passed (0.014 seconds).
+Test Case '-[ChameoTests.TimelapseExportTests testLateCancellationAfterCommitStillReportsSuccess]' started.
+Test Case '-[ChameoTests.TimelapseExportTests testLateCancellationAfterCommitStillReportsSuccess]' passed (0.004 seconds).
+Test Case '-[ChameoTests.TimelapseExportTests testMainProgressStaysOnCompletedPhotosAcrossPhaseChanges]' started.
+Test Case '-[ChameoTests.TimelapseExportTests testMainProgressStaysOnCompletedPhotosAcrossPhaseChanges]' passed (0.005 seconds).
+Test Case '-[ChameoTests.TimelapseExportTests testPhotoStackKeepsLoadedThumbnailsAcrossCreationAndCompletion]' started.
+Test Case '-[ChameoTests.TimelapseExportTests testPhotoStackKeepsLoadedThumbnailsAcrossCreationAndCompletion]' passed (0.115 seconds).
+Test Case '-[ChameoTests.TimelapseExportTests testSnapshotDuplicateStartsProgressAndLateCallbacks]' started.
+Test Case '-[ChameoTests.TimelapseExportTests testSnapshotDuplicateStartsProgressAndLateCallbacks]' passed (0.010 seconds).
+Test Case '-[ChameoTests.TimelapseExportTests testSuccessPersistsResultAndAnnouncesReadyInApp]' started.
+Test Case '-[ChameoTests.TimelapseExportTests testSuccessPersistsResultAndAnnouncesReadyInApp]' passed (0.007 seconds).
+Test Case '-[ChameoTests.TimelapseExportTests testSummaryDurationAndDestinationCancellation]' started.
+Test Case '-[ChameoTests.TimelapseExportTests testSummaryDurationAndDestinationCancellation]' passed (0.001 seconds).
+Test Suite 'TimelapseExportTests' passed at 2026-10-03 22:44:57.788.
+	 Executed 15 tests, with 0 failures (0 unexpected) in 7.807 (7.809) seconds
+Test Suite 'TimelapseNotificationTests' started at 2026-10-03 22:44:57.788.
+Test Case '-[ChameoTests.TimelapseNotificationTests testBodyAndOpenFolderRouteToExportWhileDismissAndReminderDoNot]' started.
+Test Case '-[ChameoTests.TimelapseNotificationTests testBodyAndOpenFolderRouteToExportWhileDismissAndReminderDoNot]' passed (0.000 seconds).
+Test Case '-[ChameoTests.TimelapseNotificationTests testColdLaunchActionWaitsForHandler]' started.
+Test Case '-[ChameoTests.TimelapseNotificationTests testColdLaunchActionWaitsForHandler]' passed (0.000 seconds).
+Test Case '-[ChameoTests.TimelapseNotificationTests testCompletedFileBookmarkSurvivesStoreRelaunch]' started.
+Test Case '-[ChameoTests.TimelapseNotificationTests testCompletedFileBookmarkSurvivesStoreRelaunch]' passed (0.004 seconds).
+Test Case '-[ChameoTests.TimelapseNotificationTests testMissingFileAndUnknownExportCannotOpen]' started.
+Test Case '-[ChameoTests.TimelapseNotificationTests testMissingFileAndUnknownExportCannotOpen]' passed (0.002 seconds).
+Test Suite 'TimelapseNotificationTests' passed at 2026-10-03 22:44:57.795.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.006 (0.006) seconds
+Test Suite 'TimelapsePhotoLoaderTests' started at 2026-10-03 22:44:57.795.
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testCancelledDownloadDoesNotFallBackOrSaveOriginal]' started.
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testCancelledDownloadDoesNotFallBackOrSaveOriginal]' passed (0.004 seconds).
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testDisabledStoreUsesPhotosEvenWithLocalOriginal]' started.
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testDisabledStoreUsesPhotosEvenWithLocalOriginal]' passed (0.009 seconds).
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testDownloadsOlderOriginalOnceAndReusesIt]' started.
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testDownloadsOlderOriginalOnceAndReusesIt]' passed (0.009 seconds).
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testEditDuringOriginalDownloadUsesCurrentPhotosImage]' started.
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testEditDuringOriginalDownloadUsesCurrentPhotosImage]' passed (0.011 seconds).
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testLocalOriginalOrientationIsAppliedWithoutDownsizing]' started.
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testLocalOriginalOrientationIsAppliedWithoutDownsizing]' passed (0.005 seconds).
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testLocalWriteFailureStillUsesDownloadedOriginal]' started.
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testLocalWriteFailureStillUsesDownloadedOriginal]' passed (0.012 seconds).
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testOlderEditedPhotoArchivesOriginalAndCombinesDownloadProgress]' started.
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testOlderEditedPhotoArchivesOriginalAndCombinesDownloadProgress]' passed (0.005 seconds).
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testPhotosEditKeepsOriginalAndUsesCurrentImage]' started.
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testPhotosEditKeepsOriginalAndUsesCurrentImage]' passed (0.005 seconds).
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testRemovedLocalFileCannotSupplyOfflineExportAndIsNotRecreated]' started.
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testRemovedLocalFileCannotSupplyOfflineExportAndIsNotRecreated]' passed (0.004 seconds).
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testRemovedLocalFileStaysRemovedAcrossExportsAndRelaunch]' started.
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testRemovedLocalFileStaysRemovedAcrossExportsAndRelaunch]' passed (0.005 seconds).
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testUnavailableBothSourcesFailsExportImageLoading]' started.
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testUnavailableBothSourcesFailsExportImageLoading]' passed (0.003 seconds).
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testUnavailableFolderSkipsOriginalDownloadAndFallsBack]' started.
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testUnavailableFolderSkipsOriginalDownloadAndFallsBack]' passed (0.009 seconds).
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testUserModifiedLocalPhotoFallsBackWithoutReplacingIt]' started.
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testUserModifiedLocalPhotoFallsBackWithoutReplacingIt]' passed (0.005 seconds).
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testValidLocalOriginalWorksWithoutPhotosImageRequest]' started.
+Test Case '-[ChameoTests.TimelapsePhotoLoaderTests testValidLocalOriginalWorksWithoutPhotosImageRequest]' passed (0.005 seconds).
+Test Suite 'TimelapsePhotoLoaderTests' passed at 2026-10-03 22:44:57.886.
+	 Executed 14 tests, with 0 failures (0 unexpected) in 0.090 (0.091) seconds
+Test Suite 'TimelapseProgressTests' started at 2026-10-03 22:44:57.886.
+Test Case '-[ChameoTests.TimelapseProgressTests testDownloadDetailClampsPercentages]' started.
+Test Case '-[ChameoTests.TimelapseProgressTests testDownloadDetailClampsPercentages]' passed (0.000 seconds).
+Test Case '-[ChameoTests.TimelapseProgressTests testDownloadDetailDescribesOnlyTheCurrentPhoto]' started.
+Test Case '-[ChameoTests.TimelapseProgressTests testDownloadDetailDescribesOnlyTheCurrentPhoto]' passed (0.000 seconds).
+Test Case '-[ChameoTests.TimelapseProgressTests testUnknownWorkIsDescribedWithoutAPercentage]' started.
+Test Case '-[ChameoTests.TimelapseProgressTests testUnknownWorkIsDescribedWithoutAPercentage]' passed (0.000 seconds).
+Test Suite 'TimelapseProgressTests' passed at 2026-10-03 22:44:57.887.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'TimelapseSelectionTests' started at 2026-10-03 22:44:57.887.
+Test Case '-[ChameoTests.TimelapseSelectionTests testIncludesEveryDatedItemInChronologicalOrder]' started.
+Test Case '-[ChameoTests.TimelapseSelectionTests testIncludesEveryDatedItemInChronologicalOrder]' passed (0.000 seconds).
+Test Case '-[ChameoTests.TimelapseSelectionTests testIncludesMissingDatesAndPreservesInputOrderForTies]' started.
+Test Case '-[ChameoTests.TimelapseSelectionTests testIncludesMissingDatesAndPreservesInputOrderForTies]' passed (0.000 seconds).
+Test Case '-[ChameoTests.TimelapseSelectionTests testMonthAndYearUseCalendarBoundariesAndExcludeUndatedPhotos]' started.
+Test Case '-[ChameoTests.TimelapseSelectionTests testMonthAndYearUseCalendarBoundariesAndExcludeUndatedPhotos]' passed (0.000 seconds).
+Test Suite 'TimelapseSelectionTests' passed at 2026-10-03 22:44:57.888.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'TimelapseServiceTests' started at 2026-10-03 22:44:57.888.
+Test Case '-[ChameoTests.TimelapseServiceTests testCancellationBeforeCommitKeepsExistingFile]' started.
+Test Case '-[ChameoTests.TimelapseServiceTests testCancellationBeforeCommitKeepsExistingFile]' passed (0.001 seconds).
+Test Case '-[ChameoTests.TimelapseServiceTests testEveryPlaybackPresetControlsRealEncodedDuration]' started.
+Test Case '-[ChameoTests.TimelapseServiceTests testEveryPlaybackPresetControlsRealEncodedDuration]' passed (0.254 seconds).
+Test Case '-[ChameoTests.TimelapseServiceTests testFailureKeepsExistingDestinationAndCleansStaging]' started.
+Test Case '-[ChameoTests.TimelapseServiceTests testFailureKeepsExistingDestinationAndCleansStaging]' passed (0.002 seconds).
+Test Case '-[ChameoTests.TimelapseServiceTests testFinalizationCanCancelWithoutFrameworkCallback]' started.
+Test Case '-[ChameoTests.TimelapseServiceTests testFinalizationCanCancelWithoutFrameworkCallback]' passed (0.000 seconds).
+Test Case '-[ChameoTests.TimelapseServiceTests testPhotoLoadingCancellationKeepsExistingVideo]' started.
+Test Case '-[ChameoTests.TimelapseServiceTests testPhotoLoadingCancellationKeepsExistingVideo]' passed (0.021 seconds).
+Test Case '-[ChameoTests.TimelapseServiceTests testPhotoRequestCancellationResumesOnceAndRejectsLaterProgress]' started.
+Test Case '-[ChameoTests.TimelapseServiceTests testPhotoRequestCancellationResumesOnceAndRejectsLaterProgress]' passed (0.000 seconds).
+Test Case '-[ChameoTests.TimelapseServiceTests testRealEncoderWritesAllFramesAndReportsSavingBeforeCommit]' started.
+Test Case '-[ChameoTests.TimelapseServiceTests testRealEncoderWritesAllFramesAndReportsSavingBeforeCommit]' passed (0.076 seconds).
+Test Case '-[ChameoTests.TimelapseServiceTests testSinglePhotoProducesOneTenthSecondVideo]' started.
+Test Case '-[ChameoTests.TimelapseServiceTests testSinglePhotoProducesOneTenthSecondVideo]' passed (0.066 seconds).
+Test Case '-[ChameoTests.TimelapseServiceTests testSuccessfulCommitReplacesExistingVideo]' started.
+Test Case '-[ChameoTests.TimelapseServiceTests testSuccessfulCommitReplacesExistingVideo]' passed (0.003 seconds).
+Test Case '-[ChameoTests.TimelapseServiceTests testWriterReadinessCanCancelAndDetectFailure]' started.
+Test Case '-[ChameoTests.TimelapseServiceTests testWriterReadinessCanCancelAndDetectFailure]' passed (0.000 seconds).
+Test Suite 'TimelapseServiceTests' passed at 2026-10-03 22:44:58.312.
+	 Executed 10 tests, with 0 failures (0 unexpected) in 0.423 (0.424) seconds
+Test Suite 'UpdateReminderBarrierTests' started at 2026-10-03 22:44:58.312.
+Test Case '-[ChameoTests.UpdateReminderBarrierTests testCancellationDuringCleanupWaitsThenRestores]' started.
+Test Case '-[ChameoTests.UpdateReminderBarrierTests testCancellationDuringCleanupWaitsThenRestores]' passed (0.000 seconds).
+Test Case '-[ChameoTests.UpdateReminderBarrierTests testFailedCleanupRefusesQuitAndRestoresScheduling]' started.
+Test Case '-[ChameoTests.UpdateReminderBarrierTests testFailedCleanupRefusesQuitAndRestoresScheduling]' passed (0.000 seconds).
+Test Case '-[ChameoTests.UpdateReminderBarrierTests testOrdinaryQuitKeepsReminders]' started.
+Test Case '-[ChameoTests.UpdateReminderBarrierTests testOrdinaryQuitKeepsReminders]' passed (0.000 seconds).
+Test Case '-[ChameoTests.UpdateReminderBarrierTests testQueueSuspensionDrainsWorkAndBlocksRefreshUntilResume]' started.
+Test Case '-[ChameoTests.UpdateReminderBarrierTests testQueueSuspensionDrainsWorkAndBlocksRefreshUntilResume]' passed (0.000 seconds).
+Test Case '-[ChameoTests.UpdateReminderBarrierTests testSparkleOptionalDelegateMethodsAreExposedToObjectiveC]' started.
+Test Case '-[ChameoTests.UpdateReminderBarrierTests testSparkleOptionalDelegateMethodsAreExposedToObjectiveC]' passed (0.000 seconds).
+Test Case '-[ChameoTests.UpdateReminderBarrierTests testTimeoutRefusesQuitAndLateCleanupRestoresInsteadOfInstalling]' started.
+Test Case '-[ChameoTests.UpdateReminderBarrierTests testTimeoutRefusesQuitAndLateCleanupRestoresInsteadOfInstalling]' passed (0.022 seconds).
+Test Case '-[ChameoTests.UpdateReminderBarrierTests testUpdateQuitWaitsForCleanupAndKeepsSchedulingSuspended]' started.
+Test Case '-[ChameoTests.UpdateReminderBarrierTests testUpdateQuitWaitsForCleanupAndKeepsSchedulingSuspended]' passed (0.000 seconds).
+Test Suite 'UpdateReminderBarrierTests' passed at 2026-10-03 22:44:58.337.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.024 (0.024) seconds
+Test Suite 'UserFacingCopyTests' started at 2026-10-03 22:44:58.337.
+Test Case '-[ChameoTests.UserFacingCopyTests testAlignmentFallbackDoesNotClaimThePhotoWasSaved]' started.
+Test Case '-[ChameoTests.UserFacingCopyTests testAlignmentFallbackDoesNotClaimThePhotoWasSaved]' passed (0.000 seconds).
+Test Suite 'UserFacingCopyTests' passed at 2026-10-03 22:44:58.337.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+Test Suite 'ChameoTests.xctest' passed at 2026-10-03 22:44:58.337.
+	 Executed 216 tests, with 1 test skipped and 0 failures (0 unexpected) in 16.340 (16.364) seconds
+Test Suite 'All tests' passed at 2026-10-03 22:44:58.337.
+	 Executed 216 tests, with 1 test skipped and 0 failures (0 unexpected) in 16.340 (16.366) seconds
+◇ Test run started.
+↳ Testing Library Version: 2084
+↳ Target Platform: arm64e-apple-macos14.0
+✔ Test run with 0 tests in 0 suites passed after 0.001 seconds.

@@ -34,31 +34,8 @@ enum DailyCaptureHistory {
         calendar: Calendar = .current,
         isAvailable: Bool = true
     ) -> DailyCaptureStatus {
-        guard isAvailable else {
-            return .unknown
-        }
-
-        let day = calendar.startOfDay(for: date)
-        let today = calendar.startOfDay(for: today)
-
-        guard day <= today else {
-            return .future
-        }
-
-        let capturedDays = Set(captureDates.map(calendar.startOfDay(for:)))
-        if capturedDays.contains(day) {
-            return .captured
-        }
-
-        if day == today {
-            return .pendingToday
-        }
-
-        guard let firstCapturedDay = capturedDays.min(), day >= firstCapturedDay else {
-            return .outsideTracking
-        }
-
-        return .missed
+        DailyCaptureDayIndex(captureDates: captureDates, calendar: calendar)
+            .status(for: date, today: today, isAvailable: isAvailable)
     }
 
     static func calendarDates(
@@ -92,5 +69,29 @@ enum DailyCaptureHistory {
         calendar: Calendar = .current
     ) -> Bool {
         calendar.isDate(date, equalTo: month, toGranularity: .month)
+    }
+}
+
+/// Normalize the history once; month cells only perform day lookups.
+struct DailyCaptureDayIndex {
+    let calendar: Calendar
+    let capturedDays: Set<Date>
+    let firstCapturedDay: Date?
+
+    init(captureDates: [Date], calendar: Calendar = .current) {
+        self.calendar = calendar
+        capturedDays = Set(captureDates.map(calendar.startOfDay(for:)))
+        firstCapturedDay = capturedDays.min()
+    }
+
+    func status(for date: Date, today: Date = Date(), isAvailable: Bool = true) -> DailyCaptureStatus {
+        guard isAvailable else { return .unknown }
+        let day = calendar.startOfDay(for: date)
+        let today = calendar.startOfDay(for: today)
+        guard day <= today else { return .future }
+        if capturedDays.contains(day) { return .captured }
+        if day == today { return .pendingToday }
+        guard let firstCapturedDay, day >= firstCapturedDay else { return .outsideTracking }
+        return .missed
     }
 }

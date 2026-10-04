@@ -32,8 +32,11 @@ The app uses `NSStatusItem` plus `NSPopover` instead of SwiftUI `MenuBarExtra` b
   - reminder weekday
 - `AppPreferenceKey` is the canonical key namespace for those preferences.
 - `StoredReminderSettings` is the typed read boundary used by background reminder reconciliation.
+- `ReminderPreferences` commits reminder choices inside the same serial operation as notification reconciliation. Refresh reads the choices only after entering that queue.
 - `LibraryStore` owns the currently fetched Photos assets, snapshot validity,
-  library errors, and the Photos-backed daily completion status.
+  library errors, and the Photos-backed daily completion status. It caches an
+  immutable calendar snapshot of capture days and sorted assets per day,
+  invalidated on asset or calendar/time-zone changes.
 - `CameraService` owns main-actor camera UI state, transient live-framing
   guidance, and still photo capture.
 - `CameraSessionController` serializes blocking `AVCaptureSession` configuration and lifecycle work.
@@ -78,9 +81,9 @@ The app uses `NSStatusItem` plus `NSPopover` instead of SwiftUI `MenuBarExtra` b
   - Requests Photos read/write access.
   - Finds the first Photos album with the configured exact name, or creates that album if none exists.
   - Saves images into Photos.app with optional `CLLocation`.
-  - Fetches album assets and thumbnails.
+  - Fetches album assets and thumbnails; cancellation propagates to PhotoKit using the image request ID.
   - Deletes selected original assets from Photos.
-  - Serializes find-or-create album operations so overlapping saves/settings actions cannot create duplicate exact-name albums.
+  - Coalesces in-flight find-or-create album operations by normalized name so overlapping saves/settings actions share the same result.
 
 - `LocationService`
   - Requests when-in-use authorization.
@@ -100,6 +103,9 @@ The app uses `NSStatusItem` plus `NSPopover` instead of SwiftUI `MenuBarExtra` b
   - Persists the latest completed export and a read-only security-scoped file bookmark for explicit Open Folder/Open Video actions.
   - Export completion stays in the app and never requests notification permission or sends a notification. Legacy notification actions from older builds can still resolve saved results.
 
+- `CaptureReviewStore`
+  - Owns one shared draft and in-flight capture/save operation across tabs and main surfaces.
+  - Retake discards explicitly; a failed Photos save retains the draft for retry.
 - `ReminderService`
   - Schedules dated primary notifications.
   - Reconciles pending notifications when settings change and after a save, skipping completed days and clearing delivered reminders for completed days.

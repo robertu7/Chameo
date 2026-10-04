@@ -1,0 +1,5 @@
+assets=365 42 statuses current_median_ms=15.405916 precomputed_median_ms=0.092875
+assets=1000 42 statuses current_median_ms=41.394292 precomputed_median_ms=0.092417
+assets=3650 42 statuses current_median_ms=148.32525 precomputed_median_ms=0.092791
+assets=10000 42 statuses current_median_ms=406.559834 precomputed_median_ms=0.092875
+sink=4080

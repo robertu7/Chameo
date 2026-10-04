@@ -214,9 +214,9 @@ cat >>"$INFO_PLIST" <<PLIST
   <key>NSPhotoLibraryUsageDescription</key>
   <string>Chameo saves and manages the photos you take in a dedicated album in Photos.</string>
   <key>NSLocationUsageDescription</key>
-  <string>Chameo can add your current city and country to photos you save.</string>
+  <string>Chameo can save your current geographic coordinates with photos. Shared photos may include this location.</string>
   <key>NSLocationWhenInUseUsageDescription</key>
-  <string>Chameo can add your current city and country to photos you save.</string>
+  <string>Chameo can save your current geographic coordinates with photos. Shared photos may include this location.</string>
   <key>NSUserNotificationUsageDescription</key>
   <string>Chameo sends daily photo reminders.</string>
   <key>NSPrincipalClass</key>

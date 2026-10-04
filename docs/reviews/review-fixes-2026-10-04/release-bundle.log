@@ -1,0 +1,33 @@
+Building for production...
+[1 / 3]
+[2 / 5] Chameo-product
+/Users/john/Documents/Projects/Chameo/Sources/Chameo/Services/LocationService.swift:133:40: warning: 'CLGeocoder' was deprecated in macOS 26.0: Use MapKit [#DeprecatedDeclaration]
+131 | 
+132 |         do {
+133 |             let placemarks = try await CLGeocoder().reverseGeocodeLocation(location)
+    |                                        `- warning: 'CLGeocoder' was deprecated in macOS 26.0: Use MapKit [#DeprecatedDeclaration]
+134 |             guard let placemark = placemarks.first else {
+135 |                 return coordinateName(for: location)
+
+/Users/john/Documents/Projects/Chameo/Sources/Chameo/Services/LocationService.swift:133:53: warning: 'reverseGeocodeLocation' was deprecated in macOS 26.0: Use MKReverseGeocodingRequest [#DeprecatedDeclaration]
+131 | 
+132 |         do {
+133 |             let placemarks = try await CLGeocoder().reverseGeocodeLocation(location)
+    |                                                     `- warning: 'reverseGeocodeLocation' was deprecated in macOS 26.0: Use MKReverseGeocodingRequest [#DeprecatedDeclaration]
+134 |             guard let placemark = placemarks.first else {
+135 |                 return coordinateName(for: location)
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[3 / 6] Chameo-product
+[5 / 6] Chameo-product
+[6 / 6] Chameo-product
+Build complete! (12.23 secs)
+warning: CHAMEO_CODE_SIGN_IDENTITY=- requested ad-hoc signing; rebuilt binaries do not retain protected-resource permissions.
+warning: hardened runtime is disabled for this ad-hoc private-testing build.
+/Users/john/Documents/Projects/Chameo/dist/Chameo.app/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Installer.xpc: replacing existing signature
+/Users/john/Documents/Projects/Chameo/dist/Chameo.app/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc: replacing existing signature
+/Users/john/Documents/Projects/Chameo/dist/Chameo.app/Contents/Frameworks/Sparkle.framework/Versions/B/Autoupdate: replacing existing signature
+/Users/john/Documents/Projects/Chameo/dist/Chameo.app/Contents/Frameworks/Sparkle.framework/Versions/B/Updater.app: replacing existing signature
+/Users/john/Documents/Projects/Chameo/dist/Chameo.app/Contents/Frameworks/Sparkle.framework: replacing existing signature
+/Users/john/Documents/Projects/Chameo/dist/Chameo.app: replacing existing signature
+/Users/john/Documents/Projects/Chameo/dist/Chameo.app

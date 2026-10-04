@@ -1,5 +1,7 @@
 # Timelapse UI/UX review — October 2, 2026
 
+Archived review of the October 2 build. Its temporary screenshots were not retained. Later evidence is available in [the approved Timelapse review](approved-screens-2026-10-02/prior-timelapse-qa.md); those captures describe a later implementation.
+
 Timelapse needs clearer hierarchy and a different layout for each stage. The
 current compact window repeats a large title, promotional subtitle, and photo
 strip before the information needed to create, monitor, or open the export.
@@ -28,7 +30,7 @@ strip before the information needed to create, monitor, or open the export.
 
 ## 1. Library entry — blocked for an empty album
 
-![Live Library entry](/tmp/chameo-timelapse-review-20261002/01-entry.png)
+*Archived screenshot unavailable: Live Library entry (temporary capture was not retained).*
 
 The entry is easy to locate, and sits beside Today. But a disabled Timelapse
 button does not explain its prerequisite. Its help text says only “Create
@@ -42,7 +44,7 @@ decision before implementation.
 
 ## 2. Setup — too much space for repeated information
 
-![Fresh setup fixture render](/tmp/chameo-timelapse-review-20261002/02-summary-english.png)
+*Archived screenshot unavailable: Fresh setup fixture render (temporary capture was not retained).*
 
 The export scope, chronology, duration, and format are useful and present.
 However, the large icon/header and three-photo strip dominate the window.
@@ -62,7 +64,7 @@ Recommendation:
 
 ## 3. Generation — competing progress signals
 
-![Fresh download/progress fixture render](/tmp/chameo-timelapse-review-20261002/03-progress-english.png)
+*Archived screenshot unavailable: Fresh download/progress fixture render (temporary capture was not retained).*
 
 The fixture reports a photo download at 45%, but also displays a large 0%
 export figure and “Photos completed: 0 of 3.” These values refer to different
@@ -91,7 +93,7 @@ layouts. [Apple progress indicators](https://developer.apple.com/design/human-in
 
 ## 4. Completion — the result should lead
 
-![Fresh completion fixture render](/tmp/chameo-timelapse-review-20261002/04-result-english.png)
+*Archived screenshot unavailable: Fresh completion fixture render (temporary capture was not retained).*
 
 The success heading and explicit Open Folder/Open Video actions are clear.
 However, the source-photo strip remains above the saved file, the promotional
@@ -164,7 +166,7 @@ come from the fixture, and composited glass/window chrome remain unverified.
 
 | Setup | Downloading | Ready |
 | --- | --- | --- |
-| ![Setup](/tmp/chameo-timelapse-redesign-20261002/english-summary.png) | ![Downloading](/tmp/chameo-timelapse-redesign-20261002/english-progress-minimum.png) | ![Ready](/tmp/chameo-timelapse-redesign-20261002/english-result-minimum.png) |
+| *Archived screenshot unavailable: Setup (temporary capture was not retained).* | *Archived screenshot unavailable: Downloading (temporary capture was not retained).* | *Archived screenshot unavailable: Ready (temporary capture was not retained).* |
 
 ### Validation
 

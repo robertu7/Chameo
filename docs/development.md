@@ -123,7 +123,7 @@ Sparkle 2.9.4 is pinned in `Package.swift` and `Package.resolved`. Chameo uses:
 match the version in `VERSION`, including any prerelease suffix.
 
 The CI workflow runs on pull requests and pushes to `main`. Push a matching tag
-to start a prerelease:
+to start a release:
 
 ```bash
 git tag v0.3.6
@@ -136,7 +136,7 @@ The tag commit must be reachable from `origin/main`. The release workflow:
 2. Builds an ad-hoc-signed app bundle and packages it as a ZIP and DMG.
 3. Signs and verifies the ZIP, release notes, and appcast.
 4. Validates that the DMG contains Chameo and an `/Applications` shortcut.
-5. Creates a public GitHub prerelease with both installation formats.
+5. Creates a public GitHub release with both installation formats; semantic prerelease versions are marked as prereleases.
 6. Publishes the signed ZIP appcast through GitHub Pages.
 7. Verifies the published release and feed URLs.
 
@@ -243,3 +243,25 @@ release screenshots or proof of final contrast. The normal test suite skips
 this opt-in export. Verify the signed test `.app` with pointer, keyboard,
 VoiceOver, Reduce Transparency, and Reduce Motion before replacing onboarding
 screenshots with new Camera and Library captures.
+
+### Recovering a release after publication
+
+Dispatch Release with the existing immutable tag. The workflow resolves the
+published release before generating the appcast. A missing tag allows normal
+publication; API failures stop the run. An existing release must have matching
+stable/prerelease metadata and all three assets. Recovery downloads these assets,
+checks their sizes and available GitHub SHA-256 digests, verifies that the ZIP's
+version/build identity matches the tagged source, and validates the signed app
+bundle and disk image. It signs a new appcast using the downloaded ZIP and notes
+without replacing or rebuilding the published assets. Incomplete existing
+publications fail with a diagnostic instead of silently replacing assets.
+
+Release and Repair update feed share a workflow-wide `chameo-update-feed` lock
+from feed fetch through deployment and verification. GitHub permits one running
+and one pending run per group; a newer pending run can replace an older pending
+run. Recover any tag whose queued run was cancelled. The lock covers the complete
+feed transaction to prevent a stale merge from overwriting another release.
+
+A deployment-only retry also checks the public feed's SHA-256 against the fetched
+base or the already-deployed result. If another release changed it, rerun the
+whole workflow to merge that feed instead of deploying the stale artifact.

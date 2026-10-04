@@ -6,12 +6,15 @@ final class LibraryStore: ObservableObject {
     typealias AssetLoader = (String) async throws -> [ChameoAsset]
     typealias AssetDeleter = (PHAsset) async throws -> Void
 
-    @Published private(set) var assets: [ChameoAsset] = []
+    @Published private(set) var assets: [ChameoAsset] = [] {
+        didSet { cachedCalendarSnapshot = nil }
+    }
     @Published private(set) var isLoading = false
     @Published private(set) var hasLoaded = false
     @Published var errorMessage: LocalizedMessage?
     @Published private(set) var deletionWarning: LocalizedMessage?
 
+    private var cachedCalendarSnapshot: LibraryCalendarSnapshot?
     private let assetLoader: AssetLoader
     private let assetDeleter: AssetDeleter
     private var reloadGeneration = 0
@@ -21,6 +24,15 @@ final class LibraryStore: ObservableObject {
          assetLoader: @escaping AssetLoader = PhotoLibraryService.fetchAssets) {
         self.assetLoader = assetLoader
         self.assetDeleter = assetDeleter
+    }
+
+    func calendarSnapshot(calendar: Calendar = LibraryCalendarSnapshot.displayCalendar) -> LibraryCalendarSnapshot {
+        if let cachedCalendarSnapshot, cachedCalendarSnapshot.calendar == calendar {
+            return cachedCalendarSnapshot
+        }
+        let snapshot = LibraryCalendarSnapshot(assets: assets, calendar: calendar)
+        cachedCalendarSnapshot = snapshot
+        return snapshot
     }
 
     func reload(albumName: String) async {
@@ -54,6 +66,12 @@ final class LibraryStore: ObservableObject {
         if generation == reloadGeneration {
             isLoading = false
         }
+    }
+
+    /// A save can outlive the camera surface or an album change in Settings.
+    func reloadAfterSaving(albumName: String) async {
+        guard requestedAlbumName == nil || requestedAlbumName == albumName else { return }
+        await reload(albumName: albumName)
     }
 
     func deleteFromLibrary(_ asset: ChameoAsset, albumName: String,
@@ -100,16 +118,14 @@ final class LibraryStore: ObservableObject {
     func dailyStatus(
         on date: Date = Date(),
         today: Date = Date(),
-        calendar: Calendar = .current
+        calendar: Calendar = LibraryCalendarSnapshot.displayCalendar
     ) -> DailyCaptureStatus {
         let hasUsableSnapshot = (hasLoaded || !assets.isEmpty)
             && (errorMessage == nil || !assets.isEmpty)
 
-        return DailyCaptureHistory.status(
+        return calendarSnapshot(calendar: calendar).history.status(
             for: date,
-            captureDates: assets.compactMap(\.createdAt),
             today: today,
-            calendar: calendar,
             isAvailable: hasUsableSnapshot
         )
     }

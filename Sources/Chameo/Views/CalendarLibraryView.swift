@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 struct CalendarLibraryView: View {
-    let assets: [ChameoAsset]
+    let snapshot: LibraryCalendarSnapshot
     @Binding var selectedDay: Date?
     let isRefreshing: Bool
     let isExportingTimelapse: Bool
@@ -18,16 +18,7 @@ struct CalendarLibraryView: View {
     @State private var displayedMonth = Calendar.current.startOfDay(for: Date())
     @FocusState private var focusedDay: Date?
 
-    private var calendar: Calendar {
-        var calendar = Calendar.current
-        calendar.locale = L10n.currentLocalization.displayLocale
-        calendar.firstWeekday = 2
-        return calendar
-    }
-
-    private var captureDates: [Date] {
-        assets.compactMap(\.createdAt)
-    }
+    private var calendar: Calendar { snapshot.calendar }
 
     private var dates: [Date] {
         DailyCaptureHistory.calendarDates(
@@ -38,15 +29,6 @@ struct CalendarLibraryView: View {
 
     private var previewDay: Date {
         focusedDay ?? selectedDay ?? calendar.startOfDay(for: Date())
-    }
-
-    private var assetsByDay: [Date: [ChameoAsset]] {
-        Dictionary(grouping: assets) { asset in
-            calendar.startOfDay(for: asset.createdAt ?? .distantPast)
-        }
-        .mapValues {
-            $0.sorted { ($0.createdAt ?? .distantPast) > ($1.createdAt ?? .distantPast) }
-        }
     }
 
     var body: some View {
@@ -60,10 +42,8 @@ struct CalendarLibraryView: View {
                 spacing: 2
             ) {
                 ForEach(dates, id: \.self) { date in
-                    let status = DailyCaptureHistory.status(
-                        for: date,
-                        captureDates: captureDates,
-                        calendar: calendar
+                    let status = snapshot.history.status(
+                        for: date
                     )
 
                     CalendarDayCell(
@@ -88,12 +68,10 @@ struct CalendarLibraryView: View {
 
             CalendarDayPreview(
                 date: previewDay,
-                status: DailyCaptureHistory.status(
-                    for: previewDay,
-                    captureDates: captureDates,
-                    calendar: calendar
+                status: snapshot.history.status(
+                    for: previewDay
                 ),
-                assets: assetsByDay[calendar.startOfDay(for: previewDay)] ?? [],
+                assets: snapshot.assetsByDay[calendar.startOfDay(for: previewDay)] ?? [],
                 canSaveLocalCopy: canSaveLocalCopy,
                 onTakeChameo: onTakeChameo,
                 onDelete: onDelete,

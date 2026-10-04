@@ -6,7 +6,6 @@ struct ReminderSettingsView: View {
     @AppStorage(AppPreferenceKey.reminderDate) private var reminderDateTimeInterval = Date().timeIntervalSinceReferenceDate
     @AppStorage(AppPreferenceKey.reminderRepeat) private var reminderRepeatRawValue = ReminderRepeat.none.rawValue
     @AppStorage(AppPreferenceKey.reminderWeekday) private var reminderWeekdayStorage = Calendar.current.component(.weekday, from: Date())
-    @AppStorage(AppPreferenceKey.reminderSettingsMigrated) private var reminderSettingsMigrated = false
 
     @State private var reminderEnabled = false
     @State private var reminderDate = Date()
@@ -98,13 +97,14 @@ struct ReminderSettingsView: View {
             Text(L10n.string("Notifications are used only for reminders."))
                 .font(.caption).foregroundStyle(.secondary)
         }
+        .disabled(!hasLoadedSettings)
         .onAppear {
             if !hasLoadedSettings || !hasReminderChanges {
                 loadStoredSettings()
-                hasLoadedSettings = true
             }
             Task {
                 await migrateReminderSettingsIfNeeded()
+                hasLoadedSettings = true
                 notificationAuthorizationStatus = await ReminderService.authorizationStatus()
             }
         }
@@ -137,10 +137,12 @@ struct ReminderSettingsView: View {
     }
 
     private func loadStoredSettings() {
-        reminderEnabled = reminderEnabledStorage
-        reminderDate = Date(timeIntervalSinceReferenceDate: reminderDateTimeInterval)
-        reminderRepeat = ReminderRepeat(rawValue: reminderRepeatRawValue) ?? .none
-        reminderWeekday = validWeekday(reminderWeekdayStorage)
+        let settings = StoredReminderSettings.load()
+        reminderEnabled = settings.isEnabled
+        reminderDate = UserDefaults.standard.object(forKey: AppPreferenceKey.reminderDate) == nil
+            ? Date(timeIntervalSinceReferenceDate: reminderDateTimeInterval) : settings.date
+        reminderRepeat = settings.repeatMode
+        reminderWeekday = validWeekday(settings.weekday)
     }
 
     private func saveReminderSettings() async {
@@ -161,20 +163,9 @@ struct ReminderSettingsView: View {
         }
 
         do {
-            if reminderEnabled {
-                try await ReminderService.configureReminder(
-                    date: reminderDate,
-                    repeatMode: reminderRepeat,
-                    weekday: reminderWeekday
-                )
-            } else {
-                try await ReminderService.cancelReminder()
-            }
-
-            reminderEnabledStorage = reminderEnabled
-            reminderDateTimeInterval = reminderDate.timeIntervalSinceReferenceDate
-            reminderRepeatRawValue = reminderRepeat.rawValue
-            reminderWeekdayStorage = reminderWeekday
+            try await ReminderService.updateReminder(isEnabled: reminderEnabled,
+                date: reminderDate, repeatMode: reminderRepeat, weekday: reminderWeekday)
+            loadStoredSettings()
             notificationAuthorizationStatus = await ReminderService.authorizationStatus()
         } catch {
             notificationAuthorizationStatus = await ReminderService.authorizationStatus()
@@ -286,15 +277,12 @@ struct ReminderSettingsView: View {
     }
 
     private func migrateReminderSettingsIfNeeded() async {
-        guard !reminderSettingsMigrated else {
-            return
+        let hadChanges = hasReminderChanges
+        do {
+            try await ReminderService.migrateSettingsIfNeeded(defaultDate: reminderDate)
+            if !hadChanges && !isUpdatingReminder { loadStoredSettings() }
+        } catch {
+            errorMessage = .error(error)
         }
-
-        let hasScheduledReminder = await ReminderService.hasScheduledReminder()
-        reminderEnabled = hasScheduledReminder
-        reminderEnabledStorage = hasScheduledReminder
-        reminderWeekday = Calendar.current.component(.weekday, from: reminderDate)
-        reminderWeekdayStorage = reminderWeekday
-        reminderSettingsMigrated = true
     }
 }

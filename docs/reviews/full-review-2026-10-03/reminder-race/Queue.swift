@@ -1,0 +1,69 @@
+import Foundation
+@preconcurrency import UserNotifications
+protocol ReminderNotificationCenter: Sendable {
+    func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool
+    func add(_ request: UNNotificationRequest) async throws
+    func pendingReminderNotificationIdentifiers() async -> [String]
+    func deliveredReminderNotificationIdentifiers() async -> [String]
+    func removePendingReminderNotifications(withIdentifiers identifiers: [String]) async
+    func removeDeliveredReminderNotifications(withIdentifiers identifiers: [String]) async
+}
+
+actor ReminderOperationQueue {
+    private var tail: Task<Void, Never>?
+    private var isSuspended = false
+
+    func suspend(perform cleanup: @escaping @Sendable () async throws -> Void) async throws {
+        try await enqueue {
+            await self.setSuspended(true)
+            try await cleanup()
+        }
+    }
+
+    func resume() async {
+        try? await enqueue { await self.setSuspended(false) }
+    }
+
+    private func setSuspended(_ value: Bool) {
+        isSuspended = value
+    }
+
+    func perform(_ operation: @escaping @Sendable () async throws -> Void) async throws {
+        try await enqueue {
+            guard await !self.isSuspended else { return }
+            try await operation()
+        }
+    }
+
+    private func enqueue(_ operation: @escaping @Sendable () async throws -> Void) async throws {
+        let previous = tail
+        let operationTask = Task<Result<Void, Error>, Never> {
+            await previous?.value
+            do {
+                try await operation()
+                return .success(())
+            } catch {
+                return .failure(error)
+            }
+        }
+        tail = Task {
+            _ = await operationTask.value
+        }
+
+        try await operationTask.value.get()
+    }
+}
+
+enum ReminderError: LocalizedError {
+    case notAuthorized
+    case updateTimedOut
+
+    var errorDescription: String? {
+        switch self {
+        case .notAuthorized:
+            return L10n.string("Allow Notifications in System Settings to schedule reminders.")
+        case .updateTimedOut:
+            return L10n.string("Could not update reminders. Try again.")
+        }
+    }
+}

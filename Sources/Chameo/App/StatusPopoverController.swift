@@ -215,7 +215,7 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
     }
 
     private func makeContentView(surface: ChameoMainSurface) -> some View {
-        ContentView(surface: surface, onOpenTimelapse: { [weak self] in self?.showTimelapse() },
+        ContentView(captureReview: appState.captureReview, surface: surface, onOpenTimelapse: { [weak self] in self?.showTimelapse() },
                     onOpenSettings: { [weak self] in self?.showSettings() })
             .environmentObject(appState)
             .environmentObject(cameraService)

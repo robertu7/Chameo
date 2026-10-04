@@ -156,8 +156,9 @@ Chameo asks for permissions only when needed:
 
 - Camera: required for live preview and capture.
 - Photos: required to create/use the album, save photos, list library items, and delete photos from Photos.
-- Location: optional, only when `Save photo location` is enabled.
-- Notifications: requested when reminder settings are scheduled or after choosing a destination for the first timelapse export.
+- Location: optional, only when `Add Location to Photos` is enabled. Saves geographic coordinates, which may accompany shared photos.
+- Notifications: requested when reminders are enabled. Timelapse completion appears in the app.
+- Pictures folder: read/write sandbox access supports local originals in `~/Pictures/Chameo`.
 - User-selected files: used only for the timelapse destination chosen in the standard Save dialog.
 
 Library deletion removes the original photo from Photos. Photos may move deleted items to Recently Deleted according to the system Photos behavior.

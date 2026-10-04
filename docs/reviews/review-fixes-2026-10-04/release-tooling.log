@@ -1,0 +1,10 @@
+signed_feed_0.5.0=passed
+signed_feed_0.5.0-rc.0=passed
+...........
+----------------------------------------------------------------------
+Ran 11 tests in 0.006s
+
+OK
+version_fixtures=passed
+appcast_display_fixtures=passed
+run_row_fixtures=passed

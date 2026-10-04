@@ -1,5 +1,5 @@
 "NSCameraUsageDescription" = "Chameo uses the camera to take your daily photo.";
 "NSPhotoLibraryUsageDescription" = "Chameo saves and manages the photos you take in a dedicated album in Photos.";
-"NSLocationUsageDescription" = "Chameo can add your current city and country to photos you save.";
-"NSLocationWhenInUseUsageDescription" = "Chameo can add your current city and country to photos you save.";
+"NSLocationUsageDescription" = "Chameo can save your current geographic coordinates with photos. Shared photos may include this location.";
+"NSLocationWhenInUseUsageDescription" = "Chameo can save your current geographic coordinates with photos. Shared photos may include this location.";
 "NSUserNotificationUsageDescription" = "Chameo sends daily photo reminders.";

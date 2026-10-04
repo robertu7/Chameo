@@ -332,3 +332,6 @@
 "No dated photos are available." = "No dated photos are available.";
 "No photos in this period. Choose another date range." = "No photos in this period. Choose another date range.";
 "Photos without dates are only included in All Photos." = "Photos without dates are only included in All Photos.";
+
+"Saves geographic coordinates. Shared photos may include this location." = "Saves geographic coordinates. Shared photos may include this location.";
+"Open Login Items" = "Open Login Items";

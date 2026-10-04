@@ -152,7 +152,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
     private func configureUserDefaults() {
         let launchAtLogin = AppDistribution.current.launchAtLoginEnabled
-            && LaunchAtLoginService.isEnabled
+            && LaunchAtLoginService.isRegistered
 
         UserDefaults.standard.register(defaults: [
             AppPreferenceKey.albumName: AppDistribution.current.defaultAlbumName,

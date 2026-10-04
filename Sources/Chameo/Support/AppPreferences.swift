@@ -41,3 +41,20 @@ struct StoredReminderSettings {
         )
     }
 }
+
+/// UserDefaults operations are thread-safe; the reminder queue orders multi-key commits.
+struct ReminderPreferences: @unchecked Sendable {
+    static let standard = ReminderPreferences(defaults: .standard)
+    let defaults: UserDefaults
+
+    func load() -> StoredReminderSettings { .load(from: defaults) }
+    var hasMigrated: Bool { defaults.bool(forKey: AppPreferenceKey.reminderSettingsMigrated) }
+    func markMigrated() { defaults.set(true, forKey: AppPreferenceKey.reminderSettingsMigrated) }
+
+    func save(isEnabled: Bool, date: Date, repeatMode: ReminderRepeat, weekday: Int) {
+        defaults.set(date.timeIntervalSinceReferenceDate, forKey: AppPreferenceKey.reminderDate)
+        defaults.set(repeatMode.rawValue, forKey: AppPreferenceKey.reminderRepeat)
+        defaults.set(weekday, forKey: AppPreferenceKey.reminderWeekday)
+        defaults.set(isEnabled, forKey: AppPreferenceKey.reminderEnabled)
+    }
+}

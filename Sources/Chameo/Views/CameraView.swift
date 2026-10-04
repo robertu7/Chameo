@@ -1,18 +1,11 @@
 import AppKit
-import CoreLocation
-import OSLog
-import Photos
 import SwiftUI
 
 struct CameraView: View {
-    private static let captureQualityLogger = Logger(
-        subsystem: AppDistribution.current.bundleIdentifier,
-        category: "capture-quality"
-    )
-
     @EnvironmentObject private var cameraService: CameraService
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var libraryStore: LibraryStore
+    @ObservedObject var review: CaptureReviewStore
     @EnvironmentObject private var localPhotos: LocalPhotoSettingsController
     @AppStorage(AppPreferenceKey.autoAlignPhotos) private var autoAlignPhotos = true
 
@@ -21,13 +14,10 @@ struct CameraView: View {
     let handsFreeCountdown: Bool
     let showFaceGuide: Bool
     let saveLocation: Bool
-    @Binding var statusMessage: LocalizedMessage?
 
-    @State private var isSaving = false
-    @State private var capturedPreview: CapturedPreview?
-    @State private var locationService = LocationService()
-    @State private var photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
-    @State private var locationPermissionDenied = false
+    private var isSaving: Bool { review.isSaving }
+    private var capturedPreview: CapturedPreview? { review.capturedPreview }
+    private var locationPermissionDenied: Bool { review.locationPermissionDenied }
     @State private var handsFreeCountdownMachine = HandsFreeCountdownMachine()
     @State private var handsFreeCountdownTask: Task<Void, Never>?
 
@@ -40,7 +30,7 @@ struct CameraView: View {
                     photosPermissionDenied: isPhotosPermissionDenied,
                     locationPermissionDenied: saveLocation && locationPermissionDenied,
                     onRetake: {
-                        retakeCapturedPreview()
+                        review.retake()
                     },
                     onKeep: {
                         beginSavingCapturedPreview()
@@ -114,14 +104,17 @@ struct CameraView: View {
             alignment: .top
         )
         .task {
-            photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
+            review.refreshPermissions()
         }
         .onAppear {
             syncLiveFramingGuidance()
             syncHandsFreeCountdown()
         }
         .onChange(of: isVisible) { _, visible in
-            if visible { syncLiveFramingGuidance() }
+            if visible {
+                review.refreshPermissions()
+                syncLiveFramingGuidance()
+            }
             syncHandsFreeCountdown()
         }
         .onChange(of: showFaceGuide) { _, _ in
@@ -140,6 +133,7 @@ struct CameraView: View {
         .onChange(of: cameraService.status) { _, _ in
             syncHandsFreeCountdown()
         }
+        .onChange(of: isSaving) { _, _ in syncHandsFreeCountdown() }
         .onChange(of: capturedPreview?.id) { _, _ in
             syncHandsFreeCountdown()
         }
@@ -282,7 +276,7 @@ struct CameraView: View {
     }
 
     private var isPhotosPermissionDenied: Bool {
-        switch photosAuthorizationStatus {
+        switch review.photosAuthorizationStatus {
         case .denied, .restricted:
             return true
         default:
@@ -295,10 +289,8 @@ struct CameraView: View {
         if trigger == .manual {
             handleHandsFreeCountdown(.manualCapture)
         }
-        isSaving = true
-        Task {
-            await takeChameo()
-        }
+        guard canCapture, capturedPreview == nil else { return }
+        review.capture(cameraService: cameraService, autoAlignPhotos: autoAlignPhotos)
     }
 
     private func selectCamera(uniqueID: String) {
@@ -312,151 +304,17 @@ struct CameraView: View {
                 let cameraName = cameraService.availableCameras.first(
                     where: { $0.id == uniqueID }
                 )?.name ?? L10n.string("selected camera")
-                statusMessage = .formatted("Switched to %@", cameraName)
+                review.statusMessage = .formatted("Switched to %@", cameraName)
             } catch {
-                statusMessage = .error(error)
+                review.statusMessage = .error(error)
             }
-        }
-    }
-
-    private func takeChameo() async {
-        statusMessage = nil
-
-        do {
-            let data = try await cameraService.capturePhoto(mirrored: false)
-            statusMessage = .localized("Preparing photo…")
-            let qualityEvaluation = await FaceCaptureQualityService.evaluation(from: data)
-            logCaptureQuality(qualityEvaluation)
-            let qualitySuggestion = CaptureQualityPolicy.suggestion(
-                for: qualityEvaluation,
-                acceptedScores: CaptureQualityHistoryStore.acceptedScores()
-            )
-
-            if autoAlignPhotos {
-                statusMessage = .localized("Aligning photo…")
-                let result = await FaceAlignmentService.alignmentResult(from: data)
-                capturedPreview = CapturedPreview(
-                    data: result.data,
-                    qualityEvaluation: qualityEvaluation,
-                    qualitySuggestion: qualitySuggestion
-                )
-                statusMessage = previewStatusMessage(
-                    alignmentError: result.error,
-                    qualitySuggestion: qualitySuggestion
-                )
-            } else {
-                capturedPreview = CapturedPreview(
-                    data: data,
-                    qualityEvaluation: qualityEvaluation,
-                    qualitySuggestion: qualitySuggestion
-                )
-                statusMessage = previewStatusMessage(
-                    alignmentError: nil,
-                    qualitySuggestion: qualitySuggestion
-                )
-            }
-        } catch {
-            statusMessage = .error(error)
-        }
-
-        isSaving = false
-    }
-
-    private func previewStatusMessage(
-        alignmentError: FaceAlignmentError?,
-        qualitySuggestion: CaptureQualitySuggestion?
-    ) -> LocalizedMessage {
-        if let alignmentError {
-            return .error(alignmentError)
-        }
-        if qualitySuggestion != nil {
-            return .localized("Preview ready. Retake recommended, or save anyway.")
-        }
-        return .localized("Review your Chameo before saving.")
-    }
-
-    private func logCaptureQuality(_ evaluation: FaceCaptureQualityEvaluation) {
-        switch evaluation {
-        case .scored(let score):
-            Self.captureQualityLogger.debug(
-                "Vision face capture quality: \(score, privacy: .public)"
-            )
-        case .noFace:
-            Self.captureQualityLogger.debug("Vision capture quality found no face")
-        case .scoreUnavailable:
-            Self.captureQualityLogger.debug("Vision capture quality returned no score")
-        case .unreadableImage:
-            Self.captureQualityLogger.debug("Vision capture quality could not read the image")
-        case .analysisFailed:
-            Self.captureQualityLogger.debug("Vision capture quality analysis failed")
         }
     }
 
     private func beginSavingCapturedPreview() {
-        guard isVisible, capturedPreview != nil, !isSaving else { return }
-        isSaving = true
-        Task {
-            await keepCapturedPreview()
-        }
-    }
-
-    private func keepCapturedPreview() async {
-        guard let capturedPreview else {
-            return
-        }
-
-        do {
-            var location = Optional.none as CLLocation?
-            if saveLocation {
-                statusMessage = .localized("Getting location…")
-                location = await locationService.requestCurrentLocation()
-                locationPermissionDenied = locationService.isPermissionDenied
-                if location == nil {
-                    statusMessage = .localized("Location unavailable. Saving without location…")
-                }
-            }
-
-            if location != nil || !saveLocation {
-                statusMessage = .localized("Saving to Photos…")
-            }
-
-            let saved = try await CapturePhotoSaveService.save(
-                data: capturedPreview.data,
-                saveToPhotos: { data in
-                    try await PhotoLibraryService.savePhoto(data: data, albumName: albumName, location: location)
-                },
-                saveLocally: { data, asset in
-                    try await localPhotos.store.saveOriginal(data, source: LocalPhotoSnapshot(asset: asset.asset))
-                }
-            )
-            CaptureQualityHistoryStore.recordAccepted(
-                capturedPreview.qualityEvaluation
-            )
-            await ReminderService.recordSelfieTaken()
-            photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
-            await libraryStore.reload(albumName: albumName)
-            self.capturedPreview = nil
-            if saved.localCopyFailed {
-                statusMessage = .localized("Saved to Photos. The local copy could not be saved.")
-            } else if saveLocation && location == nil {
-                statusMessage = .localized("Saved to Photos without location")
-            } else {
-                statusMessage = .formatted(
-                    "Saved to %@ in Photos",
-                    PhotoLibraryService.normalizedAlbumName(albumName)
-                )
-            }
-        } catch {
-            photosAuthorizationStatus = PhotoLibraryService.authorizationStatus()
-            statusMessage = .error(error)
-        }
-
-        isSaving = false
-    }
-
-    private func retakeCapturedPreview() {
-        self.capturedPreview = nil
-        statusMessage = .localized("Discarded preview")
+        guard isVisible else { return }
+        review.save(albumName: albumName, saveLocation: saveLocation,
+                    libraryStore: libraryStore, localPhotos: localPhotos)
     }
 
     private var isHandsFreeCountdownEnabled: Bool {
@@ -464,7 +322,7 @@ struct CameraView: View {
     }
 
     private var isHandsFreeCountdownVisible: Bool {
-        isVisible && capturedPreview == nil && canCapture
+        isVisible && capturedPreview == nil && canCapture && !isSaving
     }
 
     private func syncHandsFreeCountdown() {

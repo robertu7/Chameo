@@ -332,3 +332,6 @@
 "No dated photos are available." = "沒有帶日期的照片。";
 "No photos in this period. Choose another date range." = "此日期範圍內沒有照片，請選擇其他日期範圍。";
 "Photos without dates are only included in All Photos." = "沒有日期的照片僅包含在「全部」中。";
+
+"Saves geographic coordinates. Shared photos may include this location." = "儲存地理座標。分享的照片可能包含此位置。";
+"Open Login Items" = "開啟登入項目";

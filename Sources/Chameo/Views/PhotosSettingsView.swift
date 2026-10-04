@@ -68,7 +68,9 @@ struct PhotosSettingsView: View {
             LocalPhotoSettingsView()
 
             SettingsGroup(title: L10n.string("Location")) {
-                SettingsToggle(title: L10n.string("Add Location to Photos"), isOn: $saveLocation)
+                SettingsToggle(title: L10n.string("Add Location to Photos"),
+                    description: L10n.string("Saves geographic coordinates. Shared photos may include this location."),
+                    isOn: $saveLocation)
 
                 if saveLocation && isLocationPermissionDenied {
                     PermissionStatusInline(

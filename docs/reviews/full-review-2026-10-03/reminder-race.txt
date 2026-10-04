@@ -1,0 +1,7 @@
+CONFIG awaiting authorization
+LOAD enabled=false
+LOAD enabled=false
+UI committed enabled=true
+REFRESH removing 60 pending requests
+LOAD enabled=true
+FINAL storedEnabled=true, pending=0

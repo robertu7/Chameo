@@ -4,3 +4,6 @@ dist/
 
 
 TODO
+
+# Python release-tooling test caches
+__pycache__/

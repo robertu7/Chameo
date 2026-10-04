@@ -77,7 +77,7 @@ final class ModernUIRenderTests: XCTestCase {
                 await library.reload(albumName: "Preview")
                 let export = TimelapseExportController(announce: { _ in })
                 let camera = CameraService()
-                let main = ContentView(surface: .popover, onOpenTimelapse: {}, onOpenSettings: {})
+                let main = ContentView(captureReview: state.captureReview, surface: .popover, onOpenTimelapse: {}, onOpenSettings: {})
                     .environmentObject(state)
                     .environmentObject(library)
                     .environmentObject(export)
@@ -129,7 +129,7 @@ final class ModernUIRenderTests: XCTestCase {
                     to: directory.appendingPathComponent(name + "-camera-review.png"))
                 for previewDay in [day, day.addingTimeInterval(-86400)] {
                     let assets = (0..<3).map { ChameoAsset(asset: PreviewPhoto(date: day.addingTimeInterval(-86400 + Double($0) * 60))) }
-                    let calendar = CalendarLibraryView(assets: assets, selectedDay: .constant(previewDay),
+                    let calendar = CalendarLibraryView(snapshot: LibraryCalendarSnapshot(assets: assets, calendar: LibraryCalendarSnapshot.displayCalendar), selectedDay: .constant(previewDay),
                         isRefreshing: false, isExportingTimelapse: false, canSaveLocalCopy: true,
                         onTakeChameo: {}, onExportTimelapse: {}, onDelete: { _, _ in }, onSaveLocalCopy: { _ in },
                         thumbnailLoader: { _, _ in portrait })

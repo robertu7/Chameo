@@ -4,6 +4,17 @@ import Photos
 
 @MainActor
 final class LibraryStoreTests: XCTestCase {
+    func testSaveRefreshCannotReplaceNewlySelectedAlbum() async {
+        var requestedAlbums: [String] = []
+        let store = LibraryStore(assetLoader: { album in requestedAlbums.append(album); return [] })
+        await store.reloadAfterSaving(albumName: "First")
+        await store.reload(albumName: "Selected")
+        await store.reloadAfterSaving(albumName: "First")
+        XCTAssertEqual(requestedAlbums, ["First", "Selected"])
+        await store.reloadAfterSaving(albumName: "Selected")
+        XCTAssertEqual(requestedAlbums, ["First", "Selected", "Selected"])
+    }
+
     func testOlderReloadCannotOverwriteNewerState() async {
         let store = LibraryStore(assetLoader: { albumName in
             if albumName == "Old" {

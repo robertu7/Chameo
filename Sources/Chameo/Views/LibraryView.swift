@@ -38,7 +38,7 @@ struct LibraryView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 CalendarLibraryView(
-                    assets: libraryStore.assets,
+                    snapshot: libraryStore.calendarSnapshot(),
                     selectedDay: $appState.selectedLibraryDay,
                     isRefreshing: libraryStore.isLoading,
                     isExportingTimelapse: timelapseExport.isGenerating,

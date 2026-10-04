@@ -62,11 +62,12 @@ Behavior:
 - The app asks for location only when `Add Location to Photos` is enabled and the user saves a photo.
 - If location is unavailable, the app saves without location and shows a status message.
 - Authorization and one-shot location requests time out instead of blocking a save indefinitely.
+- Photos stores the raw geographic coordinates from the one-shot location request (requested accuracy: approximately 100 metres), rather than just a city or country. Sharing an original may include this metadata.
 - Library location names are reverse-geocoded from `PHAsset.location`.
 
 ## Notifications
 
-Purpose: remind the user to take a Chameo and announce completed timelapse exports.
+Purpose: remind the user to take a Chameo.
 
 Bundle key:
 
@@ -77,7 +78,6 @@ Behavior:
 - The app schedules dated primary notifications for upcoming reminder days.
 - Updating reminder settings reconciles pending requests, and saving a Chameo cancels remaining reminders and clears delivered reminder banners for that completed day.
 - Clicking a reminder notification opens the app to the Camera tab.
-- Timelapse export requests authorization after Save if permission is undetermined. Declining does not prevent export.
 - Timelapse exports do not request notification access or send completion notifications; completion and Open Folder/Open Video actions appear in the app.
 
 ## User-Selected Files

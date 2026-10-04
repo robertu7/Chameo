@@ -1,0 +1,7 @@
+Signing with stable identity: 7328644A05EA23983CCE34335D4DAB428BA79F3E
+/Users/john/Documents/Projects/Chameo/dist/test/Chameo (test).app/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Installer.xpc: replacing existing signature
+/Users/john/Documents/Projects/Chameo/dist/test/Chameo (test).app/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc: replacing existing signature
+/Users/john/Documents/Projects/Chameo/dist/test/Chameo (test).app/Contents/Frameworks/Sparkle.framework/Versions/B/Autoupdate: replacing existing signature
+/Users/john/Documents/Projects/Chameo/dist/test/Chameo (test).app/Contents/Frameworks/Sparkle.framework/Versions/B/Updater.app: replacing existing signature
+/Users/john/Documents/Projects/Chameo/dist/test/Chameo (test).app/Contents/Frameworks/Sparkle.framework: replacing existing signature
+/Users/john/Documents/Projects/Chameo/dist/test/Chameo (test).app: replacing existing signature

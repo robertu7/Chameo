@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct GeneralSettingsView: View {
@@ -5,6 +6,7 @@ struct GeneralSettingsView: View {
     @EnvironmentObject private var updateController: UpdateController
     @AppStorage(AppPreferenceKey.launchAtLogin) private var storedLaunchAtLogin = false
     @State private var launchAtLogin = false
+    @State private var requiresLoginApproval = false
     @State private var isUpdatingLaunchAtLogin = false
     @State private var isLoadingSettings = true
     @State private var errorMessage: LocalizedMessage?
@@ -23,6 +25,11 @@ struct GeneralSettingsView: View {
                     Divider()
                     SettingsToggle(title: L10n.string("Launch at Login"), isOn: $launchAtLogin)
                         .disabled(isUpdatingLaunchAtLogin)
+                    if requiresLoginApproval {
+                        Text(L10n.string("Open System Settings → General → Login Items, then allow Chameo."))
+                            .font(.caption).foregroundStyle(.secondary)
+                        Button(L10n.string("Open Login Items")) { LaunchAtLoginService.openLoginItems() }
+                    }
                 }
             }
             if updateController.isEnabled {
@@ -40,20 +47,27 @@ struct GeneralSettingsView: View {
         .safeAreaInset(edge: .bottom) {
             if let errorMessage { SettingsErrorView(message: errorMessage.text) }
         }
-        .onAppear {
-            isLoadingSettings = true
-            launchAtLogin = AppDistribution.current.launchAtLoginEnabled && LaunchAtLoginService.isEnabled
-            storedLaunchAtLogin = launchAtLogin
-            isLoadingSettings = false
+        .onAppear { refreshLoginRegistration() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            if !isUpdatingLaunchAtLogin { refreshLoginRegistration() }
         }
         .onChange(of: launchAtLogin) { _, value in
             guard AppDistribution.current.launchAtLoginEnabled,
-                  !isLoadingSettings, value != LaunchAtLoginService.isEnabled else { return }
+                  !isLoadingSettings, value != LaunchAtLoginService.isRegistered else { return }
             Task { await updateLaunchAtLogin(value) }
         }
         .onChange(of: errorMessage?.text) { _, text in
             if let text { AccessibilityAnnouncement.post(text, priority: .high) }
         }
+    }
+
+    private func refreshLoginRegistration() {
+        isLoadingSettings = true
+        let registration = LaunchAtLoginService.registration
+        launchAtLogin = AppDistribution.current.launchAtLoginEnabled && registration.isRegistered
+        requiresLoginApproval = launchAtLogin && registration.requiresApproval
+        storedLaunchAtLogin = launchAtLogin
+        isLoadingSettings = false
     }
 
     private var languageBinding: Binding<AppLanguage> {
@@ -92,14 +106,9 @@ struct GeneralSettingsView: View {
 
         do {
             try LaunchAtLoginService.setEnabled(isEnabled)
-            if isEnabled && LaunchAtLoginService.requiresApproval {
-                errorMessage = .localized("Open System Settings → General → Login Items, then allow Chameo.")
-            }
-            launchAtLogin = LaunchAtLoginService.isEnabled
-            storedLaunchAtLogin = launchAtLogin
+            refreshLoginRegistration()
         } catch {
-            launchAtLogin = LaunchAtLoginService.isEnabled
-            storedLaunchAtLogin = launchAtLogin
+            refreshLoginRegistration()
             errorMessage = .error(error)
         }
 

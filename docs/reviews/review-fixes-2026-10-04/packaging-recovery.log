@@ -1,0 +1,17 @@
+/var/folders/gb/1wd7q_0d3gx5vym1bm7fntcm0000gn/T/chameo-recovery-packaging-wyy09dn9/dist/Chameo.app: replacing existing signature
+Updated Chameo-0.5.6-arm64.md to include signing warning for making further modifications.
+Wrote 1 new update, updated 0 existing updates, and removed 0 old updates in appcast.xml
+<!-- Updated signature inside appcast.xml and added warning for making further modifications. -->
+hdiutil: verify: checksum of "/var/folders/gb/1wd7q_0d3gx5vym1bm7fntcm0000gn/T/chameo-recovery-packaging-wyy09dn9/dist/releases/Chameo-0.5.6-arm64.dmg" is VALID
+/var/folders/gb/1wd7q_0d3gx5vym1bm7fntcm0000gn/T/chameo-recovery-packaging-wyy09dn9/dist/updates/Chameo-0.5.6-arm64.zip
+/var/folders/gb/1wd7q_0d3gx5vym1bm7fntcm0000gn/T/chameo-recovery-packaging-wyy09dn9/dist/releases/Chameo-0.5.6-arm64.dmg
+/var/folders/gb/1wd7q_0d3gx5vym1bm7fntcm0000gn/T/chameo-recovery-packaging-wyy09dn9/dist/updates/Chameo-0.5.6-arm64.md
+/var/folders/gb/1wd7q_0d3gx5vym1bm7fntcm0000gn/T/chameo-recovery-packaging-wyy09dn9/dist/updates/appcast.xml
+Wrote 0 new updates, updated 1 existing update, and removed 0 old updates in appcast.xml
+<!-- Updated signature inside appcast.xml and added warning for making further modifications. -->
+hdiutil: verify: checksum of "/var/folders/gb/1wd7q_0d3gx5vym1bm7fntcm0000gn/T/chameo-recovery-packaging-wyy09dn9/dist/releases/Chameo-0.5.6-arm64.dmg" is VALID
+/var/folders/gb/1wd7q_0d3gx5vym1bm7fntcm0000gn/T/chameo-recovery-packaging-wyy09dn9/dist/updates/Chameo-0.5.6-arm64.zip
+/var/folders/gb/1wd7q_0d3gx5vym1bm7fntcm0000gn/T/chameo-recovery-packaging-wyy09dn9/dist/releases/Chameo-0.5.6-arm64.dmg
+/var/folders/gb/1wd7q_0d3gx5vym1bm7fntcm0000gn/T/chameo-recovery-packaging-wyy09dn9/dist/updates/Chameo-0.5.6-arm64.md
+/var/folders/gb/1wd7q_0d3gx5vym1bm7fntcm0000gn/T/chameo-recovery-packaging-wyy09dn9/dist/updates/appcast.xml
+recovery_preserves_zip_dmg_notes_bytes=passed

@@ -1,0 +1,5 @@
+captures=365, index construction median ms=0.667291, 42 lookups median ms=0.143875
+captures=1000, index construction median ms=1.808458, 42 lookups median ms=0.143167
+captures=3650, index construction median ms=4.800875, 42 lookups median ms=0.102459
+captures=10000, index construction median ms=12.305959, 42 lookups median ms=0.098667
+sink=2040

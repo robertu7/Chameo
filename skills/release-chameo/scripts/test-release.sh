@@ -49,6 +49,7 @@ trap - EXIT
 sign_update="$repo_root/.build/artifacts/sparkle/Sparkle/bin/sign_update"
 [[ -x "$sign_update" ]] || die "resolve dependencies before testing appcast signing"
 python3 "$repo_root/script/test_appcast_signing.py" "$sign_update"
+python3 -m unittest discover -s "$repo_root/script/tests"
 
 run_id=""
 status=""

@@ -38,8 +38,9 @@ menu-bar app for personal use on macOS 26 or newer.
 
 ## Security and Privacy
 
-- The app sandbox grants only camera, Photos, location, and user-selected-file
-  access required by documented features.
+- The app sandbox grants camera, Photos, location, user-selected-file and
+  app-scoped bookmark access, plus read/write access to the entire Pictures
+  folder for local copies. Chameo writes originals inside its own subfolder.
 - Location is disabled by default and requested only during an explicit save
   when enabled.
 - Timelapse export uses a standard save panel and holds security-scoped access

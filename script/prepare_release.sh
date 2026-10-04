@@ -37,8 +37,15 @@ mkdir -p "$UPDATES_DIR" "$RELEASES_DIR"
 /usr/bin/find "$UPDATES_DIR" -maxdepth 1 -type f \
   \( -name 'Chameo-*-arm64.zip' -o -name 'Chameo-*-arm64.md' -o -name 'Chameo-*-arm64.dmg' \) \
   -delete
-"$ROOT_DIR/script/extract_release_notes.sh" "$VERSION" "$NOTES_PATH"
-/usr/bin/ditto -c -k --sequesterRsrc --keepParent "$APP_BUNDLE" "$ARCHIVE_PATH"
+if [[ -n "${CHAMEO_REUSE_RELEASE_ASSETS_DIR:-}" ]]; then
+  # Recovery signs the bytes already available at the immutable release URLs.
+  cp "$CHAMEO_REUSE_RELEASE_ASSETS_DIR/$ARCHIVE_BASENAME.zip" "$ARCHIVE_PATH"
+  cp "$CHAMEO_REUSE_RELEASE_ASSETS_DIR/$ARCHIVE_BASENAME.md" "$NOTES_PATH"
+  cp "$CHAMEO_REUSE_RELEASE_ASSETS_DIR/$ARCHIVE_BASENAME.dmg" "$DMG_PATH"
+else
+  "$ROOT_DIR/script/extract_release_notes.sh" "$VERSION" "$NOTES_PATH"
+  /usr/bin/ditto -c -k --sequesterRsrc --keepParent "$APP_BUNDLE" "$ARCHIVE_PATH"
+fi
 
 ARCHIVE_ENTRIES="$(/usr/bin/unzip -Z1 "$ARCHIVE_PATH")"
 for required_entry in \
@@ -107,6 +114,15 @@ bash "$ROOT_DIR/script/finalize_appcast.sh" \
   "$APPCAST_PATH" "$ARCHIVE_BASENAME.zip" "$VERSION" \
   "$SIGN_UPDATE" "${KEY_ARGUMENTS[@]}"
 
+if [[ -n "${CHAMEO_REUSE_RELEASE_ASSETS_DIR:-}" ]]; then
+  for asset_path in "$ARCHIVE_PATH" "$NOTES_PATH" "$DMG_PATH"; do
+    if ! /usr/bin/cmp -s "$asset_path" "$CHAMEO_REUSE_RELEASE_ASSETS_DIR/$(basename "$asset_path")"; then
+      echo "Sparkle modified an existing release asset; refusing to sign a feed for different published bytes." >&2
+      exit 1
+    fi
+  done
+fi
+
 if [[ ! -f "$APPCAST_PATH" ]]; then
   echo "Sparkle did not generate appcast.xml" >&2
   exit 1
@@ -164,15 +180,17 @@ cleanup_dmg() {
 }
 trap cleanup_dmg EXIT
 
-/usr/bin/ditto "$APP_BUNDLE" "$DMG_SOURCE_DIR/Chameo.app"
-/bin/ln -s /Applications "$DMG_SOURCE_DIR/Applications"
-/bin/rm -f "$DMG_PATH"
-/usr/bin/hdiutil create \
-  -volname "Chameo" \
-  -srcfolder "$DMG_SOURCE_DIR" \
-  -fs HFS+ \
-  -format UDZO \
-  "$DMG_PATH" >/dev/null
+if [[ -z "${CHAMEO_REUSE_RELEASE_ASSETS_DIR:-}" ]]; then
+  /usr/bin/ditto "$APP_BUNDLE" "$DMG_SOURCE_DIR/Chameo.app"
+  /bin/ln -s /Applications "$DMG_SOURCE_DIR/Applications"
+  /bin/rm -f "$DMG_PATH"
+  /usr/bin/hdiutil create \
+    -volname "Chameo" \
+    -srcfolder "$DMG_SOURCE_DIR" \
+    -fs HFS+ \
+    -format UDZO \
+    "$DMG_PATH" >/dev/null
+fi
 /usr/bin/hdiutil verify "$DMG_PATH" >/dev/null
 /usr/bin/hdiutil attach \
   -readonly \

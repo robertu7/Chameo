@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 
 struct ContentView: View {
+    @ObservedObject var captureReview: CaptureReviewStore
     let surface: ChameoMainSurface
     let onOpenTimelapse: () -> Void
     let onOpenSettings: () -> Void
@@ -16,7 +17,7 @@ struct ContentView: View {
     @AppStorage(AppPreferenceKey.handsFreeCountdown) private var handsFreeCountdown = false
     @AppStorage(AppPreferenceKey.showFaceGuide) private var showFaceGuide = true
     @AppStorage(AppPreferenceKey.saveLocation) private var saveLocation = false
-    @State private var statusMessage: LocalizedMessage?
+    private var statusMessage: LocalizedMessage? { captureReview.statusMessage }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -25,9 +26,8 @@ struct ContentView: View {
             Group {
                 switch appState.selectedTab {
                 case .camera:
-                    CameraView(surface: surface, albumName: albumName, handsFreeCountdown: handsFreeCountdown,
-                               showFaceGuide: showFaceGuide, saveLocation: saveLocation,
-                               statusMessage: $statusMessage)
+                    CameraView(review: captureReview, surface: surface, albumName: albumName, handsFreeCountdown: handsFreeCountdown,
+                               showFaceGuide: showFaceGuide, saveLocation: saveLocation)
                 case .library:
                     LibraryView(albumName: albumName, onOpenTimelapse: onOpenTimelapse)
                 }
@@ -41,7 +41,8 @@ struct ContentView: View {
         .environment(\.locale, localizationController.displayLocale)
         .task { await reloadLibraryIfAuthorized(albumName: albumName) }
         .onChange(of: statusMessage?.text) { _, text in
-            if let text { AccessibilityAnnouncement.post(text) }
+            guard appState.visibleMainSurface == surface, let text else { return }
+            AccessibilityAnnouncement.post(text)
         }
         .onChange(of: albumName) { _, name in
             Task { await reloadLibraryIfAuthorized(albumName: name) }

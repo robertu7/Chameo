@@ -53,49 +53,41 @@ enum ReminderService {
         await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
     }
 
-    static func hasScheduledReminder() async -> Bool {
-        await UNUserNotificationCenter.current()
-            .pendingNotificationRequests()
-            .contains { isReminderIdentifier($0.identifier) }
-    }
-
-    static func configureReminder(
-        date: Date,
-        repeatMode: ReminderRepeat,
-        weekday: Int? = nil
+    static func migrateSettingsIfNeeded(
+        center: any ReminderNotificationCenter = SystemReminderNotificationCenter(),
+        preferences: ReminderPreferences = .standard, defaultDate: Date = Date()
     ) async throws {
         try await operationQueue.perform {
-            try await configureReminderNow(
-                date: date,
-                repeatMode: repeatMode,
-                weekday: weekday
-            )
+            guard !preferences.hasMigrated else { return }
+            let settings = preferences.load()
+            let date = preferences.defaults.object(forKey: AppPreferenceKey.reminderDate) == nil
+                ? defaultDate : settings.date
+            let hasScheduledReminder = await center.pendingReminderNotificationIdentifiers()
+                .contains(where: isReminderIdentifier)
+            preferences.save(isEnabled: hasScheduledReminder, date: date, repeatMode: settings.repeatMode,
+                weekday: Calendar.current.component(.weekday, from: date))
+            preferences.markMigrated()
         }
     }
 
-    private static func configureReminderNow(
-        date: Date,
-        repeatMode: ReminderRepeat,
-        weekday: Int?
+    static func updateReminder(
+        isEnabled: Bool, date: Date, repeatMode: ReminderRepeat, weekday: Int,
+        center: any ReminderNotificationCenter = SystemReminderNotificationCenter(),
+        preferences: ReminderPreferences = .standard, now: Date? = nil
     ) async throws {
-        let center = SystemReminderNotificationCenter()
-
-        let granted = try await center.requestAuthorization(options: [.alert, .sound])
-        guard granted else {
-            throw ReminderError.notAuthorized
-        }
-
-        try await reconcileNotifications(
-            date: date,
-            repeatMode: repeatMode,
-            weekday: weekday,
-            center: center
-        )
-    }
-
-    static func cancelReminder() async throws {
         try await operationQueue.perform {
-            try await removeAllReminderNotifications(from: SystemReminderNotificationCenter())
+            if isEnabled {
+                guard try await center.requestAuthorization(options: [.alert, .sound]) else {
+                    throw ReminderError.notAuthorized
+                }
+                try await reconcileNotifications(date: date, repeatMode: repeatMode, weekday: weekday,
+                    center: center, now: now ?? Date(), completedAt: preferences.load().lastSelfieDate)
+            } else {
+                try await removeAllReminderNotifications(from: center)
+            }
+            // Commit before releasing the queue, so the next refresh sees this schedule.
+            preferences.save(isEnabled: isEnabled, date: date, repeatMode: repeatMode, weekday: weekday)
+            preferences.markMigrated()
         }
     }
 
@@ -112,13 +104,10 @@ enum ReminderService {
             forKey: AppPreferenceKey.lastSelfieDate
         )
 
-        let settings = StoredReminderSettings.load()
-        guard settings.isEnabled else {
-            return
-        }
-
         do {
             try await operationQueue.perform {
+                let settings = StoredReminderSettings.load()
+                guard settings.isEnabled else { return }
                 do {
                     try await reconcileNotifications(
                         date: settings.date,
@@ -154,55 +143,33 @@ enum ReminderService {
     }
 
     static func refreshRemindersFromStoredSettings(
-        now: Date,
-        center: any ReminderNotificationCenter
+        now: Date, center: any ReminderNotificationCenter,
+        preferences: ReminderPreferences = .standard
     ) async {
-        let settings = StoredReminderSettings.load()
-        guard settings.isEnabled else {
-            do {
-                try await operationQueue.perform {
-                    try await removeAllReminderNotifications(from: center)
-                }
-            } catch {
-                logger.error(
-                    "Failed to remove disabled reminders: \(error.localizedDescription, privacy: .private)"
-                )
-            }
-            return
-        }
-
-        let isCompletedToday = hasSelfieTaken(on: now, settings: settings)
-
         do {
             try await operationQueue.perform {
-                do {
-                    try await reconcileNotifications(
-                        date: settings.date,
-                        repeatMode: settings.repeatMode,
-                        weekday: settings.weekday,
-                        center: center,
-                        now: now
-                    )
-                } catch {
-                    logger.error(
-                        "Failed to reconcile reminders during refresh: \(error.localizedDescription, privacy: .private)"
-                    )
+                let settings = preferences.load()
+                guard settings.isEnabled else {
+                    try await removeAllReminderNotifications(from: center)
+                    return
                 }
-
-                if isCompletedToday {
-                    await removeDeliveredReminderNotifications(
-                        from: center,
-                        maximumAttempts: wakeDeliveredCleanupAttempts
-                    )
+                do {
+                    try await reconcileNotifications(date: settings.date, repeatMode: settings.repeatMode,
+                        weekday: settings.weekday, center: center, now: now,
+                        completedAt: settings.lastSelfieDate)
+                } catch {
+                    logger.error("Failed to reconcile reminders during refresh: \(error.localizedDescription, privacy: .private)")
+                }
+                if hasSelfieTaken(on: now, settings: settings) {
+                    await removeDeliveredReminderNotifications(from: center,
+                        maximumAttempts: wakeDeliveredCleanupAttempts)
                 }
             }
         } catch {
             logger.error("Failed to refresh reminders: \(error.localizedDescription, privacy: .private)")
-            if isCompletedToday {
-                await removeDeliveredReminderNotifications(
-                    from: center,
-                    maximumAttempts: wakeDeliveredCleanupAttempts
-                )
+            if hasSelfieTaken(on: now, settings: preferences.load()) {
+                await removeDeliveredReminderNotifications(from: center,
+                    maximumAttempts: wakeDeliveredCleanupAttempts)
             }
         }
     }
@@ -212,13 +179,15 @@ enum ReminderService {
         repeatMode: ReminderRepeat,
         weekday: Int?,
         center: any ReminderNotificationCenter,
-        now: Date = Date()
+        now: Date = Date(),
+        completedAt: Date? = StoredReminderSettings.load().lastSelfieDate
     ) async throws {
         let notifications = plannedNotifications(
             date: date,
             repeatMode: repeatMode,
             weekday: weekday,
-            now: now
+            now: now,
+            completedAt: completedAt
         )
         let desiredIdentifiers = Set(notifications.map(\.identifier))
         let obsoleteIdentifiers = await center.pendingReminderNotificationIdentifiers()
@@ -257,14 +226,15 @@ enum ReminderService {
         date: Date,
         repeatMode: ReminderRepeat,
         weekday: Int?,
-        now: Date
+        now: Date,
+        completedAt: Date?
     ) -> [PlannedReminderNotification] {
         return ReminderNotificationPlanner.notifications(
             reminderDate: date,
             repeatMode: repeatMode,
             weekday: weekday,
             now: now,
-            completedAt: StoredReminderSettings.load().lastSelfieDate,
+            completedAt: completedAt,
             limit: maximumNotificationRequests
         )
     }

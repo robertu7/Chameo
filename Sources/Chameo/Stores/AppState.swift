@@ -5,6 +5,7 @@ final class AppState: ObservableObject {
     @Published var selectedTab = ChameoTab.camera
     @Published var selectedLibraryDay: Date?
     @Published var visibleMainSurface: ChameoMainSurface?
+    let captureReview = CaptureReviewStore()
     private var preservesSelectionOnNextOpen = false
 
     var shouldRunCamera: Bool {
@@ -29,7 +30,9 @@ final class AppState: ObservableObject {
             preservesSelectionOnNextOpen = false
             return
         }
-        if status == .captured {
+        if captureReview.capturedPreview != nil || captureReview.isSaving {
+            selectedTab = .camera
+        } else if status == .captured {
             selectedLibraryDay = Calendar.current.startOfDay(for: now)
             selectedTab = .library
         } else {

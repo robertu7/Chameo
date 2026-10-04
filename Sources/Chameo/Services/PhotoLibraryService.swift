@@ -130,31 +130,28 @@ enum PhotoLibraryService {
     }
 
     static func thumbnail(for asset: PHAsset, size: CGSize) async -> NSImage? {
-        await withCheckedContinuation { continuation in
-            let lock = NSLock()
-            var didResume = false
-
-            let options = PHImageRequestOptions()
-            options.deliveryMode = .highQualityFormat
-            options.resizeMode = .fast
-            options.isNetworkAccessAllowed = true
-
-            PHCachingImageManager.default().requestImage(
-                for: asset,
-                targetSize: size,
-                contentMode: .aspectFill,
-                options: options
-            ) { image, _ in
-                lock.lock()
-                defer { lock.unlock() }
-
-                guard !didResume else {
-                    return
+        let manager = PHCachingImageManager.default()
+        let state = PhotoThumbnailRequestState(cancelRequest: manager.cancelImageRequest)
+        return await withTaskCancellationHandler {
+            await withCheckedContinuation { continuation in
+                guard state.install(continuation) else { return }
+                let options = PHImageRequestOptions()
+                options.deliveryMode = .highQualityFormat
+                options.resizeMode = .fast
+                options.isNetworkAccessAllowed = true
+                let requestID = manager.requestImage(
+                    for: asset, targetSize: size, contentMode: .aspectFill, options: options
+                ) { image, info in
+                    if (info?[PHImageCancelledKey] as? Bool) == true || info?[PHImageErrorKey] != nil {
+                        state.finish(nil)
+                    } else if (info?[PHImageResultIsDegradedKey] as? Bool) != true {
+                        state.finish(image)
+                    }
                 }
-
-                didResume = true
-                continuation.resume(returning: image)
+                state.setRequestID(requestID)
             }
+        } onCancel: {
+            state.cancel()
         }
     }
 
@@ -189,32 +186,6 @@ enum PhotoLibraryService {
                 completion.resume(throwing: PhotoLibraryError.changeTimedOut)
             }
         }
-    }
-}
-
-private actor PhotoAlbumCoordinator {
-    func album(named name: String) async throws -> PHAssetCollection {
-        if let existingAlbum = PhotoLibraryService.fetchAlbum(named: name) {
-            return existingAlbum
-        }
-
-        var albumPlaceholder: PHObjectPlaceholder?
-        try await PHPhotoLibrary.shared().performChanges {
-            let request = PHAssetCollectionChangeRequest.creationRequestForAssetCollection(
-                withTitle: name
-            )
-            albumPlaceholder = request.placeholderForCreatedAssetCollection
-        }
-
-        guard let localIdentifier = albumPlaceholder?.localIdentifier,
-              let album = PHAssetCollection.fetchAssetCollections(
-                withLocalIdentifiers: [localIdentifier],
-                options: nil
-              ).firstObject else {
-            throw PhotoLibraryError.albumCreationFailed
-        }
-
-        return album
     }
 }
 

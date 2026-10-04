@@ -17,7 +17,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: release-${{ inputs.release_tag || github.ref }}
+  group: chameo-update-feed
   cancel-in-progress: false
 
 jobs:
@@ -25,6 +25,9 @@ jobs:
     name: Build and publish release
     runs-on: macos-26
     environment: release
+    outputs:
+      base_feed_sha256: ${{ steps.base-feed.outputs.sha256 }}
+      published_feed_sha256: ${{ steps.signed-feed.outputs.sha256 }}
     permissions:
       contents: write
       pages: write
@@ -91,6 +94,17 @@ jobs:
           CHAMEO_BUILD_NUMBER="$(git rev-list --count HEAD)"
           ./script/build_app.sh --release
 
+      - name: Resolve existing publication
+        id: publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          python3 tooling/script/recover_release_assets.py "$GITHUB_REPOSITORY" "$RELEASE_TAG" \
+            "$RUNNER_TEMP/published-assets" \
+            "$(git -C release-source rev-parse --short=12 HEAD)" \
+            "$(git -C release-source rev-list --count HEAD)"
+
       - name: Prepare Sparkle private key
         env:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
@@ -103,6 +117,7 @@ jobs:
           printf '%s' "$SPARKLE_PRIVATE_KEY" >"$RUNNER_TEMP/sparkle-private-key"
 
       - name: Fetch existing appcast
+        id: base-feed
         run: |
           mkdir -p release-source/dist/updates
           status="$(
@@ -117,21 +132,32 @@ jobs:
           fi
           if [[ "$status" == "404" ]]; then
             rm -f release-source/dist/updates/appcast.xml
+            echo "sha256=absent" >>"$GITHUB_OUTPUT"
+          else
+            echo "sha256=$(shasum -a 256 release-source/dist/updates/appcast.xml | awk '{print $1}')" >>"$GITHUB_OUTPUT"
           fi
 
       - name: Sign and validate release artifacts
+        id: signed-feed
         working-directory: release-source
         env:
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
           SPARKLE_PRIVATE_KEY_FILE: ${{ runner.temp }}/sparkle-private-key
+          CHAMEO_REUSE_RELEASE_ASSETS_DIR: ${{ steps.publication.outputs.assets_dir }}
         run: |
           if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
             cp "$GITHUB_WORKSPACE/tooling/script/prepare_release.sh" script/prepare_release.sh
+            cp "$GITHUB_WORKSPACE/tooling/script/verify_app_bundle.sh" script/verify_app_bundle.sh
+            cp "$GITHUB_WORKSPACE/tooling/script/verify_entitlements.py" script/verify_entitlements.py
             cp "$GITHUB_WORKSPACE/tooling/script/finalize_appcast.sh" script/finalize_appcast.sh
             cp "$GITHUB_WORKSPACE/tooling/script/update_appcast_display_version.py" script/update_appcast_display_version.py
           fi
+          export CHAMEO_BUILD_ID CHAMEO_BUILD_NUMBER
+          CHAMEO_BUILD_ID="$(git rev-parse --short=12 HEAD)"
+          CHAMEO_BUILD_NUMBER="$(git rev-list --count HEAD)"
           ./script/prepare_release.sh "${RELEASE_TAG#v}"
           swift "$GITHUB_WORKSPACE/tooling/script/verify_appcast.swift" dist/updates/appcast.xml
+          echo "sha256=$(shasum -a 256 dist/updates/appcast.xml | awk '{print $1}')" >>"$GITHUB_OUTPUT"
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
@@ -148,6 +174,7 @@ jobs:
           path: release-source/dist/pages
 
       - name: Publish GitHub release
+        if: steps.publication.outputs.exists != 'true'
         working-directory: tooling
         env:
           GH_TOKEN: ${{ github.token }}
@@ -189,9 +216,6 @@ jobs:
 
   deploy-feed:
     name: Publish signed appcast
-    concurrency:
-      group: chameo-update-feed
-      cancel-in-progress: false
     needs: release
     runs-on: macos-26
     environment:
@@ -205,14 +229,33 @@ jobs:
       - name: Check out feed verification tooling
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
+      - name: Reject a stale deployment retry
+        env:
+          BASE_FEED_SHA256: ${{ needs.release.outputs.base_feed_sha256 }}
+          PUBLISHED_FEED_SHA256: ${{ needs.release.outputs.published_feed_sha256 }}
+        run: |
+          status="$(curl -sS -L -o "$RUNNER_TEMP/current-appcast.xml" -w '%{http_code}' https://robertu7.github.io/Chameo/appcast.xml)"
+          if [[ "$status" == "404" ]]; then
+            current_sha256=absent
+          elif [[ "$status" == "200" ]]; then
+            current_sha256="$(shasum -a 256 "$RUNNER_TEMP/current-appcast.xml" | awk '{print $1}')"
+          else
+            echo "Unable to check the public appcast: HTTP $status" >&2
+            exit 1
+          fi
+          python3 script/verify_feed_revision.py "$current_sha256" "$BASE_FEED_SHA256" "$PUBLISHED_FEED_SHA256"
+
       - name: Deploy GitHub Pages
         id: deployment
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
 
       - name: Validate published appcast URL
+        env:
+          PUBLISHED_FEED_SHA256: ${{ needs.release.outputs.published_feed_sha256 }}
         run: |
           curl --fail --silent --show-error --location \
             --retry 10 --retry-delay 3 \
             --output "$RUNNER_TEMP/appcast.xml" \
             "${{ steps.deployment.outputs.page_url }}appcast.xml?deployment=${{ github.run_id }}"
           swift script/verify_appcast.swift "$RUNNER_TEMP/appcast.xml"
+          test "$(shasum -a 256 "$RUNNER_TEMP/appcast.xml" | awk '{print $1}')" = "$PUBLISHED_FEED_SHA256"

@@ -1,0 +1,20 @@
+Building for debugging...
+[Pre-planning 1 / 126]
+[Planning deferred tasks]
+[1 / 16]
+[4 / 16]
+[4 / 13] Chameo-product
+[7 / 14] Chameo-product
+Build complete! (2.76 secs)
+Test Suite 'Selected tests' started at 2026-10-04 07:33:52.075.
+Test Suite 'ChameoTests.xctest' started at 2026-10-04 07:33:52.076.
+Test Suite 'ModernUIRenderTests' started at 2026-10-04 07:33:52.076.
+Test Case '-[ChameoTests.ModernUIRenderTests testRenderModernScreensInAllLanguagesAndAppearances]' started.
+Test Case '-[ChameoTests.ModernUIRenderTests testRenderModernScreensInAllLanguagesAndAppearances]' passed (27.577 seconds).
+Test Suite 'ModernUIRenderTests' passed at 2026-10-04 07:34:19.654.
+	 Executed 1 test, with 0 failures (0 unexpected) in 27.577 (27.577) seconds
+Test Suite 'ChameoTests.xctest' passed at 2026-10-04 07:34:19.654.
+	 Executed 1 test, with 0 failures (0 unexpected) in 27.577 (27.577) seconds
+Test Suite 'Selected tests' passed at 2026-10-04 07:34:19.654.
+	 Executed 1 test, with 0 failures (0 unexpected) in 27.577 (27.578) seconds
+Native content previews: /tmp/chameo-full-review-previews
