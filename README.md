@@ -122,7 +122,19 @@ are marked as prereleases. Both remain Stage 1 distribution for the owner and
 selected testers until the [public-distribution requirements](docs/roadmap.md#conditional-distribution)
 are complete.
 
-Install a test release:
+Install the latest stable test release with Homebrew:
+
+```bash
+brew install --cask robertu7/tap/chameo
+```
+
+The [Homebrew tap](https://github.com/robertu7/homebrew-tap) supports Apple Silicon
+on macOS 26 or newer. If macOS blocks the first launch, approve Chameo in
+System Settings → Privacy & Security. Then approve Camera and Photos access.
+Sparkle provides in-app updates; Homebrew users can also run
+`brew upgrade --cask robertu7/tap/chameo`.
+
+Or install the disk image:
 
 1. Download `Chameo-X.Y.Z-arm64.dmg` from
    [GitHub Releases](https://github.com/robertu7/Chameo/releases).
@@ -145,6 +157,13 @@ ZIP and disk-image contents, appcast XML, and published URLs. Sparkle continues
 to use the signed ZIP for updates; the disk image is the first-install option.
 The automation does not perform an installed-app end-to-end update or
 Gatekeeper test.
+
+After publishing a stable release and its appcast, the release workflow updates
+`Casks/chameo.rb` in `robertu7/homebrew-tap` with the published DMG's SHA-256.
+The `release` environment's `HOMEBREW_TAP_SSH_KEY` secret is a deploy key with
+write access to that tap. Prereleases and retries of older releases leave the
+cask on the latest stable version. Rerun the Homebrew job to recover a failed
+tap update.
 
 The owner confirmed a real Sparkle update/relaunch with reminder cleanup and
 the complete photo workflow on October 3, 2026. See the
