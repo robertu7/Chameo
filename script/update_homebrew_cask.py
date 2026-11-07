@@ -45,6 +45,12 @@ def update_cask(version: str, disk_image: Path, cask: Path) -> None:
 
   app "Chameo.app"
 
+  postflight_steps do
+    run "/usr/bin/xattr",
+        args:           ["-drs", "com.apple.quarantine", "{{{{appdir}}}}/Chameo.app"],
+        writable_paths: ["{{{{appdir}}}}/Chameo.app"]
+  end
+
   uninstall quit: "com.robertu.Chameo"
 
   zap trash: [
@@ -55,8 +61,9 @@ def update_cask(version: str, disk_image: Path, cask: Path) -> None:
   ]
 
   caveats <<~EOS
-    Chameo currently uses ad-hoc signing and is awaiting Apple notarization.
-    If macOS blocks the first launch, approve Chameo in System Settings > Privacy & Security.
+    This cask clears quarantine from the installed Chameo.app, skipping the usual
+    first-launch Gatekeeper check. Chameo is ad-hoc signed.
+    If macOS blocks launch, choose Open Anyway in System Settings > Privacy & Security.
   EOS
 end
 ''')

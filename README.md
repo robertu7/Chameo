@@ -122,15 +122,16 @@ are marked as prereleases. Both remain Stage 1 distribution for the owner and
 selected testers until the [public-distribution requirements](docs/roadmap.md#conditional-distribution)
 are complete.
 
-Install the latest stable test release with Homebrew:
+The Homebrew cask clears quarantine from the installed `Chameo.app`, skipping
+the usual first-launch Gatekeeper check. Install the latest stable test release
+with this command.
 
 ```bash
 brew install --cask robertu7/tap/chameo
 ```
 
 The [Homebrew tap](https://github.com/robertu7/homebrew-tap) supports Apple Silicon
-on macOS 26 or newer. If macOS blocks the first launch, approve Chameo in
-System Settings → Privacy & Security. Then approve Camera and Photos access.
+on macOS 26 or newer. Approve Camera and Photos access when prompted.
 Sparkle provides in-app updates; Homebrew users can also run
 `brew upgrade --cask robertu7/tap/chameo`.
 
@@ -139,7 +140,8 @@ Or install the disk image:
 1. Download `Chameo-X.Y.Z-arm64.dmg` from
    [GitHub Releases](https://github.com/robertu7/Chameo/releases).
 2. Open the disk image and drag `Chameo.app` onto the **Applications** shortcut.
-3. Control-click Chameo and choose **Open** for the first launch.
+3. Open Chameo. If macOS blocks it, choose **Open Anyway** in System Settings →
+   Privacy & Security and confirm.
 4. Approve the Camera and Photos permissions used by the app.
 
 Because these test builds do not have a stable Developer ID signature, macOS
